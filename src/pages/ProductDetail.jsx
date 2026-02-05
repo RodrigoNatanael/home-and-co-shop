@@ -7,7 +7,7 @@ import { Button } from '../components/ui/Button';
 import StockScarcity from '../components/ui/StockScarcity';
 import TrustBadges from '../components/ui/TrustBadges';
 import RelatedProducts from '../components/ui/RelatedProducts';
-import { useCart } from '../../context/CartContext';
+import { useCart } from '../context/CartContext';
 
 export default function ProductDetail() {
     const { id } = useParams();
