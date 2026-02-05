@@ -16,7 +16,7 @@ import AdminPanel from './pages/AdminPanel';
 import { CartProvider } from './context/CartContext';
 import CartDrawer from './components/cart/CartDrawer';
 
-// Wrapper for Layout to handle location-based logic if needed
+// Wrapper para manejar el Layout de la página
 function Layout({ children }) {
   return (
     <div className="flex flex-col min-h-screen">
@@ -30,7 +30,7 @@ function Layout({ children }) {
   );
 }
 
-// Scroll To Top component
+// Componente para volver al inicio al cambiar de página
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -48,17 +48,23 @@ function App() {
         <ScrollToTop />
         <Layout>
           <Routes>
+            {/* Rutas Principales */}
             <Route path="/" element={<Home />} />
             <Route path="/catalog" element={<Catalog />} />
             <Route path="/product/:id" element={<ProductDetail />} />
+
+            {/* Rutas de Información */}
             <Route path="/about" element={<About />} />
             <Route path="/envios" element={<Shipping />} />
             <Route path="/privacidad" element={<Privacy />} />
             <Route path="/terminos" element={<Terms />} />
             <Route path="/compra-exitosa" element={<Success />} />
+
+            {/* Panel de Administración (Ubicado antes del NotFound) */}
             <Route path="/admin-home-co" element={<AdminPanel />} />
+
+            {/* El comodín "*" SIEMPRE debe ir al final */}
             <Route path="*" element={<NotFound />} />
-            <Route path="/admin-home-co" element={<AdminPanel />} />
           </Routes>
         </Layout>
       </Router>
