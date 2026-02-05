@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Check, ShieldCheck, Zap, MessageCircle } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../supabaseclient';
 import { Button } from '../ui/Button';
 import StockScarcity from '../ui/StockScarcity';
 import TrustBadges from '../ui/TrustBadges';
