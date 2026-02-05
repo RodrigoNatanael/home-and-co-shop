@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { ShieldCheck, Truck, MessageCircle } from 'lucide-react'
+import CountdownTimer from './ui/CountdownTimer'
 
 export default function Hero() {
     return (
@@ -14,6 +15,7 @@ export default function Hero() {
                 transition={{ duration: 0.5 }}
             >
                 <div className="z-10 relative">
+                    <CountdownTimer />
                     <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm">Destacado</span>
                     <h2 className="text-4xl md:text-5xl font-bold text-white mt-4 leading-tight">
                         Vaso Térmico<br />

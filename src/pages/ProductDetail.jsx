@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Check, ShieldCheck, Zap } from 'lucide-react';
 import { products } from '../data/mockData';
 import { Button } from '../components/ui/Button';
+import StockScarcity from '../components/ui/StockScarcity';
+import TrustBadges from '../components/ui/TrustBadges';
 import { useCart } from '../context/CartContext';
 import ProductCard from '../components/ProductCard';
 
@@ -94,12 +96,16 @@ export default function ProductDetail() {
 
                         {/* Actions */}
                         <div className="mt-auto pt-8 border-t border-gray-100 flex flex-col gap-4">
+                            <div className="mb-4">
+                                <StockScarcity stockLimit={3} />
+                            </div>
                             <Button size="lg" className="w-full text-lg h-16" onClick={() => addToCart(product, 1, selectedColor)}>
                                 AGREGAR AL EQUIPO
                             </Button>
                             <p className="text-xs text-gray-400 flex items-center justify-center gap-2">
                                 <ShieldCheck size={14} /> Garantía asegurada de Home & Co.
                             </p>
+                            <TrustBadges />
                         </div>
 
                     </motion.div>
