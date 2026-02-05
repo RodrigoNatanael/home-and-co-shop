@@ -3,10 +3,10 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Check, ShieldCheck, Zap, MessageCircle } from 'lucide-react';
 import { supabase } from '../supabaseclient';
-import { Button } from '../ui/Button';
-import StockScarcity from '../ui/StockScarcity';
-import TrustBadges from '../ui/TrustBadges';
-import RelatedProducts from '../ui/RelatedProducts';
+import { Button } from '../components/ui/Button';
+import StockScarcity from '../components/ui/StockScarcity';
+import TrustBadges from '../components/ui/TrustBadges';
+import RelatedProducts from '../components/ui/RelatedProducts';
 import { useCart } from '../../context/CartContext';
 
 export default function ProductDetail() {
