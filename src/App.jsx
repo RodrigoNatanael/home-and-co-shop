@@ -11,6 +11,7 @@ import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import NotFound from './pages/NotFound';
 import Success from './pages/Success';
+import AdminPanel from './pages/AdminPanel';
 
 import { CartProvider } from './context/CartContext';
 import CartDrawer from './components/cart/CartDrawer';
@@ -55,6 +56,7 @@ function App() {
             <Route path="/privacidad" element={<Privacy />} />
             <Route path="/terminos" element={<Terms />} />
             <Route path="/compra-exitosa" element={<Success />} />
+            <Route path="/admin-home-co" element={<AdminPanel />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
