@@ -6,6 +6,10 @@ import Home from './pages/Home';
 import Catalog from './pages/Catalog';
 import ProductDetail from './pages/ProductDetail';
 import About from './pages/About';
+import Shipping from './pages/Shipping';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import NotFound from './pages/NotFound';
 import Success from './pages/Success';
 
 import { CartProvider } from './context/CartContext';
@@ -47,7 +51,11 @@ function App() {
             <Route path="/catalog" element={<Catalog />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/about" element={<About />} />
+            <Route path="/envios" element={<Shipping />} />
+            <Route path="/privacidad" element={<Privacy />} />
+            <Route path="/terminos" element={<Terms />} />
             <Route path="/compra-exitosa" element={<Success />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
       </Router>

@@ -59,6 +59,14 @@ export default function Navbar() {
 
                     {/* Actions */}
                     <div className="hidden md:flex items-center space-x-4">
+                        <a
+                            href="https://wa.me/5492617523156?text=Hola! Quiero ver el catálogo actualizado de Home & Co"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-brand-accent text-white px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform"
+                        >
+                            PEDIR CATÁLOGO
+                        </a>
                         <button className={linkHover}>
                             <ShoppingCart size={24} />
                         </button>

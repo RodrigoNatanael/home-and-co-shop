@@ -13,7 +13,7 @@ export default function Footer() {
                             Equipamiento premium para la aventura. Nacidos al pie de los Andes, diseñados para resistir todo.
                         </p>
                         <div className="flex space-x-4">
-                            <a href="#" className="text-gray-400 hover:text-white transition-colors"><Instagram /></a>
+                            <a href="https://www.instagram.com/homeandco.mza" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors"><Instagram size={24} /></a>
                             <a href="#" className="text-gray-400 hover:text-white transition-colors"><Facebook /></a>
                             <a href="#" className="text-gray-400 hover:text-white transition-colors"><Mail /></a>
                         </div>
