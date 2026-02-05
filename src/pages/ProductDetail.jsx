@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, ShieldCheck, Zap } from 'lucide-react';
+import { ArrowLeft, Check, ShieldCheck, Zap, MessageCircle } from 'lucide-react';
 import { products } from '../data/mockData';
 import { Button } from '../components/ui/Button';
 import StockScarcity from '../components/ui/StockScarcity';
@@ -26,6 +26,12 @@ export default function ProductDetail() {
             </div>
         );
     }
+
+    // 1. Primero definimos el mensaje dinámico
+    const message = `Hola Rodrigo! 👋 Estoy viendo el *${product.name}* en homeandcoarg.com y me gustaría consultar por el stock.`;
+
+    // 2. Creamos el link codificado para que WhatsApp lo entienda
+    const whatsappUrl = `https://wa.me/5492617523156?text=${encodeURIComponent(message)}`;
 
     return (
         <div className="pt-20 min-h-screen bg-white">
@@ -107,6 +113,16 @@ export default function ProductDetail() {
                                 <ShieldCheck size={14} /> Garantía asegurada de Home & Co.
                             </p>
                             <TrustBadges />
+
+                            <a
+                                href={whatsappUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-[#25D366] text-white p-4 rounded-full flex items-center justify-center gap-2 hover:scale-105 transition-transform font-bold"
+                            >
+                                <MessageCircle size={20} />
+                                Consultar por este producto
+                            </a>
                         </div>
 
                     </motion.div>
