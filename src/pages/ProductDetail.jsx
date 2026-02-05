@@ -6,6 +6,7 @@ import { products } from '../data/mockData';
 import { Button } from '../components/ui/Button';
 import StockScarcity from '../components/ui/StockScarcity';
 import TrustBadges from '../components/ui/TrustBadges';
+import RelatedProducts from '../components/ui/RelatedProducts';
 import { useCart } from '../context/CartContext';
 import ProductCard from '../components/ProductCard';
 
@@ -110,19 +111,11 @@ export default function ProductDetail() {
 
                     </motion.div>
                 </div>
+
+                <RelatedProducts currentProductId={product.id} category={product.category} />
             </div>
 
-            {/* Cross Selling (Simple) */}
-            <section className="py-20 bg-gray-50 mt-12 border-t border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 md:px-8">
-                    <h2 className="font-display font-bold text-3xl uppercase mb-8">Completa tu Equipo</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                        {products.slice(0, 4).map(p => (
-                            <ProductCard key={p.id} product={p} />
-                        ))}
-                    </div>
-                </div>
-            </section>
+
         </div>
     );
 }
