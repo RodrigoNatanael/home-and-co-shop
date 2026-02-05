@@ -58,6 +58,7 @@ function App() {
             <Route path="/compra-exitosa" element={<Success />} />
             <Route path="/admin-home-co" element={<AdminPanel />} />
             <Route path="*" element={<NotFound />} />
+            <Route path="/admin-home-co" element={<AdminPanel />} />
           </Routes>
         </Layout>
       </Router>
