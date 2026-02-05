@@ -2,21 +2,51 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Check, ShieldCheck, Zap, MessageCircle } from 'lucide-react';
-import { products } from '../data/mockData';
-import { Button } from '../components/ui/Button';
-import StockScarcity from '../components/ui/StockScarcity';
-import TrustBadges from '../components/ui/TrustBadges';
-import RelatedProducts from '../components/ui/RelatedProducts';
-import { useCart } from '../context/CartContext';
-import ProductCard from '../components/ProductCard';
+import { supabase } from '../../lib/supabaseClient';
+import { Button } from '../ui/Button';
+import StockScarcity from '../ui/StockScarcity';
+import TrustBadges from '../ui/TrustBadges';
+import RelatedProducts from '../ui/RelatedProducts';
+import { useCart } from '../../context/CartContext';
 
 export default function ProductDetail() {
     const { id } = useParams();
-    const product = products.find(p => p.id === id);
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
     const { addToCart } = useCart();
 
     // Initial State
-    const [selectedColor, setSelectedColor] = useState(product?.colors?.[0] || '#000000');
+    const [selectedColor, setSelectedColor] = useState('#000000');
+
+    useEffect(() => {
+        const fetchProduct = async () => {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('products')
+                .select('*, image_url')
+                .eq('id', id)
+                .single();
+
+            if (error) {
+                console.error('Error fetching product:', error);
+            } else {
+                setProduct(data);
+                if (data.colors && data.colors.length > 0) {
+                    setSelectedColor(data.colors[0]);
+                }
+            }
+            setLoading(false);
+        };
+        fetchProduct();
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen pt-32 flex justify-center">
+                <p>Cargando...</p>
+            </div>
+        );
+    }
 
     if (!product) {
         return (
@@ -48,12 +78,13 @@ export default function ProductDetail() {
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="bg-gray-100 aspect-square flex items-center justify-center p-12 relative overflow-hidden group"
+                        className="bg-gray-100 aspect-square flex items-center justify-center relative overflow-hidden group"
                     >
-                        <div className="text-gray-300 text-center">
-                            <span className="text-9xl block mb-4">📷</span>
-                            <p className="font-display text-2xl uppercase tracking-widest opacity-50">{product.name}</p>
-                        </div>
+                        <img
+                            src={product.image_url}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                        />
                     </motion.div>
 
                     {/* Right Column: Info */}
@@ -135,3 +166,4 @@ export default function ProductDetail() {
         </div>
     );
 }
+

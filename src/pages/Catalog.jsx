@@ -2,16 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Filter, X } from 'lucide-react';
-import { products } from '../data/mockData';
+import { supabase } from '../lib/supabaseClient';
 import ProductCard from '../components/ProductCard';
 
 export default function Catalog() {
     const [searchParams, setSearchParams] = useSearchParams();
     const categoryParam = searchParams.get('category');
 
-    // State for filters
+    // State for products and filters
+    const [products, setProducts] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(categoryParam || 'Todos');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*, image_url');
+
+            if (error) {
+                console.error('Error fetching products:', error);
+            } else {
+                setProducts(data || []);
+            }
+        };
+        fetchProducts();
+    }, []);
+
+    useEffect(() => {
+        if (categoryParam) {
+            setSelectedCategory(categoryParam);
+        }
+    }, [categoryParam]);
 
     // Derived state for filtered products
     const filteredProducts = selectedCategory === 'Todos'
@@ -20,12 +42,6 @@ export default function Catalog() {
 
     // Extract unique categories
     const categories = ['Todos', ...new Set(products.map(p => p.category))];
-
-    useEffect(() => {
-        if (categoryParam) {
-            setSelectedCategory(categoryParam);
-        }
-    }, [categoryParam]);
 
     const handleCategoryChange = (cat) => {
         setSelectedCategory(cat);

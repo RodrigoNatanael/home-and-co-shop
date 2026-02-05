@@ -2,12 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Truck, ShieldCheck, Thermometer } from 'lucide-react';
-import { products } from '../data/mockData';
+import { supabase } from '../lib/supabaseClient';
 import ProductCard from '../components/ProductCard';
 import { Button } from '../components/ui/Button';
 
 export default function Home() {
-    // Filter featured products (e.g., one from each category)
+    const [products, setProducts] = useState([]);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*, image_url');
+
+            if (error) {
+                console.error('Error fetching products:', error);
+            } else {
+                setProducts(data || []);
+            }
+        };
+
+        fetchProducts();
+    }, []);
+
+    // Filter featured products (e.g., first 3)
     const featuredProducts = products.slice(0, 3);
 
     return (

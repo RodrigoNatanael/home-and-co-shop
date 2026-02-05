@@ -10,12 +10,12 @@ export default function ProductCard({ product }) {
                 className="bg-white border text-center border-gray-200 overflow-hidden relative shadow-sm hover:shadow-xl transition-all duration-300"
             >
                 {/* Image Area */}
-                <div className="aspect-square bg-gray-100 flex items-center justify-center p-8 relative overflow-hidden">
-                    {/* Image Placeholder */}
-                    <div className="text-gray-400 group-hover:scale-105 transition-transform duration-500">
-                        <span className="text-4xl">📷</span>
-                        <p className="sr-only">{product.name}</p>
-                    </div>
+                <div className="aspect-square bg-gray-100 flex items-center justify-center relative overflow-hidden">
+                    <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
 
                     {/* Badge (Optional) */}
                     <div className="absolute top-4 left-4">

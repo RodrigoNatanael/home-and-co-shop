@@ -24,16 +24,16 @@ export default function Footer() {
                         <ul className="space-y-4">
                             <li><Link to="/catalog" className="text-gray-400 hover:text-white transition-colors">Productos</Link></li>
                             <li><Link to="/about" className="text-gray-400 hover:text-white transition-colors">Nosotros</Link></li>
-                            <li><Link to="/contact" className="text-gray-400 hover:text-white transition-colors">Contacto</Link></li>
+                            <li><a href="https://wa.me/5492617523156" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">Contacto</a></li>
                         </ul>
                     </div>
 
                     <div>
                         <h3 className="font-display font-bold text-lg mb-6 tracking-wide">LEGAL</h3>
                         <ul className="space-y-4">
-                            <li><Link to="/terms" className="text-gray-400 hover:text-white transition-colors">Términos y Condiciones</Link></li>
-                            <li><Link to="/privacy" className="text-gray-400 hover:text-white transition-colors">Política de Privacidad</Link></li>
-                            <li><Link to="/shipping" className="text-gray-400 hover:text-white transition-colors">Envíos y Devoluciones</Link></li>
+                            <li><Link to="/terminos" className="text-gray-400 hover:text-white transition-colors">Términos y Condiciones</Link></li>
+                            <li><Link to="/privacidad" className="text-gray-400 hover:text-white transition-colors">Política de Privacidad</Link></li>
+                            <li><Link to="/envios" className="text-gray-400 hover:text-white transition-colors">Envíos y Devoluciones</Link></li>
                         </ul>
                     </div>
                 </div>

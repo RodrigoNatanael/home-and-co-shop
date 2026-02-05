@@ -66,8 +66,12 @@ export default function CartDrawer() {
                                     cart.map((item) => (
                                         <div key={`${item.id}-${item.selectedColor}`} className="flex gap-4">
                                             {/* Image */}
-                                            <div className="w-24 h-24 bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
-                                                <span className="text-2xl">📷</span>
+                                            <div className="w-24 h-24 bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+                                                <img
+                                                    src={item.image_url}
+                                                    alt={item.name}
+                                                    className="w-full h-full object-cover"
+                                                />
                                             </div>
 
                                             {/* Details */}
