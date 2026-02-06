@@ -76,64 +76,65 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
 
             if (leadError) console.warn("Lead no guardado", leadError);
 
-            // --- GOOGLE SHEETS INTEGRATION ---
-            // Enviamos el pedido a Google Sheets sin bloquear el flujo principal
-            try {
-                const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzj2y4AnbJIJoVdqQz-eHnIiMRr6kIZeWVevn2XLkM0GNhO65K9yYGrj3aSeWRpr0lM/exec';
+            // --- GOOGLE SHEETS INTEGRATION (NON-BLOCKING) ---
+            const logToSheets = async () => {
+                try {
+                    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzj2y4AnbJIJoVdqQz-eHnIiMRr6kIZeWVevn2XLkM0GNhO65K9yYGrj3aSeWRpr0lM/exec';
+                    const formData = new FormData();
+                    formData.append('date', new Date().toLocaleString('es-AR'));
+                    formData.append('total', unit_price);
+                    formData.append('cliente', JSON.stringify({ name, email, phone, city, address }));
+                    formData.append('items', JSON.stringify(cartItems.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        quantity: item.quantity,
+                        price: item.price,
+                        color: item.selectedColor || 'N/A'
+                    }))));
 
-                const formData = new FormData();
-                formData.append('date', new Date().toLocaleString('es-AR'));
-                formData.append('total', unit_price);
-                formData.append('cliente', JSON.stringify({ name, email, phone, city, address }));
-                formData.append('items', JSON.stringify(cartItems.map(item => ({
-                    id: item.id,
-                    name: item.name,
-                    quantity: item.quantity,
-                    price: item.price,
-                    color: item.selectedColor || 'N/A'
-                }))));
-
-                console.log('--- ENVIANDO A GOOGLE SHEETS ---');
-                console.log('URL:', GOOGLE_SCRIPT_URL);
-                for (let pair of formData.entries()) {
-                    console.log(pair[0] + ': ' + pair[1]);
+                    console.log('--- ENVIANDO A GOOGLE SHEETS (BACKGROUND) ---');
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        body: formData
+                    });
+                } catch (sheetErr) {
+                    console.warn('Error en integración Google Sheets:', sheetErr);
                 }
+            };
 
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: formData // Browser sets Content-Type automatically
-                });
-
-                // Pequeño retraso de seguridad para asegurar que la petición salga
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-            } catch (sheetErr) {
-                console.warn('Error en integración Google Sheets:', sheetErr);
-            }
+            // Execute without awaiting
+            logToSheets();
             // ---------------------------------
 
             // 4. Ir a Mercado Pago
+            console.log('Iniciando checkout de Mercado Pago...');
             const { data, error: funcError } = await supabase.functions.invoke('create-checkout', {
                 body: {
                     unit_price: unit_price,
-                    title: `Pedido Home & Co - ${name}`, // Personalizamos el título
+                    title: `Pedido Home & Co - ${name}`,
                     quantity: 1,
                     payer: { email: email }
                 }
             });
 
-            if (funcError) throw funcError;
+            if (funcError) {
+                console.error('Error en Edge Function create-checkout:', funcError);
+                throw new Error(`Error al crear preferencia de MP: ${funcError.message}`);
+            }
 
             if (data?.url) {
+                console.log('Redirigiendo a Mercado Pago:', data.url);
                 window.location.href = data.url;
             } else {
-                throw new Error("No se recibió la URL de pago.");
+                console.error('Respuesta de MP sin URL:', data);
+                throw new Error("No se recibió la URL de pago de Mercado Pago.");
             }
 
         } catch (err) {
-            console.error(err);
-            setError('Hubo un error al procesar. Intenta nuevamente.');
+            console.error('Error crítico en el proceso de compra:', err);
+            // Show specific error if it's a logic error (like stock), otherwise generic
+            setError(err.message || 'Hubo un error al procesar. Intenta nuevamente.');
         } finally {
             if (error) setLoading(false);
         }
