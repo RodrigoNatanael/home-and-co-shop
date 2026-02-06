@@ -91,29 +91,27 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
             }
             // ---------------------------------
 
-            // 4. Ir a Mercado Pago
-            const { data, error: funcError } = await supabase.functions.invoke('create-checkout', {
-                body: {
-                    unit_price: unit_price,
-                    title: `Pedido Home & Co - ${name}`, // Personalizamos el título
-                    quantity: 1,
-                    payer: { email: email }
-                }
-            });
+            // --- WHATSAPP INTEGRATION ---
+            // 4. Redirigir a WhatsApp en lugar de Mercado Pago
+            const WHATSAPP_NUMBER = '5492617523156';
 
-            if (funcError) throw funcError;
+            const message = `¡Hola Home & Co! 👋\n\nMi nombre es ${name}.\nQuiero confirmar mi pedido por un total de *${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(unit_price)}*.\n\n📍 *Dirección de Envío:*\n${address}, ${city} (CP: ${zip})\n\n📦 *Productos:*\n${cartItems.map(item => `- ${item.quantity}x ${item.name} ${item.selectedColor ? `(${item.selectedColor})` : ''}`).join('\n')}\n\n¡Espero su confirmación para realizar el pago!`;
 
-            if (data?.url) {
-                window.location.href = data.url;
-            } else {
-                throw new Error("No se recibió la URL de pago.");
-            }
+            const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+
+            // Open in new tab
+            window.open(whatsappUrl, '_blank');
+
+            // Close modal and optionally clear cart (or leave it up to user logic, but usually good to clear or let them close)
+            onClose();
 
         } catch (err) {
             console.error(err);
             setError('Hubo un error al procesar. Intenta nuevamente.');
         } finally {
             if (error) setLoading(false);
+            // We don't necessarily stop loading if we redirect, but good practice
+            setLoading(false);
         }
     };
 
@@ -170,7 +168,7 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
                                 {error && <div className="text-red-500 text-xs bg-red-50 p-2">{error}</div>}
 
                                 <button type="submit" disabled={loading} className="w-full mt-4 bg-brand-dark text-white py-3 font-bold text-lg uppercase flex justify-center items-center gap-2 hover:bg-black transition-all shadow-lg">
-                                    {loading ? <Loader2 className="animate-spin" /> : "IR A PAGAR"}
+                                    {loading ? <Loader2 className="animate-spin" /> : "CONFIRMAR PEDIDO"}
                                 </button>
                             </form>
 
