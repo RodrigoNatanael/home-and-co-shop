@@ -371,31 +371,50 @@ export default function AdminPanel() {
             if (leadsError) throw leadsError;
 
             // 3. Normalize Data
-            const manualNormalized = (manualData || []).map(s => ({
-                id: s.id,
-                date: s.created_at,
-                client: s.client_name,
-                phone: s.client_phone,
-                total: s.total_amount,
-                paid: s.paid_amount,
-                status: s.status,
-                items: s.items_json || [],
-                origin: 'MANUAL',
-                originalData: s
-            }));
+            const manualNormalized = (manualData || []).map(s => {
+                let safeItems = [];
+                if (Array.isArray(s.items_json)) {
+                    safeItems = s.items_json;
+                } else if (typeof s.items_json === 'string') {
+                    try { safeItems = JSON.parse(s.items_json); } catch (e) { }
+                }
 
-            const leadsNormalized = (leadsData || []).map(l => ({
-                id: l.id,
-                date: l.created_at,
-                client: l.name,
-                phone: l.metadata?.shipping?.phone || '',
-                total: l.metadata?.total || 0,
-                paid: l.metadata?.total || 0,
-                status: 'Pagado',
-                items: l.metadata?.items || [],
-                origin: 'WEB',
-                originalData: l
-            }));
+                return {
+                    id: s.id,
+                    date: s.created_at,
+                    client: s.client_name,
+                    phone: s.client_phone,
+                    total: parseFloat(s.total_amount) || 0,
+                    paid: parseFloat(s.paid_amount) || 0,
+                    status: s.status,
+                    items: safeItems,
+                    origin: 'MANUAL',
+                    originalData: s
+                };
+            });
+
+            const leadsNormalized = (leadsData || []).map(l => {
+                let metadata = l.metadata;
+                // Parse metadata if it's a string (defensive)
+                if (typeof metadata === 'string') {
+                    try { metadata = JSON.parse(metadata); } catch (e) { metadata = {}; }
+                }
+
+                const safeItems = Array.isArray(metadata?.items) ? metadata.items : [];
+
+                return {
+                    id: l.id,
+                    date: l.created_at,
+                    client: l.name,
+                    phone: metadata?.shipping?.phone || '',
+                    total: parseFloat(metadata?.total) || 0,
+                    paid: parseFloat(metadata?.total) || 0, // Assume web sales are fully paid
+                    status: 'Pagado',
+                    items: safeItems,
+                    origin: 'WEB',
+                    originalData: l
+                };
+            });
 
             // 4. Merge and Sort
             const merged = [...manualNormalized, ...leadsNormalized].sort((a, b) =>
