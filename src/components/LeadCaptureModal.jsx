@@ -28,6 +28,28 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
 
             if (!unit_price || isNaN(unit_price)) throw new Error("Precio inválido");
 
+            // --- VALIDACIÓN DE STOCK ---
+            for (const item of cartItems) {
+                // Determine table: Combos have 'products_json', Products don't
+                const table = item.products_json ? 'combos' : 'products';
+
+                const { data: itemData, error: stockError } = await supabase
+                    .from(table)
+                    .select('stock, name')
+                    .eq('id', item.id)
+                    .single();
+
+                if (stockError) {
+                    console.error(`Error verificando stock para ${item.name}:`, stockError);
+                    throw new Error(`Error verificando stock del producto: ${item.name}`);
+                }
+
+                if (itemData.stock < item.quantity) {
+                    throw new Error(`¡Lo sentimos! No hay suficiente stock para "${item.name}". Disponibles: ${itemData.stock}`);
+                }
+            }
+            // ---------------------------
+
             // 2. PREPARAR EL PEDIDO COMPLETO
             // Aquí guardamos TODO lo que necesitas para hacer el envío
             const orderDetails = {
@@ -91,27 +113,29 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
             }
             // ---------------------------------
 
-            // --- WHATSAPP INTEGRATION ---
-            // 4. Redirigir a WhatsApp en lugar de Mercado Pago
-            const WHATSAPP_NUMBER = '5492617523156';
+            // 4. Ir a Mercado Pago
+            const { data, error: funcError } = await supabase.functions.invoke('create-checkout', {
+                body: {
+                    unit_price: unit_price,
+                    title: `Pedido Home & Co - ${name}`, // Personalizamos el título
+                    quantity: 1,
+                    payer: { email: email }
+                }
+            });
 
-            const message = `¡Hola Home & Co! 👋\n\nMi nombre es ${name}.\nQuiero confirmar mi pedido por un total de *${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(unit_price)}*.\n\n📍 *Dirección de Envío:*\n${address}, ${city} (CP: ${zip})\n\n📦 *Productos:*\n${cartItems.map(item => `- ${item.quantity}x ${item.name} ${item.selectedColor ? `(${item.selectedColor})` : ''}`).join('\n')}\n\n¡Espero su confirmación para realizar el pago!`;
+            if (funcError) throw funcError;
 
-            const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-
-            // Open in new tab
-            window.open(whatsappUrl, '_blank');
-
-            // Close modal and optionally clear cart (or leave it up to user logic, but usually good to clear or let them close)
-            onClose();
+            if (data?.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error("No se recibió la URL de pago.");
+            }
 
         } catch (err) {
             console.error(err);
             setError('Hubo un error al procesar. Intenta nuevamente.');
         } finally {
             if (error) setLoading(false);
-            // We don't necessarily stop loading if we redirect, but good practice
-            setLoading(false);
         }
     };
 
@@ -168,7 +192,7 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
                                 {error && <div className="text-red-500 text-xs bg-red-50 p-2">{error}</div>}
 
                                 <button type="submit" disabled={loading} className="w-full mt-4 bg-brand-dark text-white py-3 font-bold text-lg uppercase flex justify-center items-center gap-2 hover:bg-black transition-all shadow-lg">
-                                    {loading ? <Loader2 className="animate-spin" /> : "CONFIRMAR PEDIDO"}
+                                    {loading ? <Loader2 className="animate-spin" /> : "IR A PAGAR"}
                                 </button>
                             </form>
 

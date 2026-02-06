@@ -15,6 +15,7 @@ import AdminPanel from './pages/AdminPanel';
 
 import { CartProvider } from './context/CartContext';
 import CartDrawer from './components/cart/CartDrawer';
+import WhatsAppButton from './components/ui/WhatsAppButton';
 
 // Wrapper para manejar el Layout de la página
 function Layout({ children }) {
@@ -22,6 +23,7 @@ function Layout({ children }) {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <CartDrawer />
+      <WhatsAppButton />
       <main className="flex-grow">
         {children}
       </main>

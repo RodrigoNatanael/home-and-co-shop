@@ -14,7 +14,8 @@ export default function AdminPanel() {
         name: '',
         price: '',
         category: '',
-        description: ''
+        description: '',
+        stock: '' // Agregado state de stock
     });
     const [productImageFile, setProductImageFile] = useState(null);
 
@@ -32,7 +33,8 @@ export default function AdminPanel() {
     const [loadingCombos, setLoadingCombos] = useState(false);
     const [comboFormData, setComboFormData] = useState({
         name: '',
-        price: ''
+        price: '',
+        stock: '' // Agregado state de stock
     });
     const [selectedProductIds, setSelectedProductIds] = useState([]); // Array of IDs
     const [comboImageFile, setComboImageFile] = useState(null);
@@ -149,6 +151,22 @@ export default function AdminPanel() {
         const { error } = await supabase.from('products').delete().eq('id', id);
         if (error) alert('Error deleting');
         else fetchProducts();
+    };
+    const handleUpdateStock = async (table, id, newStock) => {
+        const { error } = await supabase
+            .from(table)
+            .update({ stock: parseInt(newStock) })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating stock', error);
+            alert('Error al actualizar stock');
+        } else {
+            console.log(`Stock updated for ${table} ${id}`);
+            // Optimistic update or refetch? Refetch is safer for now.
+            // But to avoid UI flickering, maybe just let it be. 
+            // The user will see the value they typed. 
+        }
     };
 
     // --- HANDLERS: BANNERS ---
@@ -344,6 +362,7 @@ export default function AdminPanel() {
                                     <input type="text" name="id" value={productFormData.id} onChange={handleProductInputChange} placeholder="ID (Opcional)" className="w-full border p-2 rounded" />
                                     <input type="text" name="name" value={productFormData.name} onChange={handleProductInputChange} required placeholder="Nombre *" className="w-full border p-2 rounded" />
                                     <input type="number" name="price" value={productFormData.price} onChange={handleProductInputChange} required placeholder="Precio *" className="w-full border p-2 rounded" />
+                                    <input type="number" name="stock" value={productFormData.stock} onChange={handleProductInputChange} required placeholder="Stock Inicial *" className="w-full border p-2 rounded" />
                                     <select name="category" value={productFormData.category} onChange={handleProductInputChange} required className="w-full border p-2 rounded">
                                         <option value="">Categoría...</option>
                                         <option value="Mates">Mates</option>
@@ -385,12 +404,23 @@ export default function AdminPanel() {
                                                 <h3 className="font-bold text-sm">{p.name}</h3>
                                                 <p className="text-xs text-gray-500">{p.id}</p>
                                             </div>
-                                            <div className="font-bold text-sm">
-                                                {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(p.price)}
+                                            <div className="flex items-center gap-4">
+                                                <div className="text-right">
+                                                    <p className="font-bold text-sm">{new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(p.price)}</p>
+                                                </div>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-[10px] uppercase text-gray-400 font-bold">Stock</span>
+                                                    <input
+                                                        type="number"
+                                                        defaultValue={p.stock}
+                                                        className="w-16 border rounded p-1 text-sm text-right font-bold"
+                                                        onBlur={(e) => handleUpdateStock('products', p.id, e.target.value)}
+                                                    />
+                                                </div>
+                                                <button onClick={() => handleProductDelete(p.id)} className="text-gray-400 hover:text-red-500 p-2">
+                                                    <Trash2 size={18} />
+                                                </button>
                                             </div>
-                                            <button onClick={() => handleProductDelete(p.id)} className="text-gray-400 hover:text-red-500 p-2">
-                                                <Trash2 size={18} />
-                                            </button>
                                         </div>
                                     ))}
                                 </div>
@@ -472,6 +502,7 @@ export default function AdminPanel() {
                                 <form onSubmit={handleComboSubmit} className="space-y-4">
                                     <input type="text" name="name" value={comboFormData.name} onChange={handleComboInputChange} required placeholder="Nombre del Combo *" className="w-full border p-2 rounded" />
                                     <input type="number" name="price" value={comboFormData.price} onChange={handleComboInputChange} required placeholder="Precio Especial *" className="w-full border p-2 rounded" />
+                                    <input type="number" name="stock" value={comboFormData.stock} onChange={handleComboInputChange} required placeholder="Stock Combo *" className="w-full border p-2 rounded" />
 
                                     <div className="border border-gray-200 rounded p-3 max-h-48 overflow-y-auto">
                                         <p className="text-xs font-bold text-gray-500 mb-2 uppercase">Incluir Productos:</p>
@@ -524,6 +555,15 @@ export default function AdminPanel() {
                                                 <button onClick={() => handleComboDelete(c.id)} className="absolute top-2 right-2 bg-white/90 text-red-500 p-1.5 rounded-full hover:bg-red-50">
                                                     <Trash2 size={16} />
                                                 </button>
+                                                <div className="absolute bottom-2 right-2 bg-white/90 px-2 py-1 rounded text-xs font-bold text-gray-700 shadow-sm flex items-center gap-1">
+                                                    Stock:
+                                                    <input
+                                                        type="number"
+                                                        defaultValue={c.stock}
+                                                        className="w-12 border rounded p-0.5 text-center font-bold"
+                                                        onBlur={(e) => handleUpdateStock('combos', c.id, e.target.value)}
+                                                    />
+                                                </div>
                                             </div>
                                             <div className="p-4">
                                                 <h3 className="font-bold text-lg mb-1">{c.name}</h3>

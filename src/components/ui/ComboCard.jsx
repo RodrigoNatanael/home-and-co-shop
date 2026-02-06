@@ -28,10 +28,27 @@ export default function ComboCard({ combo }) {
                 <img
                     src={combo.image_url}
                     alt={combo.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${combo.stock === 0 ? 'grayscale opacity-60' : ''}`}
                 />
-                <div className="absolute top-3 right-3 bg-brand-dark text-white text-xs font-bold px-3 py-1 rounded-full shadow-md uppercase tracking-wide">
-                    Combo Oferta
+
+                {/* Stock Status Overlays */}
+                {combo.stock === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                        <span className="bg-black text-white text-xs font-bold px-3 py-1 uppercase tracking-wider shadow-lg transform -rotate-12">
+                            Agotado
+                        </span>
+                    </div>
+                )}
+
+                <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
+                    <div className="bg-brand-dark text-white text-xs font-bold px-3 py-1 rounded-full shadow-md uppercase tracking-wide">
+                        Combo Oferta
+                    </div>
+                    {combo.stock > 0 && combo.stock <= 3 && (
+                        <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md uppercase tracking-wide animate-pulse">
+                            ¡Quedan {combo.stock}!
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -70,9 +87,16 @@ export default function ComboCard({ combo }) {
                 {/* Action */}
                 <Button
                     onClick={handleAddToCart}
-                    className="w-full gap-2 group-hover:bg-brand-dark group-hover:text-white transition-colors"
+                    disabled={combo.stock === 0}
+                    className={`w-full gap-2 transition-colors ${combo.stock === 0 ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'group-hover:bg-brand-dark group-hover:text-white'}`}
                 >
-                    <ShoppingCart size={18} /> Agregar Combo
+                    {combo.stock === 0 ? (
+                        <>Sin Stock</>
+                    ) : (
+                        <>
+                            <ShoppingCart size={18} /> Agregar Combo
+                        </>
+                    )}
                 </Button>
             </div>
         </motion.div>

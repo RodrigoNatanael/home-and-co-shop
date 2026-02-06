@@ -135,10 +135,15 @@ export default function ProductDetail() {
                         {/* Actions */}
                         <div className="mt-auto pt-8 border-t border-gray-100 flex flex-col gap-4">
                             <div className="mb-4">
-                                <StockScarcity stockLimit={3} />
+                                {product.stock > 0 && product.stock <= 3 && <StockScarcity stock={product.stock} />}
                             </div>
-                            <Button size="lg" className="w-full text-lg h-16" onClick={() => addToCart(product, 1, selectedColor)}>
-                                AGREGAR AL EQUIPO
+                            <Button
+                                size="lg"
+                                className={`w-full text-lg h-16 ${product.stock === 0 ? 'bg-gray-400 cursor-not-allowed hover:bg-gray-400' : ''}`}
+                                onClick={() => addToCart(product, 1, selectedColor)}
+                                disabled={product.stock === 0}
+                            >
+                                {product.stock === 0 ? 'SIN STOCK' : 'AGREGAR AL EQUIPO'}
                             </Button>
                             <p className="text-xs text-gray-400 flex items-center justify-center gap-2">
                                 <ShieldCheck size={14} /> Garantía asegurada de Home & Co.
