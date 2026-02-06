@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Truck, ShieldCheck, Thermometer } from 'lucide-react';
 import { supabase } from '../supabaseclient';
 import ProductCard from '../components/ProductCard';
+import BannerCarousel from '../components/ui/BannerCarousel';
 import { Button } from '../components/ui/Button';
 
 export default function Home() {
@@ -31,37 +32,7 @@ export default function Home() {
     return (
         <div className="min-h-screen bg-brand-light">
             {/* Hero Section */}
-            <section className="relative h-[85vh] w-full flex items-center justify-center overflow-hidden bg-gray-900 text-white">
-                {/* Background Image / Overlay */}
-                <div className="absolute inset-0 z-0 opacity-60">
-                    {/* Placeholder for video/image */}
-                    <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1533240332313-0dbdd31c16ca?q=80&w=2069&auto=format&fit=crop')] bg-cover bg-center" />
-                </div>
-                <div className="absolute inset-0 bg-black/40 z-0" />
-
-                {/* Content */}
-                <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
-                    <motion.h1
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.8 }}
-                        className="font-display font-bold text-5xl md:text-7xl lg:text-8xl tracking-tighter uppercase mb-6"
-                    >
-                        DISEÑADO PARA LA<br />AVENTURA EN MENDOZA
-                    </motion.h1>
-                    <motion.div
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                    >
-                        <Link to="/catalog">
-                            <Button size="lg" variant="primary" className="border-white bg-white text-black hover:bg-transparent hover:text-white">
-                                COMPRAR AHORA
-                            </Button>
-                        </Link>
-                    </motion.div>
-                </div>
-            </section>
+            <BannerCarousel />
 
             {/* Featured Categories (Lifestyle Strips) */}
             <section className="py-0">
