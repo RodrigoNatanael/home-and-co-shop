@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseclient';
 import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square, User, DollarSign, FileText, MessageCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -17,6 +17,7 @@ export default function AdminPanel() {
         description: '',
         stock: '',
         previous_price: '', // Nuevo campo
+        cost_price: '', // Nuevo campo costo
         tags: [] // Nuevo campo (Array de strings)
     });
     const [productImageFile, setProductImageFile] = useState(null);
@@ -57,6 +58,13 @@ export default function AdminPanel() {
         open: false,
         sale: null,
         amount: ''
+    });
+
+    // --- DELETE MODAL STATE ---
+    const [deleteModal, setDeleteModal] = useState({
+        open: false,
+        sale: null,
+        reason: '' // 'error', 'return', 'test'
     });
 
 
@@ -153,6 +161,7 @@ export default function AdminPanel() {
                 description: productFormData.description,
                 stock: parseInt(productFormData.stock) || 0,
                 previous_price: productFormData.previous_price ? parseFloat(productFormData.previous_price) : null,
+                cost_price: productFormData.cost_price ? parseFloat(productFormData.cost_price) : null,
                 tags: productFormData.tags,
                 image_url: imageUrl
             };
@@ -163,7 +172,7 @@ export default function AdminPanel() {
             if (error) throw error;
 
             alert('Producto creado!');
-            setProductFormData({ id: '', name: '', price: '', category: '', description: '' });
+            setProductFormData({ id: '', name: '', price: '', category: '', description: '', cost_price: '', previous_price: '', tags: [] });
             setProductImageFile(null);
             fetchProducts();
         } catch (error) {
@@ -584,50 +593,83 @@ export default function AdminPanel() {
         }
     };
 
-    const handleDeleteSale = async (sale) => {
-        if (!confirm(`¿Borrar venta de ${sale.client}? ${sale.origin === 'MANUAL' ? 'Se repondrá el stock.' : ''}`)) return;
+const handleDeleteSale = (sale) => {
+    setDeleteModal({ open: true, sale, reason: '' });
+};
 
-        try {
-            if (sale.origin === 'MANUAL') {
-                // Restore Stock for Manual Sales
-                const items = sale.items;
-                for (const item of items) {
-                    const table = item.type === 'product' ? 'products' : 'combos';
+const handleConfirmDelete = async () => {
+    const { sale, reason } = deleteModal;
+    if (!sale || !reason) {
+        alert('Por favor selecciona un motivo.');
+        return;
+    }
 
-                    // Get current stock
-                    const { data: currentItem, error: fetchError } = await supabase
-                        .from(table)
-                        .select('stock')
-                        .eq('id', item.id)
-                        .single();
+    try {
+        // Restore logic: Only for MANUAL sales and specific reasons
+        const shouldRestoreStock = sale.origin === 'MANUAL';
 
-                    if (!fetchError && currentItem) {
-                        // Increment stock
-                        const newStock = currentItem.stock + item.quantity;
-                        await supabase
-                            .from(table)
-                            .update({ stock: newStock })
-                            .eq('id', item.id);
-                    }
+        if (shouldRestoreStock) {
+            const items = sale.items;
+            for (const item of items) {
+                const table = item.type === 'product' ? 'products' : 'combos';
+
+                const { data: currentItem, error: fetchError } = await supabase
+                    .from(table)
+                    .select('stock')
+                    .eq('id', item.id)
+                    .single();
+
+                if (!fetchError && currentItem) {
+                    const newStock = currentItem.stock + item.quantity;
+                    await supabase.from(table).update({ stock: newStock }).eq('id', item.id);
                 }
-                // Delete Record
-                await supabase.from('manual_sales').delete().eq('id', sale.id);
-            } else {
-                // Delete Web Lead
-                await supabase.from('leads').delete().eq('id', sale.id);
             }
-
-            alert('Venta eliminada correctamente.');
-            fetchAllSales(); // Refresh Unified List
-            fetchManualSales(); // Refresh Manual List
-            fetchProducts();  // Refresh Stock
-            fetchCombos();    // Refresh Stock
-
-        } catch (error) {
-            console.error('Error deleting sale:', error);
-            alert('Error al borrar venta');
+            await supabase.from('manual_sales').delete().eq('id', sale.id);
+        } else {
+            // Delete Web Lead
+            await supabase.from('leads').delete().eq('id', sale.id);
         }
-    };
+
+        alert('Venta eliminada correctamente.');
+        setDeleteModal({ open: false, sale: null, reason: '' });
+        fetchAllSales();
+        fetchManualSales();
+        fetchProducts();
+        fetchCombos();
+
+    } catch (error) {
+        console.error('Error deleting sale:', error);
+        alert('Error al borrar venta');
+    }
+};
+
+const handleCloseDay = () => {
+    const totalWeb = allSales.filter(s => s.origin === 'WEB').reduce((acc, s) => acc + s.total, 0);
+    const totalManual = allSales.filter(s => s.origin === 'MANUAL').reduce((acc, s) => acc + (s.paid || 0), 0);
+    const totalRevenue = totalWeb + totalManual;
+
+    // Calculate Profit
+    let totalCost = 0;
+    allSales.forEach(sale => {
+        sale.items.forEach(item => {
+            const product = products.find(p => p.id === item.id);
+            if (product && product.cost_price) {
+                totalCost += ((parseFloat(product.cost_price) || 0) * item.quantity);
+            }
+        });
+    });
+
+    const netProfit = totalRevenue - totalCost;
+
+    const message = `📊 *RESUMEN HOME & CO - ${new Date().toLocaleDateString('es-AR')}* 📊%0A` +
+        `🌐 Ventas Web: $${new Intl.NumberFormat('es-AR').format(totalWeb)}%0A` +
+        `🛍️ Ventas Manuales: $${new Intl.NumberFormat('es-AR').format(totalManual)}%0A` +
+        `💰 *TOTAL RECAUDADO: $${new Intl.NumberFormat('es-AR').format(totalRevenue)}*%0A` +
+        `📈 *GANANCIA NETA: $${new Intl.NumberFormat('es-AR').format(netProfit)}*`;
+
+    const targetPhone = '5492617523156';
+    window.open(`https://wa.me/${targetPhone}?text=${message}`, '_blank');
+};
 
     const handleComboDelete = async (id) => {
         if (!confirm('¿Borrar combo?')) return;
@@ -690,6 +732,7 @@ export default function AdminPanel() {
                                     <input type="text" name="id" value={productFormData.id} onChange={handleProductInputChange} placeholder="ID (Opcional)" className="w-full border p-2 rounded" />
                                     <input type="text" name="name" value={productFormData.name} onChange={handleProductInputChange} required placeholder="Nombre *" className="w-full border p-2 rounded" />
                                     <input type="number" name="price" value={productFormData.price} onChange={handleProductInputChange} required placeholder="Precio *" className="w-full border p-2 rounded" />
+                                    <input type="number" name="cost_price" value={productFormData.cost_price} onChange={handleProductInputChange} placeholder="Precio de Costo (Admin)" className="w-full border p-2 rounded bg-yellow-50" />
                                     <input type="number" name="stock" value={productFormData.stock} onChange={handleProductInputChange} required placeholder="Stock Inicial *" className="w-full border p-2 rounded" />
                                     <select name="category" value={productFormData.category} onChange={handleProductInputChange} required className="w-full border p-2 rounded">
                                         <option value="">Categoría...</option>
@@ -776,6 +819,7 @@ export default function AdminPanel() {
                                                         className="w-16 border rounded p-1 text-sm text-right font-bold"
                                                         onBlur={(e) => handleUpdateStock('products', p.id, e.target.value)}
                                                     />
+                                                    {p.cost_price && <span className="text-[10px] text-yellow-600 font-bold mt-1">Costo: ${p.cost_price}</span>}
                                                 </div>
                                                 <button onClick={() => handleProductDelete(p.id)} className="text-gray-400 hover:text-red-500 p-2">
                                                     <Trash2 size={18} />
@@ -1175,10 +1219,18 @@ export default function AdminPanel() {
                     <div className="space-y-8">
                         {/* CIERRE DE CAJA */}
                         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                            <h2 className="font-bold text-xl mb-4 flex items-center gap-2">
-                                <DollarSign size={24} className="text-green-600" /> Cierre de Caja (Total Recaudado)
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="font-bold text-xl flex items-center gap-2">
+                                    <DollarSign size={24} className="text-green-600" /> Cierre de Caja (Total Recaudado)
+                                </h2>
+                                <button
+                                    onClick={handleCloseDay}
+                                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2 shadow-lg hover:scale-105 transition-transform"
+                                >
+                                    <MessageCircle size={18} /> CERRAR JORNADA
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                 <div className="bg-green-50 p-4 rounded-lg border border-green-100">
                                     <p className="text-sm text-green-800 font-bold uppercase mb-1">Total Web + Manual</p>
                                     <p className="text-3xl font-bold text-green-700">
@@ -1203,6 +1255,27 @@ export default function AdminPanel() {
                                             allSales.filter(s => s.origin === 'MANUAL').reduce((acc, s) => acc + (s.paid || 0), 0)
                                         )}
                                     </p>
+                                </div>
+                                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                    <p className="text-sm text-yellow-800 font-bold uppercase mb-1">Ganancia Neta</p>
+                                    <p className="text-2xl font-bold text-yellow-700">
+                                        {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
+                                            (() => {
+                                                const totalRevenue = allSales.reduce((acc, sale) => acc + (sale.origin === 'MANUAL' ? (sale.paid || 0) : (sale.total || 0)), 0);
+                                                let totalCost = 0;
+                                                allSales.forEach(sale => {
+                                                    sale.items.forEach(item => {
+                                                        const product = products.find(p => p.id === item.id);
+                                                        if (product && product.cost_price) {
+                                                            totalCost += (product.cost_price * item.quantity);
+                                                        }
+                                                    });
+                                                });
+                                                return totalRevenue - totalCost;
+                                            })()
+                                        )}
+                                    </p>
+                                    <p className="text-xs text-yellow-600 mt-2">Ventas - Costos (Costo base actual)</p>
                                 </div>
                             </div>
                         </div>
@@ -1302,6 +1375,66 @@ export default function AdminPanel() {
                                     Registrar Pago
                                 </Button>
                             </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- DELETE CONFIRMATION MODAL --- */}
+                {deleteModal.open && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl relative animate-in fade-in zoom-in duration-200">
+                            <h3 className="font-bold text-xl mb-4 text-red-600 flex items-center gap-2">
+                                <Trash2 /> Eliminar Venta
+                            </h3>
+                            <p className="text-gray-600 mb-6">
+                                ¿Por qué deseas eliminar la venta de <b>{deleteModal.sale?.client}</b>?
+                            </p>
+
+                            <div className="space-y-3">
+                                <button
+                                    onClick={() => setDeleteModal(prev => ({ ...prev, reason: 'error' }))}
+                                    className={`w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 transition-colors ${deleteModal.reason === 'error' ? 'border-red-500 bg-red-50 font-bold text-red-700' : 'border-gray-200'}`}
+                                >
+                                    Error de Carga
+                                    {deleteModal.reason === 'error' && <CheckSquare size={16} />}
+                                </button>
+                                <button
+                                    onClick={() => setDeleteModal(prev => ({ ...prev, reason: 'return' }))}
+                                    className={`w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 transition-colors ${deleteModal.reason === 'return' ? 'border-red-500 bg-red-50 font-bold text-red-700' : 'border-gray-200'}`}
+                                >
+                                    Devolución / Cancelación
+                                    {deleteModal.reason === 'return' && <CheckSquare size={16} />}
+                                </button>
+                                <button
+                                    onClick={() => setDeleteModal(prev => ({ ...prev, reason: 'test' }))}
+                                    className={`w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 transition-colors ${deleteModal.reason === 'test' ? 'border-red-500 bg-red-50 font-bold text-red-700' : 'border-gray-200'}`}
+                                >
+                                    Prueba de Sistema
+                                    {deleteModal.reason === 'test' && <CheckSquare size={16} />}
+                                </button>
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={() => setDeleteModal({ open: false, sale: null, reason: '' })}
+                                    className="flex-1 py-2 text-gray-500 font-bold hover:bg-gray-100 rounded"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleConfirmDelete}
+                                    disabled={!deleteModal.reason}
+                                    className={`flex-1 py-2 font-bold rounded text-white ${deleteModal.reason ? 'bg-red-600 hover:bg-red-700 shadow-lg' : 'bg-gray-300 cursor-not-allowed'}`}
+                                >
+                                    Confirmar
+                                </button>
+                            </div>
+
+                            {deleteModal.sale?.origin === 'MANUAL' && (
+                                <p className="text-xs text-center text-gray-400 mt-4">
+                                    * Se repondrá el stock automáticamente.
+                                </p>
+                            )}
                         </div>
                     </div>
                 )}
