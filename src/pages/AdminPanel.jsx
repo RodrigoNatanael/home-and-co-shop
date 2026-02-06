@@ -47,6 +47,7 @@ export default function AdminPanel() {
     const [manualSaleFormData, setManualSaleFormData] = useState({
         seller: 'Rodrigo', // 'Rodrigo' | 'Vane'
         client_name: '',
+        client_phone: '', // Nuevo campo
         items: [], // Array of { id, name, price, quantity, type: 'product'|'combo' }
         total_amount: 0,
         paid_amount: ''
@@ -390,7 +391,7 @@ export default function AdminPanel() {
 
     const handleManualSaleSubmit = async (e) => {
         e.preventDefault();
-        const { seller, MQ, client_name, items, total_amount, paid_amount } = manualSaleFormData;
+        const { seller, MQ, client_name, client_phone, items, total_amount, paid_amount } = manualSaleFormData;
 
         if (!client_name || items.length === 0) {
             alert('Falta nombre del cliente o productos.');
@@ -433,6 +434,7 @@ export default function AdminPanel() {
                 .insert([{
                     seller,
                     client_name,
+                    client_phone, // Save phone
                     items_json: items,
                     total_amount,
                     paid_amount: paid,
@@ -837,14 +839,23 @@ export default function AdminPanel() {
                                         </div>
                                         <div>
                                             <label className="text-xs font-bold text-gray-500 mb-1 block">Cliente</label>
-                                            <input
-                                                type="text"
-                                                placeholder="Nombre Cliente *"
-                                                required
-                                                value={manualSaleFormData.client_name}
-                                                onChange={(e) => setManualSaleFormData(prev => ({ ...prev, client_name: e.target.value }))}
-                                                className="w-full border p-2 rounded"
-                                            />
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Nombre *"
+                                                    required
+                                                    value={manualSaleFormData.client_name}
+                                                    onChange={(e) => setManualSaleFormData(prev => ({ ...prev, client_name: e.target.value }))}
+                                                    className="w-1/2 border p-2 rounded"
+                                                />
+                                                <input
+                                                    type="tel"
+                                                    placeholder="Teléfono (Ej: 261...)"
+                                                    value={manualSaleFormData.client_phone}
+                                                    onChange={(e) => setManualSaleFormData(prev => ({ ...prev, client_phone: e.target.value }))}
+                                                    className="w-1/2 border p-2 rounded"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
@@ -976,15 +987,35 @@ export default function AdminPanel() {
                                                                 >
                                                                     <DollarSign size={10} /> Cobrar
                                                                 </button>
-                                                                <a
-                                                                    href={`https://wa.me/?text=${encodeURIComponent(`Hola ${sale.client_name}! 👋 Te recordamos que quedó un soldito pendiente de ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total_amount - sale.paid_amount)} por tu compra en Home & Co. Avisanos cuando puedas transferir! Gracias!`)}`}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="bg-[#25D366] text-white p-1 rounded hover:scale-110 transition-transform"
-                                                                    title="Enviar recordatorio por WhatsApp"
-                                                                >
-                                                                    <MessageCircle size={14} />
-                                                                </a>
+                                                                {(() => {
+                                                                    // Helper to format phone for WhatsApp
+                                                                    const formatPhone = (phone) => {
+                                                                        if (!phone) return null;
+                                                                        let clean = phone.replace(/\D/g, ''); // Remove non-digits
+                                                                        if (clean.startsWith('549')) return clean;
+                                                                        if (clean.startsWith('54')) return '9' + clean; // Edge case
+                                                                        if (clean.length === 10) return '549' + clean; // Add AR prefix
+                                                                        return clean; // Retun as is if unsure, or maybe prepend 549 anyway
+                                                                    };
+                                                                    const phone = formatPhone(sale.client_phone);
+                                                                    const amount = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total_amount - sale.paid_amount);
+                                                                    const text = `Hola ${sale.client_name}! 👋 Te recordamos que quedó un saldo pendiente de ${amount} por tu compra en Home & Co. Avisanos cuando puedas transferir! Gracias!`;
+                                                                    const link = phone
+                                                                        ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
+                                                                        : `https://wa.me/?text=${encodeURIComponent(text)}`;
+
+                                                                    return (
+                                                                        <a
+                                                                            href={link}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="bg-[#25D366] text-white p-1 rounded hover:scale-110 transition-transform"
+                                                                            title={phone ? `Enviar a ${phone}` : "Abrir WhatsApp (Sin número)"}
+                                                                        >
+                                                                            <MessageCircle size={14} />
+                                                                        </a>
+                                                                    );
+                                                                })()}
                                                             </div>
                                                         )}
                                                     </div>
