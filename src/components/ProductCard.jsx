@@ -26,30 +26,48 @@ export default function ProductCard({ product }) {
                         </div>
                     )}
 
-                    {/* Badges */}
-                    <div className="absolute top-4 left-4 flex flex-col gap-2">
-                        {product.stock > 0 && product.stock <= 3 && (
-                            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider animate-pulse">
-                                ¡Últimas {product.stock}!
+                    {/* BADGES & TAGS */}
+                    <div className="absolute top-3 left-3 flex flex-col gap-2 items-start">
+                        {/* Discount Badge */}
+                        {product.previous_price > product.price && (
+                            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow-sm uppercase tracking-wider animate-pulse">
+                                {Math.round(((product.previous_price - product.price) / product.previous_price) * 100)}% OFF
                             </span>
                         )}
-                        {product.category === 'Mates' && product.stock > 3 && (
-                            <span className="bg-brand-dark text-white text-xs font-bold px-2 py-1 uppercase tracking-wider">
-                                Best Seller
+
+                        {/* Custom Tags */}
+                        {product.tags && product.tags.map(tag => (
+                            <span key={tag} className="bg-white/90 backdrop-blur-sm text-black text-[10px] font-bold px-2 py-1 rounded shadow-sm uppercase tracking-wide border border-black/5">
+                                {tag}
+                            </span>
+                        ))}
+
+                        {/* Low Stock Warning */}
+                        {product.stock > 0 && product.stock <= 3 && (
+                            <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm uppercase tracking-wider">
+                                ¡Últimas {product.stock}!
                             </span>
                         )}
                     </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 text-left">
+                <div className="p-6 text-left flex flex-col h-full">
                     <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">{product.category}</p>
-                    <h3 className="font-display font-bold text-xl text-black mb-2 group-hover:text-gray-700 transition-colors">
+                    <h3 className="font-display font-bold text-xl text-black mb-2 group-hover:text-gray-700 transition-colors line-clamp-2">
                         {product.name}
                     </h3>
-                    <p className="text-lg font-bold text-black border-t border-gray-100 pt-3 mt-auto">
-                        {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(product.price)}
-                    </p>
+
+                    <div className="pt-3 border-t border-gray-100 mt-auto">
+                        {product.previous_price > product.price && (
+                            <p className="text-xs text-gray-400 font-medium line-through mb-0.5">
+                                {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(product.previous_price)}
+                            </p>
+                        )}
+                        <p className={`text-lg font-bold ${product.previous_price > product.price ? 'text-red-600' : 'text-black'}`}>
+                            {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(product.price)}
+                        </p>
+                    </div>
                 </div>
             </motion.div>
         </Link>

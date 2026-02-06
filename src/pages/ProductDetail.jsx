@@ -93,11 +93,31 @@ export default function ProductDetail() {
                         animate={{ opacity: 1, x: 0 }}
                         className="flex flex-col h-full"
                     >
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            {product.tags && product.tags.map(tag => (
+                                <span key={tag} className="bg-black text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+
                         <span className="text-gray-500 font-bold uppercase tracking-wider text-sm mb-2">{product.category}</span>
                         <h1 className="font-display font-bold text-4xl md:text-5xl lg:text-6xl mb-6 leading-none uppercase">{product.name}</h1>
 
-                        <div className="text-3xl font-bold mb-8">
-                            {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(product.price)}
+                        <div className="flex items-end gap-4 mb-8">
+                            {product.previous_price > product.price && (
+                                <span className="text-xl text-gray-400 font-medium line-through mb-1">
+                                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(product.previous_price)}
+                                </span>
+                            )}
+                            <div className={`text-4xl font-bold ${product.previous_price > product.price ? 'text-red-600' : 'text-black'}`}>
+                                {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(product.price)}
+                            </div>
+                            {product.previous_price > product.price && (
+                                <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider mb-2">
+                                    {Math.round(((product.previous_price - product.price) / product.previous_price) * 100)}% OFF
+                                </span>
+                            )}
                         </div>
 
                         <div className="mb-8">

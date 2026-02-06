@@ -14,8 +14,11 @@ export default function AdminPanel() {
         name: '',
         price: '',
         category: '',
+        category: '',
         description: '',
-        stock: '' // Agregado state de stock
+        stock: '',
+        previous_price: '', // Nuevo campo
+        tags: [] // Nuevo campo (Array de strings)
     });
     const [productImageFile, setProductImageFile] = useState(null);
 
@@ -126,6 +129,9 @@ export default function AdminPanel() {
                 price: parseFloat(productFormData.price),
                 category: productFormData.category,
                 description: productFormData.description,
+                stock: parseInt(productFormData.stock) || 0,
+                previous_price: productFormData.previous_price ? parseFloat(productFormData.previous_price) : null,
+                tags: productFormData.tags,
                 image_url: imageUrl
             };
 
@@ -371,6 +377,38 @@ export default function AdminPanel() {
                                         <option value="Coolers">Coolers</option>
                                         <option value="Accesorios">Accesorios</option>
                                     </select>
+
+                                    {/* Nuevos Campos: Precio Anterior y Etiquetas */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <input
+                                            type="number"
+                                            name="previous_price"
+                                            value={productFormData.previous_price}
+                                            onChange={handleProductInputChange}
+                                            placeholder="Precio Anterior (Opcional)"
+                                            className="w-full border p-2 rounded text-sm"
+                                        />
+                                        <div className="border p-2 rounded bg-gray-50 max-h-32 overflow-y-auto">
+                                            <p className="text-xs font-bold text-gray-500 mb-1">Etiquetas:</p>
+                                            {['NUEVO', 'MÁS VENDIDO', 'ENVÍO GRATIS', 'PREMIUM'].map(tag => (
+                                                <label key={tag} className="flex items-center gap-2 cursor-pointer text-xs mb-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={productFormData.tags.includes(tag)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setProductFormData(prev => ({ ...prev, tags: [...prev.tags, tag] }));
+                                                            } else {
+                                                                setProductFormData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tag) }));
+                                                            }
+                                                        }}
+                                                    />
+                                                    {tag}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
                                     <textarea name="description" value={productFormData.description} onChange={handleProductInputChange} placeholder="Descripción" rows="3" className="w-full border p-2 rounded" />
 
                                     <div className="border-2 border-dashed border-gray-300 rounded p-4 text-center">
