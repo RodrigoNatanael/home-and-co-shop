@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseclient';
-import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square, User, DollarSign, FileText } from 'lucide-react';
+import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square, User, DollarSign, FileText, MessageCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export default function AdminPanel() {
@@ -50,6 +50,12 @@ export default function AdminPanel() {
         items: [], // Array of { id, name, price, quantity, type: 'product'|'combo' }
         total_amount: 0,
         paid_amount: ''
+    });
+    // --- PAYMENT MODAL STATE ---
+    const [paymentModal, setPaymentModal] = useState({
+        open: false,
+        sale: null,
+        amount: ''
     });
 
 
@@ -453,6 +459,44 @@ export default function AdminPanel() {
             alert('Error: ' + error.message);
         } finally {
             setUploading(false);
+        }
+    };
+
+    const handleOpenPaymentModal = (sale) => {
+        setPaymentModal({
+            open: true,
+            sale: sale,
+            amount: ''
+        });
+    };
+
+    const handleUpdatePayment = async (e) => {
+        e.preventDefault();
+        const { sale, amount } = paymentModal;
+        if (!sale || !amount) return;
+
+        try {
+            const extraPayment = parseFloat(amount);
+            const newTotalPaid = (sale.paid_amount || 0) + extraPayment;
+            const newStatus = newTotalPaid >= sale.total_amount ? 'Pagado' : 'Pendiente';
+
+            const { error } = await supabase
+                .from('manual_sales')
+                .update({
+                    paid_amount: newTotalPaid,
+                    status: newStatus
+                })
+                .eq('id', sale.id);
+
+            if (error) throw error;
+
+            alert('Pago registrado exitosamente!');
+            setPaymentModal({ open: false, sale: null, amount: '' });
+            fetchManualSales();
+
+        } catch (error) {
+            console.error('Error updating payment:', error);
+            alert('Error al registrar pago');
         }
     };
 
@@ -922,9 +966,26 @@ export default function AdminPanel() {
                                                 <div className="flex justify-between items-end border-t border-gray-200 pt-2 border-dashed">
                                                     <div className="text-xs">
                                                         {isDebt && (
-                                                            <span className="text-red-600 font-bold">
-                                                                Falta pagar: {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total_amount - sale.paid_amount)}
-                                                            </span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-red-600 font-bold">
+                                                                    Falta: {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total_amount - sale.paid_amount)}
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => handleOpenPaymentModal(sale)}
+                                                                    className="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm hover:bg-green-700 flex items-center gap-1"
+                                                                >
+                                                                    <DollarSign size={10} /> Cobrar
+                                                                </button>
+                                                                <a
+                                                                    href={`https://wa.me/?text=${encodeURIComponent(`Hola ${sale.client_name}! 👋 Te recordamos que quedó un soldito pendiente de ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total_amount - sale.paid_amount)} por tu compra en Home & Co. Avisanos cuando puedas transferir! Gracias!`)}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="bg-[#25D366] text-white p-1 rounded hover:scale-110 transition-transform"
+                                                                    title="Enviar recordatorio por WhatsApp"
+                                                                >
+                                                                    <MessageCircle size={14} />
+                                                                </a>
+                                                            </div>
                                                         )}
                                                     </div>
                                                     <div className="text-right">
@@ -940,6 +1001,54 @@ export default function AdminPanel() {
                                     {manualSales.length === 0 && <p className="text-gray-500 text-center py-8">No hay ventas registradas.</p>}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+
+                {/* --- PAYMENT MODAL --- */}
+                {paymentModal.open && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl relative animate-in fade-in zoom-in duration-200">
+                            <button
+                                onClick={() => setPaymentModal({ open: false, sale: null, amount: '' })}
+                                className="absolute top-2 right-2 text-gray-400 hover:text-black"
+                            >
+                                <Plus className="transform rotate-45" size={24} />
+                            </button>
+
+                            <h3 className="font-bold text-xl mb-1">Cobrar Saldo</h3>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Cliente: <span className="font-bold">{paymentModal.sale?.client_name}</span>
+                            </p>
+
+                            <div className="bg-red-50 p-3 rounded mb-4 text-center">
+                                <p className="text-xs text-red-500 font-bold uppercase">Deuda Actual</p>
+                                <p className="text-2xl font-bold text-red-600">
+                                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(paymentModal.sale?.total_amount - paymentModal.sale?.paid_amount)}
+                                </p>
+                            </div>
+
+                            <form onSubmit={handleUpdatePayment}>
+                                <label className="block text-sm font-bold mb-2">Monto a cobrar ahora:</label>
+                                <div className="relative mb-4">
+                                    <DollarSign size={18} className="absolute left-3 top-3 text-gray-400" />
+                                    <input
+                                        type="number"
+                                        autoFocus
+                                        required
+                                        min="1"
+                                        placeholder="Ingrese monto..."
+                                        value={paymentModal.amount}
+                                        onChange={(e) => setPaymentModal(prev => ({ ...prev, amount: e.target.value }))}
+                                        className="w-full border p-2 pl-10 rounded text-lg font-bold"
+                                    />
+                                </div>
+
+                                <Button type="submit" className="w-full">
+                                    Registrar Pago
+                                </Button>
+                            </form>
                         </div>
                     </div>
                 )}
