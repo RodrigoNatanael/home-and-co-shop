@@ -54,6 +54,38 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
 
             if (leadError) console.warn("Lead no guardado", leadError);
 
+            // --- GOOGLE SHEETS INTEGRATION ---
+            // Enviamos el pedido a Google Sheets sin bloquear el flujo principal
+            try {
+                const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8Rw6KULYD1MPW34vmEGrrwl5ljAPz96T_rCiKQWE4kuWcKeuU-tUMt8laIeSRT_3u/exec';
+
+                const sheetData = {
+                    date: new Date().toLocaleString('es-AR'),
+                    order_id: null, // Se generará en MP, pero enviamos timestamp como ref
+                    total: unit_price,
+                    customer: { name, email, phone, city, address },
+                    items: cartItems.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        quantity: item.quantity,
+                        price: item.price,
+                        color: item.selectedColor || 'N/A'
+                    }))
+                };
+
+                // Usamos no-cors para evitar errores de CORS con Google Script
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sheetData)
+                }).catch(err => console.warn('Error enviando a Google Sheets:', err));
+
+            } catch (sheetErr) {
+                console.warn('Error en integración Google Sheets:', sheetErr);
+            }
+            // ---------------------------------
+
             // 4. Ir a Mercado Pago
             const { data, error: funcError } = await supabase.functions.invoke('create-checkout', {
                 body: {
