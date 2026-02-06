@@ -74,12 +74,15 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
                 };
 
                 // Usamos no-cors para evitar errores de CORS con Google Script
-                fetch(GOOGLE_SCRIPT_URL, {
+                await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(sheetData)
-                }).catch(err => console.warn('Error enviando a Google Sheets:', err));
+                });
+
+                // Pequeño retraso de seguridad para asegurar que la petición salga
+                await new Promise(resolve => setTimeout(resolve, 500));
 
             } catch (sheetErr) {
                 console.warn('Error en integración Google Sheets:', sheetErr);
