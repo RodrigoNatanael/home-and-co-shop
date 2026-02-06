@@ -57,7 +57,7 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
             // --- GOOGLE SHEETS INTEGRATION ---
             // Enviamos el pedido a Google Sheets sin bloquear el flujo principal
             try {
-                const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8Rw6KULYD1MPW34vmEGrrwl5ljAPz96T_rCiKQWE4kuWcKeuU-tUMt8laIeSRT_3u/exec';
+                const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzj2y4AnbJIJoVdqQz-eHnIiMRr6kIZeWVevn2XLkM0GNhO65K9yYGrj3aSeWRpr0lM/exec';
 
                 const formData = new FormData();
                 formData.append('date', new Date().toLocaleString('es-AR'));
