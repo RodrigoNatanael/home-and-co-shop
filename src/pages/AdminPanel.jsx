@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseclient';
-import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square, User, DollarSign, FileText, MessageCircle } from 'lucide-react';
+import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square, User, DollarSign, FileText, MessageCircle, Globe, ShoppingBag, TrendingUp, Search, Calendar } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export default function AdminPanel() {
@@ -72,6 +72,7 @@ export default function AdminPanel() {
     const [loadingAllSales, setLoadingAllSales] = useState(false);
 
     const [uploading, setUploading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         fetchProducts();
@@ -593,83 +594,85 @@ export default function AdminPanel() {
         }
     };
 
-const handleDeleteSale = (sale) => {
-    setDeleteModal({ open: true, sale, reason: '' });
-};
+    const handleDeleteSale = (sale) => {
+        setDeleteModal({ open: true, sale, reason: '' });
+    };
 
-const handleConfirmDelete = async () => {
-    const { sale, reason } = deleteModal;
-    if (!sale || !reason) {
-        alert('Por favor selecciona un motivo.');
-        return;
-    }
-
-    try {
-        // Restore logic: Only for MANUAL sales and specific reasons
-        const shouldRestoreStock = sale.origin === 'MANUAL';
-
-        if (shouldRestoreStock) {
-            const items = sale.items;
-            for (const item of items) {
-                const table = item.type === 'product' ? 'products' : 'combos';
-
-                const { data: currentItem, error: fetchError } = await supabase
-                    .from(table)
-                    .select('stock')
-                    .eq('id', item.id)
-                    .single();
-
-                if (!fetchError && currentItem) {
-                    const newStock = currentItem.stock + item.quantity;
-                    await supabase.from(table).update({ stock: newStock }).eq('id', item.id);
-                }
-            }
-            await supabase.from('manual_sales').delete().eq('id', sale.id);
-        } else {
-            // Delete Web Lead
-            await supabase.from('leads').delete().eq('id', sale.id);
+    const handleConfirmDelete = async () => {
+        const { sale, reason } = deleteModal;
+        if (!sale || !reason) {
+            alert('Por favor selecciona un motivo.');
+            return;
         }
 
-        alert('Venta eliminada correctamente.');
-        setDeleteModal({ open: false, sale: null, reason: '' });
-        fetchAllSales();
-        fetchManualSales();
-        fetchProducts();
-        fetchCombos();
+        try {
+            // Restore logic: Only for MANUAL sales and specific reasons
+            const shouldRestoreStock = sale.origin === 'MANUAL';
 
-    } catch (error) {
-        console.error('Error deleting sale:', error);
-        alert('Error al borrar venta');
-    }
-};
+            if (shouldRestoreStock) {
+                const items = sale.items;
+                for (const item of items) {
+                    const table = item.type === 'product' ? 'products' : 'combos';
 
-const handleCloseDay = () => {
-    const totalWeb = allSales.filter(s => s.origin === 'WEB').reduce((acc, s) => acc + s.total, 0);
-    const totalManual = allSales.filter(s => s.origin === 'MANUAL').reduce((acc, s) => acc + (s.paid || 0), 0);
-    const totalRevenue = totalWeb + totalManual;
+                    const { data: currentItem, error: fetchError } = await supabase
+                        .from(table)
+                        .select('stock')
+                        .eq('id', item.id)
+                        .single();
 
-    // Calculate Profit
-    let totalCost = 0;
-    allSales.forEach(sale => {
-        sale.items.forEach(item => {
-            const product = products.find(p => p.id === item.id);
-            if (product && product.cost_price) {
-                totalCost += ((parseFloat(product.cost_price) || 0) * item.quantity);
+                    if (!fetchError && currentItem) {
+                        const newStock = currentItem.stock + item.quantity;
+                        await supabase.from(table).update({ stock: newStock }).eq('id', item.id);
+                    }
+                }
+                await supabase.from('manual_sales').delete().eq('id', sale.id);
+            } else {
+                // Delete Web Lead
+                await supabase.from('leads').delete().eq('id', sale.id);
             }
+
+            alert('Venta eliminada correctamente.');
+            setDeleteModal({ open: false, sale: null, reason: '' });
+            fetchAllSales();
+            fetchManualSales();
+            fetchProducts();
+            fetchCombos();
+
+        } catch (error) {
+            console.error('Error deleting sale:', error);
+            alert('Error al borrar venta');
+        }
+    };
+
+    const handleCloseDay = () => {
+        if (!confirm('¿Confirmás el cierre de hoy?')) return;
+
+        const totalWeb = allSales.filter(s => s.origin === 'WEB').reduce((acc, s) => acc + s.total, 0);
+        const totalManual = allSales.filter(s => s.origin === 'MANUAL').reduce((acc, s) => acc + (s.paid || 0), 0);
+        const totalRevenue = totalWeb + totalManual;
+
+        // Calculate Profit
+        let totalCost = 0;
+        allSales.forEach(sale => {
+            sale.items.forEach(item => {
+                const product = products.find(p => p.id === item.id);
+                if (product && product.cost_price) {
+                    totalCost += ((parseFloat(product.cost_price) || 0) * item.quantity);
+                }
+            });
         });
-    });
 
-    const netProfit = totalRevenue - totalCost;
+        const netProfit = totalRevenue - totalCost;
 
-    const message = `📊 *RESUMEN HOME & CO - ${new Date().toLocaleDateString('es-AR')}* 📊%0A` +
-        `🌐 Ventas Web: $${new Intl.NumberFormat('es-AR').format(totalWeb)}%0A` +
-        `🛍️ Ventas Manuales: $${new Intl.NumberFormat('es-AR').format(totalManual)}%0A` +
-        `💰 *TOTAL RECAUDADO: $${new Intl.NumberFormat('es-AR').format(totalRevenue)}*%0A` +
-        `📈 *GANANCIA NETA: $${new Intl.NumberFormat('es-AR').format(netProfit)}*`;
+        const message = `📊 *RESUMEN HOME & CO - ${new Date().toLocaleDateString('es-AR')}* 📊%0A` +
+            `🌐 Ventas Web: $${new Intl.NumberFormat('es-AR').format(totalWeb)}%0A` +
+            `🛍️ Ventas Manuales: $${new Intl.NumberFormat('es-AR').format(totalManual)}%0A` +
+            `💰 *TOTAL RECAUDADO: $${new Intl.NumberFormat('es-AR').format(totalRevenue)}*%0A` +
+            `📈 *GANANCIA NETA: $${new Intl.NumberFormat('es-AR').format(netProfit)}*`;
 
-    const targetPhone = '5492617523156';
-    window.open(`https://wa.me/${targetPhone}?text=${message}`, '_blank');
-};
+        const targetPhone = '5492617523156';
+        window.open(`https://wa.me/${targetPhone}?text=${message}`, '_blank');
+    };
 
     const handleComboDelete = async (id) => {
         if (!confirm('¿Borrar combo?')) return;
@@ -1231,33 +1234,45 @@ const handleCloseDay = () => {
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-                                    <p className="text-sm text-green-800 font-bold uppercase mb-1">Total Web + Manual</p>
+                                <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm relative overflow-hidden group">
+                                    <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <TrendingUp size={48} className="text-green-600" />
+                                    </div>
+                                    <p className="text-xs text-gray-500 font-bold uppercase mb-1 flex items-center gap-1"><Globe size={12} /> Ventas Totales</p>
                                     <p className="text-3xl font-bold text-green-700">
                                         {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
                                             allSales.reduce((acc, sale) => acc + (sale.origin === 'MANUAL' ? (sale.paid || 0) : (sale.total || 0)), 0)
                                         )}
                                     </p>
-                                    <p className="text-xs text-green-600 mt-2">Deduce deudas pendientes manuales.</p>
+                                    <p className="text-[10px] text-gray-400 mt-2">Recaudación Real</p>
                                 </div>
-                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                                    <p className="text-sm text-blue-800 font-bold uppercase mb-1">Ventas Web</p>
+                                <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm relative overflow-hidden group">
+                                    <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <Globe size={48} className="text-blue-600" />
+                                    </div>
+                                    <p className="text-xs text-gray-500 font-bold uppercase mb-1 flex items-center gap-1"><Globe size={12} /> Web</p>
                                     <p className="text-2xl font-bold text-blue-700">
                                         {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
                                             allSales.filter(s => s.origin === 'WEB').reduce((acc, s) => acc + s.total, 0)
                                         )}
                                     </p>
                                 </div>
-                                <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
-                                    <p className="text-sm text-purple-800 font-bold uppercase mb-1">Ventas Manuales (Cobradas)</p>
+                                <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm relative overflow-hidden group">
+                                    <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <ShoppingBag size={48} className="text-purple-600" />
+                                    </div>
+                                    <p className="text-xs text-gray-500 font-bold uppercase mb-1 flex items-center gap-1"><ShoppingBag size={12} /> Manual</p>
                                     <p className="text-2xl font-bold text-purple-700">
                                         {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
-                                            allSales.filter(s => s.origin === 'MANUAL').reduce((acc, s) => acc + (s.paid || 0), 0)
+                                            allSales.filter(s => s.origin === 'MANUAL').reduce((acc, s) => acc + (sale.paid || 0), 0)
                                         )}
                                     </p>
                                 </div>
-                                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                                    <p className="text-sm text-yellow-800 font-bold uppercase mb-1">Ganancia Neta</p>
+                                <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm relative overflow-hidden group">
+                                    <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <DollarSign size={48} className="text-yellow-600" />
+                                    </div>
+                                    <p className="text-xs text-gray-500 font-bold uppercase mb-1 flex items-center gap-1"><TrendingUp size={12} /> Ganancia</p>
                                     <p className="text-2xl font-bold text-yellow-700">
                                         {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
                                             (() => {
@@ -1275,57 +1290,120 @@ const handleCloseDay = () => {
                                             })()
                                         )}
                                     </p>
-                                    <p className="text-xs text-yellow-600 mt-2">Ventas - Costos (Costo base actual)</p>
                                 </div>
                             </div>
                         </div>
 
+
                         {/* LISTA UNIFICADA */}
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                            <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
+                            <div className="p-4 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
                                 <h2 className="font-bold">Historial Unificado de Ventas</h2>
+
+                                {/* SEARCH BAR */}
+                                <div className="relative w-full md:w-64">
+                                    <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar cliente po nombre o teléfono..."
+                                        className="w-full pl-9 pr-4 py-2 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+
                                 <button onClick={fetchAllSales} className="text-sm text-blue-600 hover:underline">Refrescar</button>
                             </div>
-                            <div className="divide-y divide-gray-100">
-                                {allSales.map(sale => (
-                                    <div key={`${sale.origin}-${sale.id}`} className="p-4 hover:bg-gray-50 transition-colors flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white ${sale.origin === 'WEB' ? 'bg-blue-500' : 'bg-purple-500'}`}>
-                                                    {sale.origin}
-                                                </span>
-                                                <span className="text-xs text-gray-400">
-                                                    {new Date(sale.date).toLocaleString()}
-                                                </span>
-                                            </div>
-                                            <p className="font-bold text-lg">{sale.client || 'Cliente Desconocido'}</p>
-                                            <p className="text-sm text-gray-500">
-                                                {sale.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
-                                            </p>
-                                        </div>
 
-                                        <div className="flex items-center gap-6">
-                                            <div className="text-right">
-                                                <p className="font-bold text-xl">
-                                                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total)}
-                                                </p>
-                                                {sale.origin === 'MANUAL' && sale.status === 'Pendiente' && (
-                                                    <p className="text-xs text-red-500 font-bold">
-                                                        Debe: {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total - sale.paid)}
-                                                    </p>
-                                                )}
+                            <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+                                {(() => {
+                                    // 1. Filter
+                                    const filteredSales = allSales.filter(s =>
+                                        s.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                        (s.phone && s.phone.includes(searchTerm))
+                                    );
+
+                                    // 2. Group by Date
+                                    const groups = {};
+                                    filteredSales.forEach(sale => {
+                                        const dateKey = new Date(sale.date).toDateString();
+                                        if (!groups[dateKey]) groups[dateKey] = [];
+                                        groups[dateKey].push(sale);
+                                    });
+
+                                    // 3. Render
+                                    if (filteredSales.length === 0) {
+                                        return (
+                                            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                                                <div className="bg-gray-100 p-4 rounded-full mb-3">
+                                                    <Search size={32} />
+                                                </div>
+                                                <p>No se encontraron ventas.</p>
                                             </div>
-                                            <button
-                                                onClick={() => handleDeleteSale(sale)}
-                                                className="text-gray-300 hover:text-red-500 p-2 transition-colors"
-                                                title={sale.origin === 'MANUAL' ? "Borrar y Restaurar Stock" : "Borrar registro"}
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                                {allSales.length === 0 && <p className="text-center py-12 text-gray-400">No hay ventas registradas aún.</p>}
+                                        );
+                                    }
+
+                                    return Object.keys(groups).map(dateKey => {
+                                        const dateObj = new Date(dateKey);
+                                        const isToday = dateKey === new Date().toDateString();
+                                        const isYesterday = dateKey === new Date(new Date().setDate(new Date().getDate() - 1)).toDateString();
+
+                                        const label = isToday
+                                            ? 'Hoy'
+                                            : isYesterday
+                                                ? 'Ayer'
+                                                : dateObj.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+                                        return (
+                                            <div key={dateKey}>
+                                                {/* Sticky Header */}
+                                                <div className="bg-gray-100 px-4 py-2 text-xs font-bold text-gray-500 uppercase sticky top-0 z-10 flex items-center gap-2">
+                                                    <Calendar size={12} /> {label}
+                                                </div>
+
+                                                {/* Sales for this date */}
+                                                {groups[dateKey].map(sale => (
+                                                    <div key={`${sale.origin}-${sale.id}`} className="p-4 hover:bg-gray-50 transition-colors flex flex-col md:flex-row gap-4 justify-between items-start md:items-center border-b last:border-0 relative">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white ${sale.origin === 'WEB' ? 'bg-blue-500' : 'bg-purple-500'}`}>
+                                                                    {sale.origin}
+                                                                </span>
+                                                                <span className="text-xs text-gray-400">
+                                                                    {new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                </span>
+                                                            </div>
+                                                            <p className="font-bold text-lg">{sale.client || 'Cliente Desconocido'}</p>
+                                                            <p className="text-sm text-gray-500">
+                                                                {sale.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-6">
+                                                            <div className="text-right">
+                                                                <p className="font-bold text-xl">
+                                                                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total)}
+                                                                </p>
+                                                                {sale.origin === 'MANUAL' && sale.status === 'Pendiente' && (
+                                                                    <p className="text-xs text-red-500 font-bold">
+                                                                        Debe: {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total - sale.paid)}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleDeleteSale(sale)}
+                                                                className="text-gray-300 hover:text-red-500 p-2 transition-colors"
+                                                                title={sale.origin === 'MANUAL' ? "Borrar y Restaurar Stock" : "Borrar registro"}
+                                                            >
+                                                                <Trash2 size={18} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    });
+                                })()}
                             </div>
                         </div>
                     </div>
