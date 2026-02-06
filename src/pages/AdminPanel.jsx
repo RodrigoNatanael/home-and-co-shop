@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseclient';
-import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square } from 'lucide-react';
+import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square, User, DollarSign, FileText } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export default function AdminPanel() {
-    const [activeTab, setActiveTab] = useState('products'); // 'products' | 'banners' | 'combos'
+    const [activeTab, setActiveTab] = useState('products'); // 'products' | 'banners' | 'combos' | 'manual_sales'
 
     // --- PRODUCTS STATE ---
     const [products, setProducts] = useState([]);
@@ -13,7 +13,6 @@ export default function AdminPanel() {
         id: '',
         name: '',
         price: '',
-        category: '',
         category: '',
         description: '',
         stock: '',
@@ -42,6 +41,17 @@ export default function AdminPanel() {
     const [selectedProductIds, setSelectedProductIds] = useState([]); // Array of IDs
     const [comboImageFile, setComboImageFile] = useState(null);
 
+    // --- MANUAL SALES STATE ---
+    const [manualSales, setManualSales] = useState([]);
+    const [loadingManualSales, setLoadingManualSales] = useState(false);
+    const [manualSaleFormData, setManualSaleFormData] = useState({
+        seller: 'Rodrigo', // 'Rodrigo' | 'Vane'
+        client_name: '',
+        items: [], // Array of { id, name, price, quantity, type: 'product'|'combo' }
+        total_amount: 0,
+        paid_amount: ''
+    });
+
 
     const [uploading, setUploading] = useState(false);
 
@@ -49,6 +59,7 @@ export default function AdminPanel() {
         fetchProducts();
         fetchBanners();
         fetchCombos();
+        fetchManualSales();
     }, []);
 
     // --- FETCH DATA ---
@@ -318,13 +329,139 @@ export default function AdminPanel() {
         }
     };
 
+    const fetchManualSales = async () => {
+        setLoadingManualSales(true);
+        const { data, error } = await supabase
+            .from('manual_sales')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) console.error('Error fetching manual sales:', error);
+        else setManualSales(data || []);
+        setLoadingManualSales(false);
+    };
+
+    // --- HANDLERS: MANUAL SALES ---
+    const handleAddManualItem = (productId, type) => {
+        // Find product or combo
+        const list = type === 'product' ? products : combos;
+        const item = list.find(i => i.id === productId);
+        if (!item) return;
+
+        setManualSaleFormData(prev => {
+            const existing = prev.items.find(i => i.id === productId && i.type === type);
+            let newItems;
+
+            if (existing) {
+                newItems = prev.items.map(i =>
+                    (i.id === productId && i.type === type)
+                        ? { ...i, quantity: i.quantity + 1 }
+                        : i
+                );
+            } else {
+                newItems = [...prev.items, {
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: 1,
+                    type: type
+                }];
+            }
+
+            // Recalculate total
+            const newTotal = newItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+            return { ...prev, items: newItems, total_amount: newTotal };
+        });
+    };
+
+    const handleRemoveManualItem = (index) => {
+        setManualSaleFormData(prev => {
+            const newItems = prev.items.filter((_, i) => i !== index);
+            const newTotal = newItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+            return { ...prev, items: newItems, total_amount: newTotal };
+        });
+    };
+
+    const handleManualSaleSubmit = async (e) => {
+        e.preventDefault();
+        const { seller, MQ, client_name, items, total_amount, paid_amount } = manualSaleFormData;
+
+        if (!client_name || items.length === 0) {
+            alert('Falta nombre del cliente o productos.');
+            return;
+        }
+
+        try {
+            setUploading(true);
+
+            // 1. Determine Status
+            const paid = parseFloat(paid_amount) || 0;
+            const status = paid >= total_amount ? 'Pagado' : 'Pendiente';
+
+            // 2. Deduct Stock
+            for (const item of items) {
+                const table = item.type === 'product' ? 'products' : 'combos';
+
+                // Get current stock
+                const { data: currentItem, error: fetchError } = await supabase
+                    .from(table)
+                    .select('stock')
+                    .eq('id', item.id)
+                    .single();
+
+                if (fetchError) throw new Error(`Error buscando ${item.name}`);
+
+                // Update stock
+                const newStock = Math.max(0, currentItem.stock - item.quantity);
+                const { error: updateError } = await supabase
+                    .from(table)
+                    .update({ stock: newStock })
+                    .eq('id', item.id);
+
+                if (updateError) throw new Error(`Error actualizando stock de ${item.name}`);
+            }
+
+            // 3. Save Sale
+            const { error: insertError } = await supabase
+                .from('manual_sales')
+                .insert([{
+                    seller,
+                    client_name,
+                    items_json: items,
+                    total_amount,
+                    paid_amount: paid,
+                    status,
+                    date: new Date().toISOString()
+                }]);
+
+            if (insertError) throw insertError;
+
+            alert('Venta registrada!');
+            setManualSaleFormData({
+                seller: 'Rodrigo',
+                client_name: '',
+                items: [],
+                total_amount: 0,
+                paid_amount: ''
+            });
+            fetchManualSales();
+            fetchProducts(); // Refresh stock in UI
+            fetchCombos();   // Refresh stock in UI
+
+        } catch (error) {
+            console.error('Error processing sale:', error);
+            alert('Error: ' + error.message);
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleComboDelete = async (id) => {
         if (!confirm('¿Borrar combo?')) return;
         const { error } = await supabase.from('combos').delete().eq('id', id);
         if (error) alert('Error deleting combo');
         else fetchCombos();
     };
-
 
     return (
         <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 md:px-8">
@@ -351,6 +488,12 @@ export default function AdminPanel() {
                             className={`px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'combos' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             <CheckSquare size={16} /> Combos
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('manual_sales')}
+                            className={`px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'manual_sales' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <FileText size={16} /> Ventas Manuales
                         </button>
                     </div>
                 </div>
@@ -619,6 +762,182 @@ export default function AdminPanel() {
                                         </div>
                                     ))}
                                     {combos.length === 0 && <p className="col-span-2 text-gray-500 text-center py-8">No hay combos activos.</p>}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- CONTENT: MANUAL SALES --- */}
+                {activeTab === 'manual_sales' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* New Sale Form */}
+                        <div className="lg:col-span-1">
+                            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 sticky top-24">
+                                <h2 className="font-bold text-xl mb-4 flex items-center gap-2">
+                                    <Plus size={20} /> Registrar Venta
+                                </h2>
+                                <form onSubmit={handleManualSaleSubmit} className="space-y-4">
+                                    {/* Seller & Client */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-500 mb-1 block">Vendedor</label>
+                                            <select
+                                                value={manualSaleFormData.seller}
+                                                onChange={(e) => setManualSaleFormData(prev => ({ ...prev, seller: e.target.value }))}
+                                                className="w-full border p-2 rounded"
+                                            >
+                                                <option value="Rodrigo">Rodrigo</option>
+                                                <option value="Vane">Vane</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-500 mb-1 block">Cliente</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Nombre Cliente *"
+                                                required
+                                                value={manualSaleFormData.client_name}
+                                                onChange={(e) => setManualSaleFormData(prev => ({ ...prev, client_name: e.target.value }))}
+                                                className="w-full border p-2 rounded"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Product Selector */}
+                                    <div className="border p-3 rounded bg-gray-50 max-h-48 overflow-y-auto">
+                                        <p className="text-xs font-bold text-gray-500 mb-2">Agregar Productos:</p>
+                                        <div className="space-y-1">
+                                            {products.map(p => (
+                                                <div key={p.id} className="flex justify-between items-center bg-white p-2 rounded shadow-sm border">
+                                                    <div className="truncate text-sm flex-1 mr-2">{p.name} (${p.price})</div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleAddManualItem(p.id, 'product')}
+                                                        className="bg-black text-white px-2 py-1 rounded text-xs font-bold hover:bg-gray-800"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {combos.map(c => (
+                                                <div key={c.id} className="flex justify-between items-center bg-white p-2 rounded shadow-sm border border-purple-100">
+                                                    <div className="truncate text-sm flex-1 mr-2 font-bold text-purple-700">{c.name} (Combo)</div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleAddManualItem(c.id, 'combo')}
+                                                        className="bg-purple-600 text-white px-2 py-1 rounded text-xs font-bold hover:bg-purple-700"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Selected Items List */}
+                                    {manualSaleFormData.items.length > 0 && (
+                                        <div className="border border-gray-200 rounded p-3 bg-gray-50">
+                                            <p className="text-xs font-bold text-gray-500 mb-2">Resumen del Pedido:</p>
+                                            <div className="space-y-2">
+                                                {manualSaleFormData.items.map((item, idx) => (
+                                                    <div key={`${item.id}-${idx}`} className="flex justify-between items-center text-sm">
+                                                        <span>{item.quantity}x {item.name}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold">${item.price * item.quantity}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRemoveManualItem(idx)}
+                                                                className="text-red-500 hover:bg-red-50 rounded p-1"
+                                                            >
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                <div className="flex justify-between font-bold text-lg pt-2 border-t mt-2">
+                                                    <span>Total:</span>
+                                                    <span>{new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(manualSaleFormData.total_amount)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Payment */}
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-500 mb-1 block">Monto Pagado (Si es seña, poné menos)</label>
+                                        <div className="relative">
+                                            <DollarSign size={16} className="absolute left-3 top-3 text-gray-400" />
+                                            <input
+                                                type="number"
+                                                placeholder="Monto Pagado"
+                                                value={manualSaleFormData.paid_amount}
+                                                onChange={(e) => setManualSaleFormData(prev => ({ ...prev, paid_amount: e.target.value }))}
+                                                className="w-full border p-2 pl-9 rounded font-mono font-bold"
+                                            />
+                                        </div>
+                                        {manualSaleFormData.total_amount > 0 && manualSaleFormData.paid_amount < manualSaleFormData.total_amount && (
+                                            <p className="text-xs text-red-500 font-bold mt-1 text-right">
+                                                Saldo Pendiente: {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(manualSaleFormData.total_amount - (manualSaleFormData.paid_amount || 0))}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <Button type="submit" disabled={uploading || manualSaleFormData.items.length === 0} className="w-full mt-4">
+                                        {uploading ? 'Registrando...' : 'Confirmar Venta'}
+                                    </Button>
+                                </form>
+                            </div>
+                        </div>
+
+                        {/* History List */}
+                        <div className="lg:col-span-2">
+                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                                <div className="p-4 bg-gray-50 border-b flex justify-between">
+                                    <h2 className="font-bold">Historial de Ventas</h2>
+                                </div>
+                                <div className="p-0">
+                                    {manualSales.map(sale => {
+                                        const isDebt = sale.status === 'Pendiente';
+                                        return (
+                                            <div key={sale.id} className={`p-4 border-b hover:bg-gray-50 ${isDebt ? 'bg-red-50' : ''}`}>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <h3 className="font-bold text-lg">{sale.client_name}</h3>
+                                                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                                                            <User size={12} /> {sale.seller} &bull; {new Date(sale.date).toLocaleDateString()} {new Date(sale.date).toLocaleTimeString()}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${isDebt ? 'bg-red-200 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                                                            {sale.status}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="text-sm text-gray-600 mb-2">
+                                                    {sale.items_json.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+                                                </div>
+
+                                                <div className="flex justify-between items-end border-t border-gray-200 pt-2 border-dashed">
+                                                    <div className="text-xs">
+                                                        {isDebt && (
+                                                            <span className="text-red-600 font-bold">
+                                                                Falta pagar: {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total_amount - sale.paid_amount)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-xs text-gray-500">Total</p>
+                                                        <p className="font-bold text-lg">
+                                                            {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total_amount)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {manualSales.length === 0 && <p className="text-gray-500 text-center py-8">No hay ventas registradas.</p>}
                                 </div>
                             </div>
                         </div>
