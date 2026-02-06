@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseclient';
-import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package } from 'lucide-react';
+import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export default function AdminPanel() {
-    const [activeTab, setActiveTab] = useState('products'); // 'products' | 'banners'
+    const [activeTab, setActiveTab] = useState('products'); // 'products' | 'banners' | 'combos'
 
     // --- PRODUCTS STATE ---
     const [products, setProducts] = useState([]);
@@ -27,11 +27,23 @@ export default function AdminPanel() {
     });
     const [bannerImageFile, setBannerImageFile] = useState(null);
 
+    // --- COMBOS STATE ---
+    const [combos, setCombos] = useState([]);
+    const [loadingCombos, setLoadingCombos] = useState(false);
+    const [comboFormData, setComboFormData] = useState({
+        name: '',
+        price: ''
+    });
+    const [selectedProductIds, setSelectedProductIds] = useState([]); // Array of IDs
+    const [comboImageFile, setComboImageFile] = useState(null);
+
+
     const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         fetchProducts();
         fetchBanners();
+        fetchCombos();
     }, []);
 
     // --- FETCH DATA ---
@@ -57,6 +69,18 @@ export default function AdminPanel() {
         if (error) console.error('Error fetching banners:', error);
         else setBanners(data || []);
         setLoadingBanners(false);
+    };
+
+    const fetchCombos = async () => {
+        setLoadingCombos(true);
+        const { data, error } = await supabase
+            .from('combos')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) console.error('Error fetching combos:', error);
+        else setCombos(data || []);
+        setLoadingCombos(false);
     };
 
     // --- HANDLERS: PRODUCTS ---
@@ -190,6 +214,93 @@ export default function AdminPanel() {
         else fetchBanners();
     };
 
+    // --- HANDLERS: COMBOS ---
+    const handleComboInputChange = (e) => {
+        const { name, value } = e.target;
+        setComboFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const toggleProductSelection = (productId) => {
+        setSelectedProductIds(prev => {
+            if (prev.includes(productId)) {
+                return prev.filter(id => id !== productId);
+            } else {
+                return [...prev, productId];
+            }
+        });
+    };
+
+    const handleComboImageChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setComboImageFile(e.target.files[0]);
+        }
+    };
+
+    const handleComboSubmit = async (e) => {
+        e.preventDefault();
+        if (!comboFormData.name || !comboFormData.price) {
+            alert('Nombre y Precio son obligatorios');
+            return;
+        }
+        if (selectedProductIds.length === 0) {
+            alert('Debes seleccionar al menos un producto para el combo');
+            return;
+        }
+
+        try {
+            setUploading(true);
+            let imageUrl = null;
+
+            if (comboImageFile) {
+                const fileExt = comboImageFile.name.split('.').pop();
+                const fileName = `combo_${Math.random().toString(36).substring(2)}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('product-images')
+                    .upload(fileName, comboImageFile);
+
+                if (uploadError) throw uploadError;
+
+                const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
+                imageUrl = data.publicUrl;
+            }
+
+            // Build products_json
+            // We want to store { id, name } for easy display
+            const productsJson = products
+                .filter(p => selectedProductIds.includes(p.id))
+                .map(p => ({ id: p.id, name: p.name }));
+
+            const newCombo = {
+                name: comboFormData.name,
+                price: parseFloat(comboFormData.price),
+                image_url: imageUrl,
+                products_json: productsJson
+            };
+
+            const { error } = await supabase.from('combos').insert([newCombo]);
+            if (error) throw error;
+
+            alert('Combo creado!');
+            setComboFormData({ name: '', price: '' });
+            setSelectedProductIds([]);
+            setComboImageFile(null);
+            fetchCombos();
+
+        } catch (error) {
+            console.error('Error creating combo:', error);
+            alert('Error creating combo: ' + (error.message || 'Unknown error'));
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleComboDelete = async (id) => {
+        if (!confirm('¿Borrar combo?')) return;
+        const { error } = await supabase.from('combos').delete().eq('id', id);
+        if (error) alert('Error deleting combo');
+        else fetchCombos();
+    };
+
 
     return (
         <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 md:px-8">
@@ -210,6 +321,12 @@ export default function AdminPanel() {
                             className={`px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'banners' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             <ImageIcon size={16} /> Banners
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('combos')}
+                            className={`px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'combos' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <CheckSquare size={16} /> Combos
                         </button>
                     </div>
                 </div>
@@ -342,6 +459,94 @@ export default function AdminPanel() {
                         </div>
                     </div>
                 )}
+
+                {/* --- CONTENT: COMBOS --- */}
+                {activeTab === 'combos' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Combo Form */}
+                        <div className="lg:col-span-1">
+                            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 sticky top-24">
+                                <h2 className="font-bold text-xl mb-4 flex items-center gap-2">
+                                    <Plus size={20} /> Nuevo Combo
+                                </h2>
+                                <form onSubmit={handleComboSubmit} className="space-y-4">
+                                    <input type="text" name="name" value={comboFormData.name} onChange={handleComboInputChange} required placeholder="Nombre del Combo *" className="w-full border p-2 rounded" />
+                                    <input type="number" name="price" value={comboFormData.price} onChange={handleComboInputChange} required placeholder="Precio Especial *" className="w-full border p-2 rounded" />
+
+                                    <div className="border border-gray-200 rounded p-3 max-h-48 overflow-y-auto">
+                                        <p className="text-xs font-bold text-gray-500 mb-2 uppercase">Incluir Productos:</p>
+                                        <div className="space-y-2">
+                                            {products.map(p => (
+                                                <label key={p.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                                    <div
+                                                        className={`w-4 h-4 border rounded flex items-center justify-center ${selectedProductIds.includes(p.id) ? 'bg-black border-black text-white' : 'border-gray-300'}`}
+                                                    >
+                                                        {selectedProductIds.includes(p.id) && <CheckSquare size={12} />}
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedProductIds.includes(p.id)}
+                                                        onChange={() => toggleProductSelection(p.id)}
+                                                        className="hidden"
+                                                    />
+                                                    <span className="text-sm truncate">{p.name}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="border-2 border-dashed border-gray-300 rounded p-4 text-center">
+                                        <input type="file" onChange={handleComboImageChange} className="hidden" id="combo-file" />
+                                        <label htmlFor="combo-file" className="cursor-pointer flex flex-col items-center">
+                                            <Upload className="mb-2 text-gray-400" />
+                                            <span className="text-sm text-gray-500">{comboImageFile ? comboImageFile.name : 'Foto del Combo'}</span>
+                                        </label>
+                                    </div>
+
+                                    <Button type="submit" disabled={uploading} className="w-full mt-4">
+                                        {uploading ? 'Creando Combo...' : 'Crear Combo'}
+                                    </Button>
+                                </form>
+                            </div>
+                        </div>
+
+                        {/* Combo List */}
+                        <div className="lg:col-span-2">
+                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                                <div className="p-4 bg-gray-50 border-b flex justify-between">
+                                    <h2 className="font-bold">Combos Activos</h2>
+                                </div>
+                                <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {combos.map(c => (
+                                        <div key={c.id} className="border rounded-lg overflow-hidden flex flex-col bg-white hover:shadow-md transition-shadow">
+                                            <div className="h-48 bg-gray-100 relative">
+                                                {c.image_url && <img src={c.image_url} alt="" className="w-full h-full object-cover" />}
+                                                <button onClick={() => handleComboDelete(c.id)} className="absolute top-2 right-2 bg-white/90 text-red-500 p-1.5 rounded-full hover:bg-red-50">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                            <div className="p-4">
+                                                <h3 className="font-bold text-lg mb-1">{c.name}</h3>
+                                                <p className="text-brand-dark font-bold text-xl mb-3">
+                                                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(c.price)}
+                                                </p>
+
+                                                {/* Products List Preview */}
+                                                {c.products_json && Array.isArray(c.products_json) && (
+                                                    <div className="text-xs text-gray-500">
+                                                        <span className="font-bold uppercase">Incluye:</span> {c.products_json.map(p => p.name).join(', ')}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {combos.length === 0 && <p className="col-span-2 text-gray-500 text-center py-8">No hay combos activos.</p>}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
 
             </div>
         </div>

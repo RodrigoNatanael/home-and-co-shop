@@ -5,10 +5,12 @@ import { ArrowRight, Truck, ShieldCheck, Thermometer } from 'lucide-react';
 import { supabase } from '../supabaseclient';
 import ProductCard from '../components/ProductCard';
 import BannerCarousel from '../components/ui/BannerCarousel';
+import ComboCard from '../components/ui/ComboCard';
 import { Button } from '../components/ui/Button';
 
 export default function Home() {
     const [products, setProducts] = useState([]);
+    const [combos, setCombos] = useState([]);
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -23,7 +25,20 @@ export default function Home() {
             }
         };
 
+        const fetchCombos = async () => {
+            const { data, error } = await supabase
+                .from('combos')
+                .select('*');
+
+            if (error) {
+                console.error('Error fetching combos:', error);
+            } else {
+                setCombos(data || []);
+            }
+        };
+
         fetchProducts();
+        fetchCombos();
     }, []);
 
     // Filter featured products (e.g., first 3)
@@ -100,7 +115,7 @@ export default function Home() {
             </section>
 
             {/* Featured Products Grid */}
-            <section className="py-20 max-w-7xl mx-auto px-4 md:px-8">
+            <section id="featured-products" className="py-20 max-w-7xl mx-auto px-4 md:px-8">
                 <div className="flex justify-between items-end mb-12">
                     <h2 className="font-display font-bold text-4xl text-brand-dark">DESTACADOS</h2>
                     <Link to="/catalog" className="text-brand-dark font-bold border-b-2 border-brand-dark uppercase tracking-widest hover:text-gray-600 hover:border-gray-600 transition-colors">
@@ -113,6 +128,20 @@ export default function Home() {
                     ))}
                 </div>
             </section>
+
+            {/* Combos Section */}
+            {combos.length > 0 && (
+                <section className="py-20 bg-gray-50">
+                    <div className="max-w-7xl mx-auto px-4 md:px-8">
+                        <h2 className="font-display font-bold text-4xl text-brand-dark mb-12 text-center uppercase tracking-tight">Ofertas de Combos</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {combos.map(combo => (
+                                <ComboCard key={combo.id} combo={combo} />
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
         </div>
     );
 }
