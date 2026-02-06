@@ -59,26 +59,28 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
             try {
                 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8Rw6KULYD1MPW34vmEGrrwl5ljAPz96T_rCiKQWE4kuWcKeuU-tUMt8laIeSRT_3u/exec';
 
-                const sheetData = {
-                    date: new Date().toLocaleString('es-AR'),
-                    order_id: null, // Se generará en MP, pero enviamos timestamp como ref
-                    total: unit_price,
-                    customer: { name, email, phone, city, address },
-                    items: cartItems.map(item => ({
-                        id: item.id,
-                        name: item.name,
-                        quantity: item.quantity,
-                        price: item.price,
-                        color: item.selectedColor || 'N/A'
-                    }))
-                };
+                const formData = new FormData();
+                formData.append('date', new Date().toLocaleString('es-AR'));
+                formData.append('total', unit_price);
+                formData.append('cliente', JSON.stringify({ name, email, phone, city, address }));
+                formData.append('items', JSON.stringify(cartItems.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    quantity: item.quantity,
+                    price: item.price,
+                    color: item.selectedColor || 'N/A'
+                }))));
 
-                // Usamos no-cors para evitar errores de CORS con Google Script
+                console.log('--- ENVIANDO A GOOGLE SHEETS ---');
+                console.log('URL:', GOOGLE_SCRIPT_URL);
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
+
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(sheetData)
+                    body: formData // Browser sets Content-Type automatically
                 });
 
                 // Pequeño retraso de seguridad para asegurar que la petición salga
