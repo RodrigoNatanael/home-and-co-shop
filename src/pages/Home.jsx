@@ -76,7 +76,7 @@ export default function Home() {
     const featuredProducts = products.slice(0, 3);
 
     return (
-        <div className="min-h-screen bg-brand-light dark:bg-slate-950 transition-colors">
+        <div className="min-h-screen bg-brand-light  transition-colors">
             {/* Hero Section: Video or Carousel */}
             {config?.hero_video_url ? (
                 <div className="relative w-full h-[80vh] md:h-screen overflow-hidden">
@@ -154,23 +154,23 @@ export default function Home() {
             </section>
 
             {/* Trust Section */}
-            <section className="bg-white dark:bg-slate-900 border-y border-gray-200 dark:border-slate-800 py-16 transition-colors">
+            <section className="bg-white  border-y border-gray-200  py-16 transition-colors">
                 <div className="max-w-7xl mx-auto px-4 md:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                         <div className="flex flex-col items-center">
-                            <Truck size={48} strokeWidth={1} className="mb-4 text-brand-dark dark:text-brand-accent transition-colors" />
-                            <h3 className="font-display font-bold text-xl mb-2 dark:text-white">Envíos a todo el país</h3>
-                            <p className="text-gray-500 dark:text-gray-400 max-w-xs">Llevamos la aventura a tu puerta, estés donde estés.</p>
+                            <Truck size={48} strokeWidth={1} className="mb-4 text-brand-dark  transition-colors" />
+                            <h3 className="font-display font-bold text-xl mb-2  a todo el país</h3>
+                            <p className="text-gray-500  max-w-xs">Llevamos la aventura a tu puerta, estés donde estés.</p>
                         </div>
                         <div className="flex flex-col items-center">
-                            <Thermometer size={48} strokeWidth={1} className="mb-4 text-brand-dark dark:text-brand-accent transition-colors" />
-                            <h3 className="font-display font-bold text-xl mb-2 dark:text-white">Tecnología Térmica</h3>
-                            <p className="text-gray-500 dark:text-gray-400 max-w-xs">Aislamiento de doble pared para máxima retención de temperatura.</p>
+                            <Thermometer size={48} strokeWidth={1} className="mb-4 text-brand-dark  transition-colors" />
+                            <h3 className="font-display font-bold text-xl mb-2  Térmica</h3>
+                            <p className="text-gray-500  max-w-xs">Aislamiento de doble pared para máxima retención de temperatura.</p>
                         </div>
                         <div className="flex flex-col items-center">
-                            <ShieldCheck size={48} strokeWidth={1} className="mb-4 text-brand-dark dark:text-brand-accent transition-colors" />
-                            <h3 className="font-display font-bold text-xl mb-2 dark:text-white">Garantía de Calidad</h3>
-                            <p className="text-gray-500 dark:text-gray-400 max-w-xs">Productos probados en las condiciones más exigentes.</p>
+                            <ShieldCheck size={48} strokeWidth={1} className="mb-4 text-brand-dark  transition-colors" />
+                            <h3 className="font-display font-bold text-xl mb-2  de Calidad</h3>
+                            <p className="text-gray-500  max-w-xs">Productos probados en las condiciones más exigentes.</p>
                         </div>
                     </div>
                 </div>
@@ -179,8 +179,8 @@ export default function Home() {
             {/* Featured Products Grid */}
             <section id="featured-products" className="py-20 max-w-7xl mx-auto px-4 md:px-8">
                 <div className="flex justify-between items-end mb-12">
-                    <h2 className="font-display font-bold text-4xl text-brand-dark dark:text-white transition-colors">DESTACADOS</h2>
-                    <Link to="/catalog" className="text-brand-dark dark:text-brand-accent font-bold border-b-2 border-brand-dark dark:border-brand-accent uppercase tracking-widest hover:text-gray-600 dark:hover:text-white hover:border-gray-600 dark:hover:border-white transition-colors">
+                    <h2 className="font-display font-bold text-4xl text-brand-dark  transition-colors">DESTACADOS</h2>
+                    <Link to="/catalog" className="text-brand-dark  font-bold border-b-2 border-brand-dark  uppercase tracking-widest hover:text-gray-600  hover:border-gray-600  transition-colors">
                         Ver Todo
                     </Link>
                 </div>
@@ -193,9 +193,9 @@ export default function Home() {
 
             {/* Combos Section */}
             {combos.length > 0 && (
-                <section className="py-20 bg-gray-50 dark:bg-slate-900 transition-colors">
+                <section className="py-20 bg-gray-50  transition-colors">
                     <div className="max-w-7xl mx-auto px-4 md:px-8">
-                        <h2 className="font-display font-bold text-4xl text-brand-dark dark:text-white mb-12 text-center uppercase tracking-tight transition-colors">Ofertas de Combos</h2>
+                        <h2 className="font-display font-bold text-4xl text-brand-dark  mb-12 text-center uppercase tracking-tight transition-colors">Ofertas de Combos</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {combos.map(combo => (
                                 <ComboCard key={combo.id} combo={combo} />
@@ -207,3 +207,4 @@ export default function Home() {
         </div>
     );
 }
+

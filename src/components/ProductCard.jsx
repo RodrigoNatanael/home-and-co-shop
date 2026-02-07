@@ -7,7 +7,7 @@ export default function ProductCard({ product }) {
         <Link to={`/product/${product.id}`} className="group block">
             <motion.div
                 whileHover={{ y: -5 }}
-                className="bg-white dark:bg-slate-800 border text-center border-gray-200 dark:border-slate-700 overflow-hidden relative shadow-sm hover:shadow-xl transition-all duration-300"
+                className="bg-white  border text-center border-gray-200  overflow-hidden relative shadow-sm hover:shadow-xl transition-all duration-300"
             >
                 {/* Image Area */}
                 <div className="aspect-square bg-gray-100 flex items-center justify-center relative overflow-hidden">
@@ -53,18 +53,18 @@ export default function ProductCard({ product }) {
 
                 {/* Content */}
                 <div className="p-6 text-left flex flex-col h-full">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1">{product.category}</p>
-                    <h3 className="font-display font-bold text-xl text-black dark:text-white mb-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors line-clamp-2">
+                    <p className="text-sm text-gray-500  font-bold uppercase tracking-wider mb-1">{product.category}</p>
+                    <h3 className="font-display font-bold text-xl text-black  mb-2 group-hover:text-gray-700  transition-colors line-clamp-2">
                         {product.name}
                     </h3>
 
-                    <div className="pt-3 border-t border-gray-100 dark:border-slate-700 mt-auto">
+                    <div className="pt-3 border-t border-gray-100  mt-auto">
                         {product.previous_price > product.price && (
                             <p className="text-xs text-gray-400 font-medium line-through mb-0.5">
                                 {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(product.previous_price)}
                             </p>
                         )}
-                        <p className={`text-lg font-bold ${product.previous_price > product.price ? 'text-red-600 dark:text-red-400' : 'text-black dark:text-white'}`}>
+                        <p className={`text-lg font-bold ${product.previous_price > product.price ? 'text-red-600  : 'text-black 
                             {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(product.price)}
                         </p>
                     </div>
@@ -73,3 +73,4 @@ export default function ProductCard({ product }) {
         </Link>
     );
 }
+

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingCart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ThemeToggle from '../ThemeToggle';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -22,7 +22,7 @@ export default function Navbar() {
 
     const navBackground = isHome && !isScrolled
         ? 'bg-transparent text-white'
-        : 'bg-white dark:bg-slate-900 text-brand-dark dark:text-gray-100 shadow-md';
+        : 'bg-white text-brand-dark shadow-md';
 
     const linkHover = isHome && !isScrolled
         ? 'hover:text-brand-accent'
@@ -59,7 +59,6 @@ export default function Navbar() {
                     </div>
 
                     {/* Actions */}
-                    <ThemeToggle />
                     <a
                         href="https://wa.me/5492617523156?text=Hola! Quiero ver el catálogo actualizado de Home & Co"
                         target="_blank"
@@ -75,7 +74,6 @@ export default function Navbar() {
 
                 {/* Mobile Menu Button */}
                 <div className="md:hidden flex items-center gap-4">
-                    <ThemeToggle />
                     <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
                         {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
                     </button>
@@ -90,7 +88,7 @@ export default function Navbar() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden bg-brand-dark dark:bg-slate-950 text-white border-t border-brand-gray dark:border-slate-800 overflow-hidden"
+                        className="md:hidden bg-brand-dark text-white border-t border-brand-gray overflow-hidden"
                     >
                         <div className="flex flex-col p-8 space-y-6">
                             {links.map((link) => (
@@ -110,3 +108,4 @@ export default function Navbar() {
         </nav >
     );
 }
+
