@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { askSommelier } from '../services/ai';
+// Si te tira error en los íconos, asegurate de tener instalado lucide-react
 import { Send, X, MessageCircle } from 'lucide-react';
 
 export default function ChatBot() {
@@ -39,21 +40,12 @@ export default function ChatBot() {
     };
 
     return (
-        <div className="fixed bottom-4 right-4 z-50 font-sans">
-            {/* Botón Flotante (Cerrado) */}
-            {!isOpen && (
-                <button
-                    onClick={() => setIsOpen(true)}
-                    className="bg-black text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform duration-300 flex items-center justify-center"
-                    aria-label="Abrir chat con El Sommelier"
-                >
-                    <span className="text-2xl">🧉</span>
-                </button>
-            )}
+        /* CAMBIO CLAVE AQUÍ: z-[9999] para que flote sobre todo y bottom-24 para no tapar WhatsApp */
+        <div className="fixed bottom-24 right-4 z-[9999] font-sans flex flex-col items-end">
 
             {/* Ventana de Chat (Abierto) */}
             {isOpen && (
-                <div className="bg-white rounded-2xl shadow-2xl w-80 sm:w-96 flex flex-col h-[500px] border border-gray-200 overflow-hidden animate-fade-in-up">
+                <div className="bg-white rounded-2xl shadow-2xl w-80 sm:w-96 flex flex-col h-[500px] border border-gray-200 overflow-hidden animate-fade-in-up mb-4">
                     {/* Header */}
                     <div className="bg-black text-white p-4 flex justify-between items-center">
                         <div className="flex items-center gap-2">
@@ -77,8 +69,8 @@ export default function ChatBot() {
                             <div
                                 key={index}
                                 className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.sender === 'user'
-                                        ? 'bg-black text-white self-end rounded-br-none'
-                                        : 'bg-white border border-gray-200 text-gray-800 self-start rounded-bl-none shadow-sm'
+                                    ? 'bg-black text-white self-end rounded-br-none'
+                                    : 'bg-white border border-gray-200 text-gray-800 self-start rounded-bl-none shadow-sm'
                                     }`}
                             >
                                 {msg.text}
@@ -115,6 +107,22 @@ export default function ChatBot() {
                         </button>
                     </form>
                 </div>
+            )}
+
+            {/* Botón Flotante (Siempre visible si está cerrado, o para cerrar) */}
+            {!isOpen && (
+                <button
+                    onClick={() => setIsOpen(true)}
+                    className="bg-black text-white p-4 rounded-full shadow-xl hover:scale-110 transition-transform duration-300 flex items-center justify-center border-2 border-white"
+                    aria-label="Abrir chat con El Sommelier"
+                >
+                    <MessageCircle size={28} />
+                    {/* Puntito rojo de notificación */}
+                    <span className="absolute top-0 right-0 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                </button>
             )}
         </div>
     );
