@@ -105,6 +105,12 @@ export function CartProvider({ children }) {
                 discountAmount = 0;
             }
 
+            // DEBUG LOG (Throttled?) - Actually running every second might spam.
+            // But we need to see it.
+            if (discountAmount > 0) {
+                // console.log("Calc Discount:", { code, amount: discountAmount, currentTotal });
+            }
+
             setDiscountInfo({
                 amount: discountAmount,
                 label,
@@ -157,6 +163,7 @@ export function CartProvider({ children }) {
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
     const cartSubtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     const cartTotal = Math.max(0, cartSubtotal - discountInfo.amount); // FINAL TOTAL
+    // console.log("Cart Context Total:", cartTotal);
 
     return (
         <CartContext.Provider value={{
