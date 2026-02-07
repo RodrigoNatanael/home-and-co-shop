@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 
 export default function AdminPanel() {
     const [activeTab, setActiveTab] = useState('products'); // 'products' | 'banners' | 'combos' | 'manual_sales'
+    const [newSalesCount, setNewSalesCount] = useState(0);
 
     // --- PRODUCTS STATE ---
     const [products, setProducts] = useState([]);
@@ -475,6 +476,13 @@ export default function AdminPanel() {
 
             setAllSales(merged);
 
+            // --- CHECK FOR NEW SALES ---
+            const lastSeenCount = parseInt(localStorage.getItem('admin_seen_count') || '0');
+            const currentCount = merged.length;
+            if (currentCount > lastSeenCount) {
+                setNewSalesCount(currentCount - lastSeenCount);
+            }
+
         } catch (error) {
             console.error('Error fetching all sales:', error);
         } finally {
@@ -756,10 +764,24 @@ export default function AdminPanel() {
                             <FileText size={16} /> Ventas Manuales
                         </button>
                         <button
-                            onClick={() => setActiveTab('all_sales')}
-                            className={`px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'all_sales' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                            onClick={() => {
+                                setActiveTab('all_sales');
+                                // Reset Notification
+                                const count = allSales.length;
+                                localStorage.setItem('admin_seen_count', count.toString());
+                                setNewSalesCount(0);
+                            }}
+                            className={`px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'all_sales' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             <DollarSign size={16} /> Todas las Ventas
+                            {newSalesCount > 0 && (
+                                <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-[9px] text-white justify-center items-center">
+                                        {newSalesCount}
+                                    </span>
+                                </span>
+                            )}
                         </button>
                         <button
                             onClick={() => setActiveTab('wheel')}

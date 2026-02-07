@@ -144,6 +144,14 @@ export default function LeadCaptureModal({
 
             // 4. Ir a Mercado Pago
             console.log("Creando preferencia para:", unit_price);
+
+            // --- SAVE FOR SUCCESS PAGE ---
+            localStorage.setItem('latest_purchase_info', JSON.stringify({
+                name: name,
+                amount: unit_price
+            }));
+            // -----------------------------
+
             console.log('Iniciando checkout de Mercado Pago...');
 
             const { data, error: funcError } = await supabase.functions.invoke('create-checkout', {
@@ -255,7 +263,10 @@ export default function LeadCaptureModal({
                                 </button>
                             </form>
 
-                            <p className="mt-3 text-center text-[10px] text-gray-400"><Lock size={10} className="inline mr-1" /> Tus datos viajan encriptados.</p>
+                            <p className="mt-3 text-center text-[10px] text-gray-500">
+                                <Lock size={10} className="inline mr-1" />
+                                Tus datos están protegidos. El envío se coordina por WhatsApp una vez realizado el pago.
+                            </p>
                         </motion.div>
                     </motion.div>
                 </>
