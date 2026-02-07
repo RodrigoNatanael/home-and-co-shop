@@ -50,7 +50,7 @@ export default function LeadCaptureModal({
     const handlePurchase = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setError(null);
+        setSubmitError(null);
 
         // USE THE PROP DIRECTLY
         const finalPriceToSend = Math.round(cartItems.length > 0 ? cartTotal : 0);
@@ -143,7 +143,9 @@ export default function LeadCaptureModal({
             // ---------------------------------
 
             // 4. Ir a Mercado Pago
+            console.log("Creando preferencia para:", unit_price);
             console.log('Iniciando checkout de Mercado Pago...');
+
             const { data, error: funcError } = await supabase.functions.invoke('create-checkout', {
                 body: {
                     unit_price: unit_price,
@@ -158,9 +160,15 @@ export default function LeadCaptureModal({
                 throw new Error(`Error al crear preferencia de MP: ${funcError.message}`);
             }
 
-            if (data?.url) {
-                console.log('Redirigiendo a Mercado Pago:', data.url);
-                window.location.href = data.url;
+            console.log("Respuesta de MP (data):", data);
+
+            // Handle both potential response formats (url or init_point)
+            const redirectUrl = data?.url || data?.init_point;
+
+            if (redirectUrl) {
+                console.log('Redirigiendo a Mercado Pago:', redirectUrl);
+                // alert('Redirigiendo a Mercado Pago...'); // Optional: User asked for alert on ERROR, not success, but useful for debug if needed.
+                window.location.href = redirectUrl;
             } else {
                 console.error('Respuesta de MP sin URL:', data);
                 throw new Error("No se recibió la URL de pago de Mercado Pago.");
@@ -169,7 +177,9 @@ export default function LeadCaptureModal({
         } catch (err) {
             console.error('Error crítico en el proceso de compra:', err);
             // Show specific error if it's a logic error (like stock), otherwise generic
-            setSubmitError(err.message || 'Hubo un error al procesar. Intenta nuevamente.');
+            const msg = err.message || 'Hubo un error al procesar. Intenta nuevamente.';
+            setSubmitError(msg);
+            alert(`Error: ${msg}`); // User requested exact error alert
             setLoading(false); // Stop loading on error
         } finally {
             // Clean up
