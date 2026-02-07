@@ -130,27 +130,33 @@ const LuckyWheel = () => {
             .update({ stock: prize.stock - 1 })
             .eq('id', prize.id);
 
-        // 2. Save Lead
-        console.log("Attempting to save lead to Supabase:", {
-            name: formData.name,
-            whatsapp: formData.whatsapp,
-            prize_won: prize.label
-        });
-
-        const { data: leadData, error: leadError } = await supabase
-            .from('wheel_leads')
-            .insert([{
+        // 2. Save Lead (FORCED INSERT)
+        try {
+            console.log("Attempting to save lead to Supabase (FORCED):", {
                 name: formData.name,
                 whatsapp: formData.whatsapp,
                 prize_won: prize.label
-            }])
-            .select();
+            });
 
-        if (leadError) {
-            console.error("❌ ERROR SAVING LEAD:", leadError);
-            // Optional: fallback to localStorage or retry?
-        } else {
-            console.log("✅ LEAD SAVED SUCCESSFULLY:", leadData);
+            const { data: leadData, error: leadError } = await supabase
+                .from('wheel_leads')
+                .insert([{
+                    name: formData.name,
+                    whatsapp: formData.whatsapp,
+                    prize_won: prize.label
+                }])
+                .select();
+
+            if (leadError) {
+                console.error("❌ ERROR SAVING LEAD:", leadError);
+                alert(`Error guardando participante: ${leadError.message || JSON.stringify(leadError)}`);
+                throw leadError;
+            } else {
+                console.log("✅ LEAD SAVED SUCCESSFULLY:", leadData);
+            }
+        } catch (insertErr) {
+            console.error("CRITICAL INSERT ERROR:", insertErr);
+            alert(`Error CRÍTICO guardando lead: ${insertErr.message}`);
         }
 
         // 3. Local Storage

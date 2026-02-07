@@ -18,22 +18,25 @@ export default function LeadCaptureModal({ isOpen, onClose, cartItems }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // --- FAILSAFE: CALCULATE TOTAL & DISCOUNT LOCALLY ---
     React.useEffect(() => {
         if (!isOpen) return;
 
         // 1. Calculate Subtotal from Items
         const rawSubtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
-        // 2. Check LocalStorage for Coupon
-        const expiry = localStorage.getItem('wheel_won_expiry');
+        // 2. Check LocalStorage for Coupon (FORCED CHECK)
+        // We ignore any passed props for discount and check directly
         const code = localStorage.getItem('wheel_prize_code');
+        const expiry = localStorage.getItem('wheel_won_expiry');
         // label is display only
 
         let discountAmount = 0;
         let activeCode = '';
 
-        if (expiry && code && Date.now() < parseInt(expiry)) {
+        // Validate Expiry if it exists
+        const isExpired = expiry && Date.now() > parseInt(expiry);
+
+        if (code && !isExpired) {
             activeCode = code;
             if (code === 'HOME10') {
                 discountAmount = rawSubtotal * 0.10;
@@ -41,8 +44,11 @@ export default function LeadCaptureModal({ isOpen, onClose, cartItems }) {
                 discountAmount = rawSubtotal * 0.05;
             } else if (code === 'DESC1000') {
                 discountAmount = 1000;
+            } else if (code === 'FREESHIP') {
+                // Free ship logic might be handled elsewhere (unit_price is product cost)
+                // For now, no product discount
+                discountAmount = 0;
             }
-            // Add more codes if needed
         }
 
         const finalTotal = Math.max(0, rawSubtotal - discountAmount);
@@ -54,10 +60,11 @@ export default function LeadCaptureModal({ isOpen, onClose, cartItems }) {
             code: activeCode
         });
 
-        console.log("--- MODAL CALCULATION ---");
+        console.log(`MODAL TOTAL: ${finalTotal}`); // Specific log requested
+        console.log("--- MODAL CALCULATION (FORCED) ---");
         console.log("Subtotal:", rawSubtotal);
-        console.log("Discount:", discountAmount);
-        console.log("Final Total:", finalTotal);
+        console.log("Found Code:", code);
+        console.log("Calculated Discount:", discountAmount);
 
     }, [isOpen, cartItems]);
     // ----------------------------------------------------
