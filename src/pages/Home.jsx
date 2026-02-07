@@ -110,22 +110,25 @@ export default function Home() {
             <section className="py-0">
                 <div className="grid grid-cols-1 md:grid-cols-3">
                     {/* Category 1 */}
-                    <Link to={config?.cat1_link || '#'} className="group relative h-[500px] overflow-hidden">
-                        <div className="absolute inset-0 bg-gray-900">
-                            {/* AutoPlay Video or Fallback Image */}
+                    <Link to={config?.cat1_link || '#'} className="group relative h-[500px] overflow-hidden block">
+                        {/* Layer 0: Background Media */}
+                        <div className="absolute inset-0 z-0">
                             {config?.cat1_img ? (
                                 <video
                                     src={config.cat1_img}
-                                    className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
+                                    className="w-full h-full object-cover pointer-events-none opacity-90 group-hover:scale-105 transition-transform duration-700"
                                     autoPlay loop muted playsInline
                                 />
                             ) : (
-                                <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1616422838323-95e263c9b78e?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70" />
+                                <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1616422838323-95e263c9b78e?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70 pointer-events-none" />
                             )}
-                            {/* Gradient Overlay for Text Contrast */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity" />
                         </div>
-                        <div className="absolute inset-0 flex items-center justify-center z-10">
+
+                        {/* Layer 1: Gradient Overlay */}
+                        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 transition-opacity pointer-events-none" />
+
+                        {/* Layer 2: Content */}
+                        <div className="absolute inset-0 z-20 flex items-center justify-center">
                             <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-2xl">
                                 {config?.cat1_title}
                             </h2>
@@ -133,20 +136,25 @@ export default function Home() {
                     </Link>
 
                     {/* Category 2 */}
-                    <Link to={config?.cat2_link || '#'} className="group relative h-[500px] overflow-hidden">
-                        <div className="absolute inset-0 bg-gray-900">
+                    <Link to={config?.cat2_link || '#'} className="group relative h-[500px] overflow-hidden block">
+                        {/* Layer 0: Background Media */}
+                        <div className="absolute inset-0 z-0">
                             {config?.cat2_img ? (
                                 <video
                                     src={config.cat2_img}
-                                    className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
+                                    className="w-full h-full object-cover pointer-events-none opacity-90 group-hover:scale-105 transition-transform duration-700"
                                     autoPlay loop muted playsInline
                                 />
                             ) : (
-                                <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1605152276897-4f618f831968?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70" />
+                                <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1605152276897-4f618f831968?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70 pointer-events-none" />
                             )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity" />
                         </div>
-                        <div className="absolute inset-0 flex items-center justify-center z-10">
+
+                        {/* Layer 1: Gradient Overlay */}
+                        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 transition-opacity pointer-events-none" />
+
+                        {/* Layer 2: Content */}
+                        <div className="absolute inset-0 z-20 flex items-center justify-center">
                             <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-2xl">
                                 {config?.cat2_title}
                             </h2>
@@ -154,20 +162,25 @@ export default function Home() {
                     </Link>
 
                     {/* Category 3 */}
-                    <Link to={config?.cat3_link || '#'} className="group relative h-[500px] overflow-hidden">
-                        <div className="absolute inset-0 bg-gray-900">
+                    <Link to={config?.cat3_link || '#'} className="group relative h-[500px] overflow-hidden block">
+                        {/* Layer 0: Background Media */}
+                        <div className="absolute inset-0 z-0">
                             {config?.cat3_img ? (
                                 <video
                                     src={config.cat3_img}
-                                    className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
+                                    className="w-full h-full object-cover pointer-events-none opacity-90 group-hover:scale-105 transition-transform duration-700"
                                     autoPlay loop muted playsInline
                                 />
                             ) : (
-                                <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70" />
+                                <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70 pointer-events-none" />
                             )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity" />
                         </div>
-                        <div className="absolute inset-0 flex items-center justify-center z-10">
+
+                        {/* Layer 1: Gradient Overlay */}
+                        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 transition-opacity pointer-events-none" />
+
+                        {/* Layer 2: Content */}
+                        <div className="absolute inset-0 z-20 flex items-center justify-center">
                             <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-2xl">
                                 {config?.cat3_title}
                             </h2>
