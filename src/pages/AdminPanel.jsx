@@ -142,10 +142,10 @@ export default function AdminPanel() {
                 .upsert(updates, { onConflict: 'key' });
 
             if (error) throw error;
-            alert('Configuración guardada!');
+            alert('Configuración guardada exitosamente!');
         } catch (error) {
-            console.error('Error saving config:', error);
-            alert('Error al guardar configuración');
+            console.error('Error detallado al guardar configuración:', error);
+            alert('Error al guardar: ' + (error.message || error.details || JSON.stringify(error)));
         } finally {
             setUploading(false);
         }
