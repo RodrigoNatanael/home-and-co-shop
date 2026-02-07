@@ -118,7 +118,9 @@ export default function AdminPanel() {
         if (data) {
             const newConfig = { ...siteConfig };
             data.forEach(item => {
-                newConfig[item.key] = item.value;
+                // If table uses 'id' instead of 'key'
+                const configKey = item.key || item.id;
+                newConfig[configKey] = item.value;
             });
             setSiteConfig(newConfig);
         }
@@ -132,14 +134,16 @@ export default function AdminPanel() {
     const handleSaveConfig = async () => {
         try {
             setUploading(true);
-            const updates = Object.keys(siteConfig).map(key => ({
-                key,
-                value: siteConfig[key]
+            // Map configuration to DB structure (using 'id' as key if 'key' column is missing)
+            const updates = Object.keys(siteConfig).map(k => ({
+                id: k, // Using 'id' column as the identifier
+                value: siteConfig[k]
             }));
 
+            // Upsert based on 'id'
             const { error } = await supabase
                 .from('site_config')
-                .upsert(updates, { onConflict: 'key' });
+                .upsert(updates, { onConflict: 'id' });
 
             if (error) throw error;
             alert('Configuración guardada exitosamente!');

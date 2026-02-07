@@ -28,7 +28,11 @@ export default function Home() {
             if (data) {
                 const newConfig = { ...config };
                 data.forEach(item => {
-                    newConfig[item.key] = item.value;
+                    // Support both 'key' and 'id' columns
+                    const configKey = item.key || item.id;
+                    if (configKey) {
+                        newConfig[configKey] = item.value;
+                    }
                 });
                 setConfig(newConfig);
             }
