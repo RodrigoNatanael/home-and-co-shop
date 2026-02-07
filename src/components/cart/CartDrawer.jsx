@@ -13,7 +13,8 @@ export default function CartDrawer() {
         removeFromCart,
         updateQuantity,
         cartSubtotal,
-        discountInfo
+        discountInfo,
+        cartTotal
     } = useCart();
 
     const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
@@ -185,6 +186,7 @@ export default function CartDrawer() {
                 onClose={() => setIsCheckoutModalOpen(false)}
                 cartTotal={cartTotal}
                 cartItems={cart}
+                discountInfo={discountInfo}
             />
         </>
     );

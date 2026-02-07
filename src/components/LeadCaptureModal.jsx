@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2, Lock, MapPin, Phone } from 'lucide-react'; // Agregamos iconos
 import { supabase } from '../supabaseclient';
 
-export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems }) {
+export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems, discountInfo }) {
     // Estados para datos personales y de envío
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -19,6 +19,12 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
         e.preventDefault();
         setLoading(true);
         setError(null);
+
+        // --- HARDCODE VERIFICATION ---
+        console.log("--- INICIANDO CHECKOUT ---");
+        console.log("Cart Total recibido (Prop):", cartTotal);
+        console.log("Discount Info:", discountInfo);
+        // -----------------------------
 
         try {
 
@@ -167,11 +173,23 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
                             </div>
 
                             {/* Resumen Precio */}
-                            <div className="mb-4 bg-gray-50 p-3 border border-gray-200 flex justify-between items-center">
-                                <span className="text-xs text-gray-500 font-bold uppercase">Total a Pagar</span>
-                                <span className="font-display font-bold text-2xl text-brand-dark">
-                                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(cartTotal)}
-                                </span>
+                            <div className="mb-4 bg-gray-50 p-3 border border-gray-200">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs text-gray-500 font-bold uppercase">Total a Pagar</span>
+                                    <span className="font-display font-bold text-2xl text-brand-dark">
+                                        {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(cartTotal)}
+                                    </span>
+                                </div>
+                                {discountInfo && discountInfo.amount > 0 && (
+                                    <div className="flex justify-between items-center mt-1 border-t border-gray-200 pt-1">
+                                        <span className="text-[10px] text-green-600 font-bold uppercase flex items-center gap-1">
+                                            <Lock size={10} /> Descuento aplicado ({discountInfo.code})
+                                        </span>
+                                        <span className="text-xs font-bold text-green-600">
+                                            - {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(discountInfo.amount)}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Formulario de Envío */}
