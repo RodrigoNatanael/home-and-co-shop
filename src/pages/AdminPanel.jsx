@@ -898,12 +898,66 @@ export default function AdminPanel() {
                                 <Palette size={20} className="text-blue-600" /> Categorías Destacadas
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                const [availableCategories, setAvailableCategories] = useState([]);
+
+    useEffect(() => {
+                                    fetchProducts();
+                                fetchSiteConfig();
+                                fetchUniqueCategories();
+    }, []);
+
+    const fetchUniqueCategories = async () => {
+        const {data, error} = await supabase
+                                .from('products')
+                                .select('category');
+
+                                if (data) {
+            // Extract unique categories
+            const unique = [...new Set(data.map(item => item.category))].filter(Boolean);
+                                setAvailableCategories(unique);
+        }
+    };
+
+    // ... (existing functions)
+
+    const handleCategorySelect = (e, catPrefix) => {
+        const selectedCategory = e.target.value;
+        setSiteConfig(prev => ({
+                                    ...prev,
+                                    [`${catPrefix}_title`]: selectedCategory,
+                                [`${catPrefix}_link`]: `/catalog?category=${selectedCategory}`
+        }));
+    };
+
+                                // ... (inside render)
+
                                 {/* Cat 1 */}
                                 <div className="bg-gray-50 p-4 rounded border">
                                     <h3 className="font-bold mb-2 text-center uppercase text-gray-700">Categoría 1</h3>
                                     <div className="space-y-3">
-                                        <input type="text" name="cat1_title" value={siteConfig.cat1_title} onChange={handleConfigChange} placeholder="Título" className="w-full border p-2 rounded text-sm" />
-                                        <input type="text" name="cat1_link" value={siteConfig.cat1_link} onChange={handleConfigChange} placeholder="Link (/catalog?...)" className="w-full border p-2 rounded text-sm" />
+                                        <label className="block text-xs font-bold text-gray-500">Seleccionar Categoría</label>
+                                        <select
+                                            name="cat1_title"
+                                            value={siteConfig.cat1_title}
+                                            onChange={(e) => handleCategorySelect(e, 'cat1')}
+                                            className="w-full border p-2 rounded text-sm bg-white"
+                                        >
+                                            <option value="">-- Seleccionar --</option>
+                                            {availableCategories.map(cat => (
+                                                <option key={cat} value={cat}>{cat}</option>
+                                            ))}
+                                        </select>
+
+                                        <label className="block text-xs font-bold text-gray-500 mt-2">Link Generado (Auto)</label>
+                                        <input
+                                            type="text"
+                                            name="cat1_link"
+                                            value={siteConfig.cat1_link}
+                                            readOnly
+                                            className="w-full border p-2 rounded text-sm bg-gray-100 text-gray-500 cursor-not-allowed"
+                                        />
+
+                                        <label className="block text-xs font-bold text-gray-500 mt-2">Video de Fondo</label>
                                         <input type="text" name="cat1_img" value={siteConfig.cat1_img} onChange={handleConfigChange} placeholder="URL Video (MP4)" className="w-full border p-2 rounded text-sm" />
                                     </div>
                                     {siteConfig.cat1_img && (
@@ -912,12 +966,34 @@ export default function AdminPanel() {
                                         </div>
                                     )}
                                 </div>
+
                                 {/* Cat 2 */}
                                 <div className="bg-gray-50 p-4 rounded border">
                                     <h3 className="font-bold mb-2 text-center uppercase text-gray-700">Categoría 2</h3>
                                     <div className="space-y-3">
-                                        <input type="text" name="cat2_title" value={siteConfig.cat2_title} onChange={handleConfigChange} placeholder="Título" className="w-full border p-2 rounded text-sm" />
-                                        <input type="text" name="cat2_link" value={siteConfig.cat2_link} onChange={handleConfigChange} placeholder="Link (/catalog?...)" className="w-full border p-2 rounded text-sm" />
+                                        <label className="block text-xs font-bold text-gray-500">Seleccionar Categoría</label>
+                                        <select
+                                            name="cat2_title"
+                                            value={siteConfig.cat2_title}
+                                            onChange={(e) => handleCategorySelect(e, 'cat2')}
+                                            className="w-full border p-2 rounded text-sm bg-white"
+                                        >
+                                            <option value="">-- Seleccionar --</option>
+                                            {availableCategories.map(cat => (
+                                                <option key={cat} value={cat}>{cat}</option>
+                                            ))}
+                                        </select>
+
+                                        <label className="block text-xs font-bold text-gray-500 mt-2">Link Generado (Auto)</label>
+                                        <input
+                                            type="text"
+                                            name="cat2_link"
+                                            value={siteConfig.cat2_link}
+                                            readOnly
+                                            className="w-full border p-2 rounded text-sm bg-gray-100 text-gray-500 cursor-not-allowed"
+                                        />
+
+                                        <label className="block text-xs font-bold text-gray-500 mt-2">Video de Fondo</label>
                                         <input type="text" name="cat2_img" value={siteConfig.cat2_img} onChange={handleConfigChange} placeholder="URL Video (MP4)" className="w-full border p-2 rounded text-sm" />
                                     </div>
                                     {siteConfig.cat2_img && (
@@ -926,12 +1002,34 @@ export default function AdminPanel() {
                                         </div>
                                     )}
                                 </div>
+
                                 {/* Cat 3 */}
                                 <div className="bg-gray-50 p-4 rounded border">
                                     <h3 className="font-bold mb-2 text-center uppercase text-gray-700">Categoría 3</h3>
                                     <div className="space-y-3">
-                                        <input type="text" name="cat3_title" value={siteConfig.cat3_title} onChange={handleConfigChange} placeholder="Título" className="w-full border p-2 rounded text-sm" />
-                                        <input type="text" name="cat3_link" value={siteConfig.cat3_link} onChange={handleConfigChange} placeholder="Link (/catalog?...)" className="w-full border p-2 rounded text-sm" />
+                                        <label className="block text-xs font-bold text-gray-500">Seleccionar Categoría</label>
+                                        <select
+                                            name="cat3_title"
+                                            value={siteConfig.cat3_title}
+                                            onChange={(e) => handleCategorySelect(e, 'cat3')}
+                                            className="w-full border p-2 rounded text-sm bg-white"
+                                        >
+                                            <option value="">-- Seleccionar --</option>
+                                            {availableCategories.map(cat => (
+                                                <option key={cat} value={cat}>{cat}</option>
+                                            ))}
+                                        </select>
+
+                                        <label className="block text-xs font-bold text-gray-500 mt-2">Link Generado (Auto)</label>
+                                        <input
+                                            type="text"
+                                            name="cat3_link"
+                                            value={siteConfig.cat3_link}
+                                            readOnly
+                                            className="w-full border p-2 rounded text-sm bg-gray-100 text-gray-500 cursor-not-allowed"
+                                        />
+
+                                        <label className="block text-xs font-bold text-gray-500 mt-2">Video de Fondo</label>
                                         <input type="text" name="cat3_img" value={siteConfig.cat3_img} onChange={handleConfigChange} placeholder="URL Video (MP4)" className="w-full border p-2 rounded text-sm" />
                                     </div>
                                     {siteConfig.cat3_img && (
