@@ -1365,18 +1365,25 @@ export default function AdminPanel() {
 
                             <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
                                 {(() => {
-                                    // 1. Filter
+                                    console.log("Datos de ventas recibidos:", allSales);
+
+                                    // 1. Filter with Protection
                                     const filteredSales = allSales.filter(s =>
-                                        s.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                        (s.phone && s.phone.includes(searchTerm))
+                                        (s.client?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                                        (s.phone?.includes(searchTerm))
                                     );
 
                                     // 2. Group by Date
                                     const groups = {};
                                     filteredSales.forEach(sale => {
-                                        const dateKey = new Date(sale.date).toDateString();
-                                        if (!groups[dateKey]) groups[dateKey] = [];
-                                        groups[dateKey].push(sale);
+                                        try {
+                                            const date = sale.date ? new Date(sale.date) : new Date();
+                                            const dateKey = date.toDateString();
+                                            if (!groups[dateKey]) groups[dateKey] = [];
+                                            groups[dateKey].push(sale);
+                                        } catch (e) {
+                                            console.warn("Error grouping sale:", sale);
+                                        }
                                     });
 
                                     // 3. Render
@@ -1410,44 +1417,57 @@ export default function AdminPanel() {
                                                 </div>
 
                                                 {/* Sales for this date */}
-                                                {groups[dateKey].map(sale => (
-                                                    <div key={`${sale.origin}-${sale.id}`} className="p-4 hover:bg-gray-50 transition-colors flex flex-col md:flex-row gap-4 justify-between items-start md:items-center border-b last:border-0 relative">
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white ${sale.origin === 'WEB' ? 'bg-blue-500' : 'bg-purple-500'}`}>
-                                                                    {sale.origin}
-                                                                </span>
-                                                                <span className="text-xs text-gray-400">
-                                                                    {new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                </span>
-                                                            </div>
-                                                            <p className="font-bold text-lg">{sale.client || 'Cliente Desconocido'}</p>
-                                                            <p className="text-sm text-gray-500">
-                                                                {sale.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
-                                                            </p>
-                                                        </div>
+                                                {groups[dateKey].map(sale => {
+                                                    // Try/Catch en el Render (Protección contra fallos en fila individual)
+                                                    try {
+                                                        const safeTotal = (isNaN(sale.total) || sale.total === null) ? 0 : sale.total;
+                                                        const safePaid = (isNaN(sale.paid) || sale.paid === null) ? 0 : sale.paid;
+                                                        const safeItems = Array.isArray(sale.items) ? sale.items : [];
 
-                                                        <div className="flex items-center gap-6">
-                                                            <div className="text-right">
-                                                                <p className="font-bold text-xl">
-                                                                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total)}
-                                                                </p>
-                                                                {sale.origin === 'MANUAL' && sale.status === 'Pendiente' && (
-                                                                    <p className="text-xs text-red-500 font-bold">
-                                                                        Debe: {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total - sale.paid)}
+                                                        return (
+                                                            <div key={`${sale.origin}-${sale.id}`} className="p-4 hover:bg-gray-50 transition-colors flex flex-col md:flex-row gap-4 justify-between items-start md:items-center border-b last:border-0 relative">
+                                                                <div>
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white ${sale.origin === 'WEB' ? 'bg-blue-500' : 'bg-purple-500'}`}>
+                                                                            {sale.origin || 'N/A'}
+                                                                        </span>
+                                                                        <span className="text-xs text-gray-400">
+                                                                            {sale.date ? new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                                                                        </span>
+                                                                    </div>
+                                                                    {/* Protección de Mapeo: Optional Chaining */}
+                                                                    <p className="font-bold text-lg">{sale.client || 'Cliente Desconocido'}</p>
+                                                                    <p className="text-sm text-gray-500">
+                                                                        {safeItems.map(i => `${i?.quantity || 0}x ${i?.name || 'Item'}`).join(', ')}
                                                                     </p>
-                                                                )}
+                                                                </div>
+
+                                                                <div className="flex items-center gap-6">
+                                                                    <div className="text-right">
+                                                                        <p className="font-bold text-xl">
+                                                                            {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(safeTotal)}
+                                                                        </p>
+                                                                        {sale.origin === 'MANUAL' && sale.status === 'Pendiente' && (
+                                                                            <p className="text-xs text-red-500 font-bold">
+                                                                                Debe: {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(safeTotal - safePaid)}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                    <button
+                                                                        onClick={() => handleDeleteSale(sale)}
+                                                                        className="text-gray-300 hover:text-red-500 p-2 transition-colors"
+                                                                        title={sale.origin === 'MANUAL' ? "Borrar y Restaurar Stock" : "Borrar registro"}
+                                                                    >
+                                                                        <Trash2 size={18} />
+                                                                    </button>
+                                                                </div>
                                                             </div>
-                                                            <button
-                                                                onClick={() => handleDeleteSale(sale)}
-                                                                className="text-gray-300 hover:text-red-500 p-2 transition-colors"
-                                                                title={sale.origin === 'MANUAL' ? "Borrar y Restaurar Stock" : "Borrar registro"}
-                                                            >
-                                                                <Trash2 size={18} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                        );
+                                                    } catch (err) {
+                                                        console.error("Error rendering sale row:", sale, err);
+                                                        return null; // Si falla, no muestra la fila
+                                                    }
+                                                })}
                                             </div>
                                         );
                                     });
