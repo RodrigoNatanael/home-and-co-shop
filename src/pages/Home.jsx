@@ -87,6 +87,7 @@ export default function Home() {
                         loop
                         muted
                         playsInline
+                        poster="https://images.unsplash.com/photo-1616422838323-95e263c9b78e?q=80&w=1780&auto=format&fit=crop" // Fallback/Loading image
                     />
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
                         <div className="text-center text-white p-4">
@@ -112,40 +113,20 @@ export default function Home() {
                     <Link to={config?.cat1_link || '#'} className="group relative h-[500px] overflow-hidden">
                         <div className="absolute inset-0 bg-gray-900">
                             {/* AutoPlay Video or Fallback Image */}
-                            {config?.cat1_img && config.cat1_img.includes('mp4') || config?.cat1_img && config.cat1_img.includes('webm') || config?.cat1_img && !config.cat1_img.startsWith('http') ? (
-                                // Simple heuristic: if it looks like a video or just assume video if configured from new admin? 
-                                // User said "Reuse cat1_img". I will try to render video if it's there. 
-                                // Actually better: Try to render video tag. If it errors (fallback to img? no, difficult).
-                                // Simplified: The user puts VIDEO URL in this field. I will assume it is a video.
-                                // If empty, I show fallback default HARDCODED image.
-                                config.cat1_img ? (
-                                    <video
-                                        src={config.cat1_img}
-                                        className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
-                                        autoPlay loop muted playsInline
-                                    />
-                                ) : (
-                                    <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1616422838323-95e263c9b78e?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70" />
-                                )
+                            {config?.cat1_img ? (
+                                <video
+                                    src={config.cat1_img}
+                                    className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
+                                    autoPlay loop muted playsInline
+                                />
                             ) : (
-                                // If config is totally missing or just text
-                                // Wait, the field IS cat1_img. 
-                                // I will assume: if `config.cat1_img` has content, it is a video (per new design).
-                                // If it is empty, fallback.
-                                config?.cat1_img ? (
-                                    <video
-                                        src={config.cat1_img}
-                                        className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
-                                        autoPlay loop muted playsInline
-                                    />
-                                ) : (
-                                    <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1616422838323-95e263c9b78e?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70" />
-                                )
+                                <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1616422838323-95e263c9b78e?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70" />
                             )}
-                            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+                            {/* Gradient Overlay for Text Contrast */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity" />
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center z-10">
-                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-xl">
+                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-2xl">
                                 {config?.cat1_title}
                             </h2>
                         </div>
@@ -157,16 +138,16 @@ export default function Home() {
                             {config?.cat2_img ? (
                                 <video
                                     src={config.cat2_img}
-                                    className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
+                                    className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
                                     autoPlay loop muted playsInline
                                 />
                             ) : (
                                 <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1605152276897-4f618f831968?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70" />
                             )}
-                            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity" />
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center z-10">
-                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-xl">
+                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-2xl">
                                 {config?.cat2_title}
                             </h2>
                         </div>
@@ -178,16 +159,16 @@ export default function Home() {
                             {config?.cat3_img ? (
                                 <video
                                     src={config.cat3_img}
-                                    className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
+                                    className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
                                     autoPlay loop muted playsInline
                                 />
                             ) : (
                                 <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70" />
                             )}
-                            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity" />
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center z-10">
-                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-xl">
+                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-2xl">
                                 {config?.cat3_title}
                             </h2>
                         </div>
