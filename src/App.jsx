@@ -71,6 +71,9 @@ function App() {
 
         {/* El Layout maneja el contenido normal */}
         <Layout>
+          <div className="fixed top-0 left-0 w-full bg-red-600 text-white text-center font-bold z-[9999999] p-2">
+            VERSIÓN DEBUG 5.0 - SI VES ESTO, EL DEPLOY FUNCIONA
+          </div>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/catalog" element={<Catalog />} />
