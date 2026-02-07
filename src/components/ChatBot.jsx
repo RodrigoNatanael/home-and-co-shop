@@ -1,78 +1,89 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { askSommelier } from '../services/ai';
-
-// SIN IMPORTACIONES DE ICONOS EXTERNOS (Para descartar errores)
+// Usamos emojis para no depender de librerías por ahora
+// Si querés íconos, descomentá los imports y cambialos abajo
 
 export default function ChatBot() {
+    useEffect(() => {
+        console.log("🤖 CHATBOT MONTADO Y LISTO PARA LA GUERRA");
+    }, []);
+
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { text: "¡Hola! Soy El Sommelier 🧉. ¿En qué te puedo ayudar hoy?", sender: 'bot' }
+        { text: "¡Hola! 🧉 Soy el Sommelier Virtual. ¿En qué te ayudo?", sender: 'bot' }
     ]);
-    const [inputText, setInputText] = useState("");
+    const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSend = async (e) => {
         e.preventDefault();
-        if (!inputText.trim()) return;
-
-        const userMessage = inputText;
-        setMessages(prev => [...prev, { text: userMessage, sender: 'user' }]);
-        setInputText("");
+        if (!input.trim()) return;
+        const userMsg = input;
+        setInput("");
+        setMessages(prev => [...prev, { text: userMsg, sender: 'user' }]);
         setIsLoading(true);
-
         try {
-            const response = await askSommelier(userMessage);
+            const response = await askSommelier(userMsg);
             setMessages(prev => [...prev, { text: response, sender: 'bot' }]);
         } catch (error) {
-            setMessages(prev => [...prev, { text: "¡Ups! Me quedé sin wifi. Probá de nuevo.", sender: 'bot' }]);
+            setMessages(prev => [...prev, { text: "Error de conexión 🔌", sender: 'bot' }]);
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        /* Z-INDEX EXTREMO Y COLOR ROJO DE FONDO TEMPORAL PARA VERLO SI O SI */
-        <div className="fixed bottom-24 right-4 z-[99999] font-sans flex flex-col items-end">
+        // ESTILOS EN LINEA para asegurar que NADA de Tailwind lo rompa
+        <div style={{
+            position: 'fixed',
+            bottom: '100px', // Un poco más arriba que WhatsApp
+            right: '20px',
+            zIndex: 9999999, // Z-index nuclear
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end'
+        }}>
 
-            {/* Ventana de Chat */}
             {isOpen && (
-                <div className="bg-white rounded-lg shadow-2xl w-80 border-2 border-black overflow-hidden mb-2">
+                <div className="bg-white border-2 border-black rounded-lg shadow-xl w-80 mb-4 overflow-hidden flex flex-col h-96">
                     <div className="bg-black text-white p-3 flex justify-between items-center">
-                        <span className="font-bold">🧉 Sommelier Home & Co</span>
-                        <button onClick={() => setIsOpen(false)} className="text-white font-bold text-xl px-2">×</button>
+                        <span className="font-bold">🧉 Sommelier</span>
+                        <button onClick={() => setIsOpen(false)} className="text-white font-bold">X</button>
                     </div>
-
-                    <div className="h-64 overflow-y-auto p-4 bg-gray-100 flex flex-col gap-2">
-                        {messages.map((msg, index) => (
-                            <div key={index} className={`p-2 rounded-lg text-sm max-w-[80%] ${msg.sender === 'user' ? 'bg-black text-white self-end' : 'bg-white text-black self-start border border-gray-300'
-                                }`}>
-                                {msg.text}
+                    <div className="flex-1 overflow-y-auto p-4 bg-gray-100 flex flex-col gap-2">
+                        {messages.map((m, i) => (
+                            <div key={i} className={`p-2 rounded max-w-[80%] text-sm ${m.sender === 'user' ? 'bg-black text-white self-end' : 'bg-white border self-start'}`}>
+                                {m.text}
                             </div>
                         ))}
-                        {isLoading && <div className="text-xs text-gray-500 animate-pulse">Escribiendo...</div>}
+                        {isLoading && <div className="text-xs text-gray-500">Escribiendo...</div>}
                     </div>
-
                     <form onSubmit={handleSend} className="p-2 border-t flex gap-2">
-                        <input
-                            value={inputText}
-                            onChange={(e) => setInputText(e.target.value)}
-                            placeholder="Preguntame algo..."
-                            className="flex-1 p-2 border rounded"
-                        />
-                        <button type="submit" className="bg-black text-white px-4 rounded font-bold">→</button>
+                        <input className="flex-1 border p-1 rounded" value={input} onChange={e => setInput(e.target.value)} placeholder="..." />
+                        <button type="submit" className="bg-black text-white px-3 rounded">→</button>
                     </form>
                 </div>
             )}
 
-            {/* BOTÓN FLOTANTE (SOLO EMOJI) */}
-            {!isOpen && (
-                <button
-                    onClick={() => setIsOpen(true)}
-                    className="bg-black text-white w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-3xl hover:scale-110 transition-transform border-2 border-white"
-                >
-                    🤖
-                </button>
-            )}
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                style={{
+                    backgroundColor: 'black',
+                    color: 'white',
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    fontSize: '30px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '2px solid white'
+                }}
+            >
+                {isOpen ? '❌' : '🤖'}
+            </button>
         </div>
     );
 }

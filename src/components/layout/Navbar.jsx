@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingCart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
 
-    // Only transparent on home page
+    // Solo transparente en la home
     const isHome = location.pathname === '/';
 
     useEffect(() => {
@@ -20,6 +19,7 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // Estilos dinámicos según scroll y ubicación
     const navBackground = isHome && !isScrolled
         ? 'bg-transparent text-white'
         : 'bg-white text-brand-dark shadow-md';
@@ -27,6 +27,8 @@ export default function Navbar() {
     const linkHover = isHome && !isScrolled
         ? 'hover:text-brand-accent'
         : 'hover:text-brand-accent';
+
+    const iconColor = isHome && !isScrolled ? 'text-white' : 'text-brand-dark';
 
     const links = [
         { name: 'Mates', path: '/catalog?category=Mates' },
@@ -40,13 +42,14 @@ export default function Navbar() {
             <div className="max-w-7xl mx-auto px-4 md:px-8">
                 <div className="flex items-center justify-between h-20">
 
-                    {/* Logo */}
-                    <Link to="/" className="font-display font-bold text-3xl tracking-tighter">
+                    {/* 1. LOGO */}
+                    <Link to="/" className="font-display font-bold text-3xl tracking-tighter z-50">
                         HOME & CO
                     </Link>
 
-                    {/* Desktop Menu */}
+                    {/* 2. MENU DESKTOP (Links + Botón + Carrito) */}
                     <div className="hidden md:flex items-center space-x-8">
+                        {/* Links */}
                         {links.map((link) => (
                             <Link
                                 key={link.name}
@@ -56,56 +59,75 @@ export default function Navbar() {
                                 {link.name}
                             </Link>
                         ))}
+
+                        {/* Botón WhatsApp */}
+                        <a
+                            href="https://wa.me/5492617523156?text=Hola! Quiero ver el catálogo actualizado de Home & Co"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-brand-accent text-white px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform"
+                        >
+                            PEDIR CATÁLOGO
+                        </a>
+
+                        {/* Carrito Desktop */}
+                        <Link to="/cart" className={`transition-colors ${linkHover}`}>
+                            <ShoppingCart size={24} />
+                        </Link>
                     </div>
 
-                    {/* Actions */}
-                    <a
-                        href="https://wa.me/5492617523156?text=Hola! Quiero ver el catálogo actualizado de Home & Co"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-brand-accent text-white px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform"
-                    >
-                        PEDIR CATÁLOGO
-                    </a>
-                    <Link to="/cart" className={linkHover}>
-                        <ShoppingCart size={24} />
-                    </Link>
-                </div>
+                    {/* 3. CONTROLES MOBILE (Carrito + Hamburguesa) */}
+                    <div className="md:hidden flex items-center gap-4 z-50">
+                        {/* Carrito visible en Mobile también */}
+                        <Link to="/cart" className={iconColor}>
+                            <ShoppingCart size={24} />
+                        </Link>
 
-                {/* Mobile Menu Button */}
-                <div className="md:hidden flex items-center gap-4">
-                    <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-                        {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-                    </button>
+                        {/* Botón Hamburguesa */}
+                        <button
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className={iconColor}
+                        >
+                            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                        </button>
+                    </div>
                 </div>
             </div>
 
-
-            {/* Mobile Menu Overlay */}
+            {/* 4. MENU MOBILE DESPLEGABLE */}
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <motion.div
                         initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
+                        animate={{ opacity: 1, height: '100vh' }} // Pantalla completa para mejor UX
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden bg-brand-dark text-white border-t border-brand-gray overflow-hidden"
+                        className="md:hidden absolute top-0 left-0 w-full bg-brand-dark text-white overflow-hidden flex flex-col pt-24 px-8"
                     >
-                        <div className="flex flex-col p-8 space-y-6">
+                        <div className="flex flex-col space-y-6">
                             {links.map((link) => (
                                 <Link
                                     key={link.name}
                                     to={link.path}
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="font-display font-bold text-2xl uppercase tracking-wider hover:text-brand-accent"
+                                    className="font-display font-bold text-2xl uppercase tracking-wider hover:text-brand-accent border-b border-gray-700 pb-2"
                                 >
                                     {link.name}
                                 </Link>
                             ))}
+
+                            {/* El botón de acción también en el menú móvil */}
+                            <a
+                                href="https://wa.me/5492617523156?text=Hola! Quiero ver el catálogo actualizado de Home & Co"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-brand-accent text-white text-center py-3 rounded-full font-bold text-lg mt-4"
+                            >
+                                PEDIR CATÁLOGO 📲
+                            </a>
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
-        </nav >
+        </nav>
     );
 }
-
