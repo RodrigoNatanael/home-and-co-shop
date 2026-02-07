@@ -98,6 +98,8 @@ export function CartProvider({ children }) {
                 discountAmount = currentTotal * 0.05;
             } else if (code === 'DESC1000') {
                 discountAmount = 1000;
+            } else if (code === 'MATERO10') {
+                discountAmount = currentTotal * 0.10;
             } else if (code === 'FREESHIP') {
                 // Handle freeship logic if needed, for now 0 monetary discount
                 discountAmount = 0;
@@ -108,6 +110,32 @@ export function CartProvider({ children }) {
                 label,
                 code
             });
+
+            // --- GIFT LOGIC ---
+            if (code.startsWith('GIFT_') || code === 'REGALO') {
+                const giftId = `gift-${code}`;
+                const hasGift = cart.some(item => item.id === giftId);
+
+                if (!hasGift) {
+                    // Prevent infinite loop: We only add if not present
+                    // We need to use setCart directly or addToCart but be careful of dependencies
+                    // Since this effect depends on [cart], calling setCart will re-trigger it
+                    // But hasGift check prevents infinite loop.
+
+                    const giftItem = {
+                        id: giftId,
+                        name: `PREMIO RULETA: ${label}`,
+                        price: 0,
+                        quantity: 1,
+                        image_url: 'https://cdn-icons-png.flaticon.com/512/3209/3209955.png', // Generic Gift Icon
+                        selectedColor: 'Único'
+                    };
+
+                    // We can't use addToCart easily because it opens the drawer. We just want to add it silently?
+                    // Or maybe silently.
+                    setCart(prev => [...prev, giftItem]);
+                }
+            }
         };
 
         // Check immediately and then every second
