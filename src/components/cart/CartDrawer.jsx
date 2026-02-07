@@ -190,8 +190,8 @@ export default function CartDrawer() {
             <LeadCaptureModal
                 isOpen={isCheckoutModalOpen}
                 onClose={() => setIsCheckoutModalOpen(false)}
-                cartTotal={cartTotal}
-                cartItems={cart}
+                cartTotal={cartTotal || 0}
+                cartItems={cart || []}
                 discountInfo={discountInfo}
             />
         </>

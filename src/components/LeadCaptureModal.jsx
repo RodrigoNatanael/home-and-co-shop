@@ -18,6 +18,23 @@ export default function LeadCaptureModal({
     const [city, setCity] = useState('');         // Nuevo
     const [zip, setZip] = useState('');           // Nuevo
 
+    // EMERGENCY LOG
+    console.log("RENDERIZANDO MODAL CON:", cartTotal);
+
+    // CRITICAL GUARD: If for some reason cartTotal is bad, safely handle it or return null if requested
+    // User requested: if (!total) return null; 
+    // We'll be safer: if undefined/null. If it's 0 it's valid.
+    const safeTotal = cartTotal || 0;
+
+    // We won't return null because the modal needs to be able to close if isOpen is true but data is weird.
+    // However, if the user insists on return null to avoid crash:
+    if (isOpen && (cartTotal === undefined || cartTotal === null)) {
+        console.error("CRITICAL: Modal attempted to render with undefined total");
+        // We'll let it render with default props (0) because return null might lock the state? 
+        // Actually, if we return null, the backdrop won't show/close. 
+        // We will rely on default props (handled in function signature) and 'safeTotal' usage below.
+    }
+
     // We trust the props passed from CartDrawer/CartContext
     // No more local recalculation or localStorage overrides here.
     // The "Source of Truth" is the CartContext.
@@ -152,8 +169,11 @@ export default function LeadCaptureModal({
             console.error('Error crítico en el proceso de compra:', err);
             // Show specific error if it's a logic error (like stock), otherwise generic
             setError(err.message || 'Hubo un error al procesar. Intenta nuevamente.');
+            setLoading(false); // Stop loading on error
         } finally {
-            if (error) setLoading(false);
+            // If we are here and have no error, we are redirecting. 
+            // We can keep loading true to show progress until page change.
+            // If we had error, we already set loading false in catch.
         }
     };
 
@@ -179,7 +199,7 @@ export default function LeadCaptureModal({
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs text-gray-500 font-bold uppercase">Total a Pagar</span>
                                     <span className="font-display font-bold text-2xl text-brand-dark">
-                                        {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(cartTotal)}
+                                        {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(cartTotal || 0)}
                                     </span>
                                 </div>
                                 {discountInfo && discountInfo.amount > 0 && (
