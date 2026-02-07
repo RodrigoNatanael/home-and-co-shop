@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2, Lock, MapPin, Phone } from 'lucide-react'; // Agregamos iconos
 import { supabase } from '../supabaseclient';
 
-export default function LeadCaptureModal({ isOpen, onClose, cartItems }) {
+export default function LeadCaptureModal({ isOpen, onClose, cartItems, cartTotal, discountInfo }) {
     // Estados para datos personales y de envío
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -12,101 +12,30 @@ export default function LeadCaptureModal({ isOpen, onClose, cartItems }) {
     const [city, setCity] = useState('');         // Nuevo
     const [zip, setZip] = useState('');           // Nuevo
 
-    // Local Calculation State
-    const [localTotalData, setLocalTotalData] = useState({ total: 0, subtotal: 0, discount: 0, code: '' });
-
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    // We trust the props passed from CartDrawer/CartContext
+    // No more local recalculation or localStorage overrides here.
+    // The "Source of Truth" is the CartContext.
 
     React.useEffect(() => {
-        if (!isOpen) return;
-
-        // 1. Calculate Subtotal from Items
-        const rawSubtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-
-        // 2. Check LocalStorage for Coupon (FORCED CHECK)
-        // We ignore any passed props for discount and check directly
-        const code = localStorage.getItem('wheel_prize_code');
-        const expiry = localStorage.getItem('wheel_won_expiry');
-        // label is display only
-
-        let discountAmount = 0;
-        let activeCode = '';
-
-        // Validate Expiry if it exists
-        const isExpired = expiry && Date.now() > parseInt(expiry);
-
-        if (code && !isExpired) {
-            activeCode = code;
-            if (code === 'HOME10') {
-                discountAmount = rawSubtotal * 0.10;
-            } else if (code === 'HOME5') {
-                discountAmount = rawSubtotal * 0.05;
-            } else if (code === 'DESC1000') {
-                discountAmount = 1000;
-            } else if (code === 'FREESHIP') {
-                // Free ship logic might be handled elsewhere (unit_price is product cost)
-                // For now, no product discount
-                discountAmount = 0;
-            }
+        if (isOpen) {
+            console.log("--- MODAL OPENED ---");
+            console.log("MONTO RECIBIDO (PROPS):", cartTotal);
         }
-
-        const finalTotal = Math.max(0, rawSubtotal - discountAmount);
-
-        setLocalTotalData({
-            subtotal: rawSubtotal,
-            discount: discountAmount,
-            total: finalTotal,
-            code: activeCode
-        });
-
-        console.log(`MODAL TOTAL: ${finalTotal}`); // Specific log requested
-        console.log("--- MODAL CALCULATION (FORCED) ---");
-        console.log("Subtotal:", rawSubtotal);
-        console.log("Found Code:", code);
-        console.log("Calculated Discount:", discountAmount);
-
-    }, [isOpen, cartItems]);
-    // ----------------------------------------------------
+    }, [isOpen, cartTotal]);
 
     const handlePurchase = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
-        const finalPriceToSend = Math.round(localTotalData.total);
+        // USE THE PROP DIRECTLY
+        const finalPriceToSend = Math.round(cartItems.length > 0 ? cartTotal : 0);
 
-        // --- HARDCODE VERIFICATION ---
         console.log("--- ENVIANDO A MP ---");
-        console.log("Monto Final:", finalPriceToSend);
-        // alert(`ENVIANDO A MP: $${finalPriceToSend}`); // Uncomment to debug alert
-        // -----------------------------
+        console.log("MONTO MODAL:", finalPriceToSend);
 
         try {
-
-            // 1. Limpieza del precio (CÁLCULO FINAL FORZADO)
-            // Recalculamos el total aquí mismo para asegurarnos de que el descuento se aplique
-            const rawSubtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-            const savedCode = localStorage.getItem('wheel_prize_code');
-            const savedExpiry = localStorage.getItem('wheel_won_expiry');
-
-            let forcedDiscount = 0;
-            const isExpired = savedExpiry && Date.now() > parseInt(savedExpiry);
-
-            if (savedCode && !isExpired) {
-                if (savedCode === 'HOME10') forcedDiscount = rawSubtotal * 0.10;
-                else if (savedCode === 'HOME5') forcedDiscount = rawSubtotal * 0.05;
-                else if (savedCode === 'DESC1000') forcedDiscount = 1000;
-                // Add MATERO10 as requested example? Assuming HOME10/MATERO10 map to 10%
-                else if (savedCode === 'MATERO10') forcedDiscount = rawSubtotal * 0.10;
-            }
-
-            const finalCalculatedTotal = Math.round(Math.max(0, rawSubtotal - forcedDiscount));
-
-            console.log(`💸 PRECIO FINAL A MERCADO PAGO: ${finalCalculatedTotal} (Desc: ${forcedDiscount})`);
-
-            const unit_price = finalCalculatedTotal;
-            const discount_clean = Math.round(forcedDiscount);
+            const unit_price = finalPriceToSend;
 
             if (!unit_price || isNaN(unit_price) || unit_price < 0) throw new Error("Precio inválido");
 
@@ -244,16 +173,16 @@ export default function LeadCaptureModal({ isOpen, onClose, cartItems }) {
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs text-gray-500 font-bold uppercase">Total a Pagar</span>
                                     <span className="font-display font-bold text-2xl text-brand-dark">
-                                        {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(localTotalData.total)}
+                                        {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(cartTotal)}
                                     </span>
                                 </div>
-                                {localTotalData.discount > 0 && (
+                                {discountInfo && discountInfo.amount > 0 && (
                                     <div className="flex justify-between items-center mt-1 border-t border-gray-200 pt-1">
                                         <span className="text-[10px] text-green-600 font-bold uppercase flex items-center gap-1">
-                                            <Lock size={10} /> Descuento aplicado ({localTotalData.code})
+                                            <Lock size={10} /> Descuento aplicado ({discountInfo.code})
                                         </span>
                                         <span className="text-xs font-bold text-green-600">
-                                            - {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(localTotalData.discount)}
+                                            - {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(discountInfo.amount)}
                                         </span>
                                     </div>
                                 )}
