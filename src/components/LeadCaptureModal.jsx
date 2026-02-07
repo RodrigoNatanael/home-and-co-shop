@@ -84,9 +84,29 @@ export default function LeadCaptureModal({ isOpen, onClose, cartItems }) {
 
         try {
 
-            // 1. Limpieza del precio (Usamos el calculado localmente)
-            const unit_price = Math.round(localTotalData.total);
-            const discount_clean = Math.round(localTotalData.discount);
+            // 1. Limpieza del precio (CÁLCULO FINAL FORZADO)
+            // Recalculamos el total aquí mismo para asegurarnos de que el descuento se aplique
+            const rawSubtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+            const savedCode = localStorage.getItem('wheel_prize_code');
+            const savedExpiry = localStorage.getItem('wheel_won_expiry');
+
+            let forcedDiscount = 0;
+            const isExpired = savedExpiry && Date.now() > parseInt(savedExpiry);
+
+            if (savedCode && !isExpired) {
+                if (savedCode === 'HOME10') forcedDiscount = rawSubtotal * 0.10;
+                else if (savedCode === 'HOME5') forcedDiscount = rawSubtotal * 0.05;
+                else if (savedCode === 'DESC1000') forcedDiscount = 1000;
+                // Add MATERO10 as requested example? Assuming HOME10/MATERO10 map to 10%
+                else if (savedCode === 'MATERO10') forcedDiscount = rawSubtotal * 0.10;
+            }
+
+            const finalCalculatedTotal = Math.round(Math.max(0, rawSubtotal - forcedDiscount));
+
+            console.log(`💸 PRECIO FINAL A MERCADO PAGO: ${finalCalculatedTotal} (Desc: ${forcedDiscount})`);
+
+            const unit_price = finalCalculatedTotal;
+            const discount_clean = Math.round(forcedDiscount);
 
             if (!unit_price || isNaN(unit_price) || unit_price < 0) throw new Error("Precio inválido");
 

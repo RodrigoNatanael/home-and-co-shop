@@ -1548,7 +1548,7 @@ export default function AdminPanel() {
                                                 <td className="p-3 text-gray-500 text-xs">
                                                     {new Date(lead.created_at).toLocaleDateString()} {new Date(lead.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </td>
-                                                <td className="p-3 font-bold">{lead.name}</td>
+                                                <td className="p-3 font-bold">{lead.full_name || lead.name}</td>
                                                 <td className="p-3 font-mono">{lead.whatsapp}</td>
                                                 <td className="p-3">
                                                     <span className={`text-xs font-bold px-2 py-1 rounded ${lead.prize_won === 'Sigue Participando' || lead.prize_won === 'NO_PRIZE' ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700'}`}>
