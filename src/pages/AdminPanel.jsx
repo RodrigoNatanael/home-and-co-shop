@@ -1312,7 +1312,7 @@ export default function AdminPanel() {
                                     <p className="text-xs text-gray-500 font-bold uppercase mb-1 flex items-center gap-1"><ShoppingBag size={12} /> Manual</p>
                                     <p className="text-2xl font-bold text-purple-700">
                                         {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
-                                            allSales.filter(s => s.origin === 'MANUAL').reduce((acc, s) => acc + (sale.paid || 0), 0)
+                                            allSales.filter(s => s.origin === 'MANUAL').reduce((acc, s) => acc + (s.paid || 0), 0)
                                         )}
                                     </p>
                                 </div>
@@ -1347,6 +1347,7 @@ export default function AdminPanel() {
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                             <div className="p-4 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
                                 <h2 className="font-bold">Historial Unificado de Ventas</h2>
+                                {console.log("Cargando ventas (Render):", allSales)}
 
                                 {/* SEARCH BAR */}
                                 <div className="relative w-full md:w-64">
