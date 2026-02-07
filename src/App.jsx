@@ -18,81 +18,85 @@ import CartDrawer from './components/cart/CartDrawer';
 import WhatsAppButton from './components/ui/WhatsAppButton';
 import LuckyWheel from './components/marketing/LuckyWheel';
 import UrgencyBanner from './components/ui/UrgencyBanner';
-import ChatBot from './components/ChatBot'; // <--- Chequeá que la ruta sea correcta
+import ChatBot from './components/ChatBot';
 
-// Wrapper para manejar el Layout (Navbar, Footer, etc.)
+// 1. Wrapper del Layout (Navbar, Footer, etc.)
 function Layout({ children }) {
   const location = useLocation();
   const isAdminPanel = location.pathname.startsWith('/admin-home-co');
 
   return (
     <div className="flex flex-col min-h-screen relative">
+      {/* Elementos Públicos */}
       {!isAdminPanel && <Navbar />}
       {!isAdminPanel && <CartDrawer />}
       {!isAdminPanel && <UrgencyBanner />}
 
+      {/* Contenido Principal */}
       <main className="flex-grow">
         {children}
       </main>
 
+      {/* Footer y Elementos Flotantes (Menos Chatbot) */}
       {!isAdminPanel && (
         <>
           <WhatsAppButton />
           <LuckyWheel />
-          {/* EL CHATBOT YA NO ESTÁ ACÁ ADENTRO */}
           <Footer />
         </>
-
-      );
+      )}
+    </div>
+  );
 }
 
-      // Componente para detectar ruta y ocultar Chatbot en Admin
-      // (Este "Wrapper" lo controla desde afuera del Layout)
-      function ChatBotWrapper() {
+// 2. Wrapper Especial para el ChatBot (Fuera del Layout)
+function ChatBotWrapper() {
   const location = useLocation();
-      const isAdminPanel = location.pathname.startsWith('/admin-home-co');
+  const isAdminPanel = location.pathname.startsWith('/admin-home-co');
 
-      if (isAdminPanel) return null; // No mostrar en Admin
-      return <ChatBot />;
+  // Si estamos en Admin, no renderizamos nada
+  if (isAdminPanel) return null;
+
+  // Si estamos en la pública, mostramos el Chatbot
+  return <ChatBot />;
 }
 
-      function ScrollToTop() {
-  const {pathname} = useLocation();
-  React.useEffect(() => {window.scrollTo(0, 0); }, [pathname]);
-      return null;
+// 3. Función auxiliar para Scroll
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  React.useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
 }
 
-      function App() {
+// 4. Componente Principal APP
+function App() {
   return (
-      <CartProvider>
-        <Router>
-          <ScrollToTop />
+    <CartProvider>
+      <Router>
+        <ScrollToTop />
 
-          {/* El Layout maneja el contenido normal */}
-          <Layout>
-            <div className="fixed top-0 left-0 w-full bg-red-600 text-white text-center font-bold z-[9999999] p-2">
-              VERSIÓN DEBUG 5.0 - SI VES ESTO, EL DEPLOY FUNCIONA
-            </div>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/catalog" element={<Catalog />} />
-              <Route path="/product/:id" element={<ProductDetail />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/envios" element={<Shipping />} />
-              <Route path="/privacidad" element={<Privacy />} />
-              <Route path="/terminos" element={<Terms />} />
-              <Route path="/compra-exitosa" element={<Success />} />
-              <Route path="/admin-home-co/*" element={<AdminPanel />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
+        {/* Layout envuelve las rutas */}
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/catalog" element={<Catalog />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/envios" element={<Shipping />} />
+            <Route path="/privacidad" element={<Privacy />} />
+            <Route path="/terminos" element={<Terms />} />
+            <Route path="/compra-exitosa" element={<Success />} />
+            <Route path="/admin-home-co/*" element={<AdminPanel />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Layout>
 
-          {/* EL CHATBOT ESTÁ ACÁ: LIBRE Y FLOTANDO SOBRE TODO */}
-          <ChatBotWrapper />
+        {/* ChatBot afuera del Layout para evitar conflictos de CSS */}
+        <ChatBotWrapper />
 
-        </Router>
-      </CartProvider>
-      );
+      </Router>
+    </CartProvider>
+  );
 }
 
-      export default App;
+export default App;
