@@ -10,6 +10,9 @@ export default function LeadCaptureModal({
     cartTotal = 0,
     discountInfo = { amount: 0, code: '' }
 }) {
+    // 1. HARDCODE FALLBACK (Super Safe)
+    const safeTotal = (typeof cartTotal === 'number' && !isNaN(cartTotal)) ? cartTotal : 0;
+
     // Estados para datos personales y de envío
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -18,15 +21,13 @@ export default function LeadCaptureModal({
     const [city, setCity] = useState('');         // Nuevo
     const [zip, setZip] = useState('');           // Nuevo
 
+    const [loading, setLoading] = useState(false);
+    const [submitError, setSubmitError] = useState(null); // RENAMED FROM 'error'
+
     // EMERGENCY LOG
-    console.log("RENDERIZANDO MODAL CON:", cartTotal);
+    console.log("RENDERIZANDO MODAL CON:", safeTotal);
 
-    // CRITICAL GUARD: If for some reason cartTotal is bad, safely handle it or return null if requested
-    // User requested: if (!total) return null; 
-    // We'll be safer: if undefined/null. If it's 0 it's valid.
-    const safeTotal = cartTotal || 0;
-
-    // We won't return null because the modal needs to be able to close if isOpen is true but data is weird.
+    // We trust the props passed from CartDrawer/CartContext
     // However, if the user insists on return null to avoid crash:
     if (isOpen && (cartTotal === undefined || cartTotal === null)) {
         console.error("CRITICAL: Modal attempted to render with undefined total");
@@ -165,15 +166,13 @@ export default function LeadCaptureModal({
                 throw new Error("No se recibió la URL de pago de Mercado Pago.");
             }
 
-        } catch (error) {
-            console.error('Error crítico en el proceso de compra:', error);
+        } catch (err) {
+            console.error('Error crítico en el proceso de compra:', err);
             // Show specific error if it's a logic error (like stock), otherwise generic
-            setError(error.message || 'Hubo un error al procesar. Intenta nuevamente.');
+            setSubmitError(err.message || 'Hubo un error al procesar. Intenta nuevamente.');
             setLoading(false); // Stop loading on error
         } finally {
-            // If we are here and have no error, we are redirecting. 
-            // We can keep loading true to show progress until page change.
-            // If we had error, we already set loading false in catch.
+            // Clean up
         }
     };
 
@@ -199,7 +198,7 @@ export default function LeadCaptureModal({
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs text-gray-500 font-bold uppercase">Total a Pagar</span>
                                     <span className="font-display font-bold text-2xl text-brand-dark">
-                                        {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(cartTotal || 0)}
+                                        {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(safeTotal)}
                                     </span>
                                 </div>
                                 {discountInfo && discountInfo.amount > 0 && (
@@ -239,7 +238,7 @@ export default function LeadCaptureModal({
                                     <input type="text" required value={zip} onChange={e => setZip(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 focus:border-brand-dark outline-none text-sm" placeholder="Código Postal" />
                                 </div>
 
-                                {error && <div className="text-red-500 text-xs bg-red-50 p-2">{error}</div>}
+                                {submitError && <div className="text-red-500 text-xs bg-red-50 p-2">{submitError}</div>}
 
                                 <button type="submit" disabled={loading} className="w-full mt-4 bg-brand-dark text-white py-3 font-bold text-lg uppercase flex justify-center items-center gap-2 hover:bg-black transition-all shadow-lg">
                                     {loading ? <Loader2 className="animate-spin" /> : "IR A PAGAR"}
