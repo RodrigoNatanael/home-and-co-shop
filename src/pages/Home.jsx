@@ -110,86 +110,46 @@ export default function Home() {
             {/* Featured Categories (Dynamic Video - Background Only) */}
             <section className="py-0">
                 <div className="grid grid-cols-1 md:grid-cols-3">
-                    {/* Category 1 */}
-                    <Link to={config?.cat1_link || '/catalog'} className="group relative h-[500px] block overflow-hidden">
-                        {/* Background Video Layer (Z-0) */}
-                        <div className="absolute inset-0 z-0 bg-gray-900">
-                            {config?.cat1_img ? (
-                                <video
-                                    src={config.cat1_img}
-                                    className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105"
-                                    autoPlay loop muted playsInline
-                                    style={{ pointerEvents: 'none' }}
-                                />
-                            ) : (
-                                <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1616422838323-95e263c9b78e?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70" />
-                            )}
-                        </div>
+                    {[1, 2, 3].map(num => {
+                        // Helper variables for cleaner JSX
+                        const link = config?.[`cat${num}_link`] || '/catalog';
+                        const videoUrl = config?.[`cat${num}_img`];
+                        const title = config?.[`cat${num}_title`] || `CATEGORÍA ${num}`;
 
-                        {/* Gradient Overlay Layer (Z-10) */}
-                        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none transition-opacity" />
+                        return (
+                            <Link key={num} to={link} className="group relative h-[500px] block overflow-hidden bg-gray-900">
+                                {/* Layer 0: Background Video (Strictly Background) */}
+                                <div className="absolute inset-0 z-0">
+                                    {videoUrl ? (
+                                        <video
+                                            src={videoUrl}
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                            autoPlay
+                                            loop
+                                            muted
+                                            playsInline
+                                            style={{ pointerEvents: 'none' }}
+                                        />
+                                    ) : (
+                                        // Fallback ONLY if no video is configured (maintain layout)
+                                        <div className="w-full h-full bg-gray-800 flex items-center justify-center pointer-events-none">
+                                            <span className="text-gray-700 font-bold text-4xl opacity-20">VIDEO</span>
+                                        </div>
+                                    )}
+                                </div>
 
-                        {/* Content Layer (Z-20) */}
-                        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
-                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-2xl">
-                                {config?.cat1_title || 'Mates'}
-                            </h2>
-                        </div>
-                    </Link>
+                                {/* Layer 1: Gradient Overlay (Contrast) */}
+                                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 pointer-events-none" />
 
-                    {/* Category 2 */}
-                    <Link to={config?.cat2_link || '/catalog'} className="group relative h-[500px] block overflow-hidden">
-                        {/* Background Video Layer (Z-0) */}
-                        <div className="absolute inset-0 z-0 bg-gray-900">
-                            {config?.cat2_img ? (
-                                <video
-                                    src={config.cat2_img}
-                                    className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105"
-                                    autoPlay loop muted playsInline
-                                    style={{ pointerEvents: 'none' }}
-                                />
-                            ) : (
-                                <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1605152276897-4f618f831968?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70" />
-                            )}
-                        </div>
-
-                        {/* Gradient Overlay Layer (Z-10) */}
-                        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none transition-opacity" />
-
-                        {/* Content Layer (Z-20) */}
-                        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
-                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-2xl">
-                                {config?.cat2_title || 'Hidratación'}
-                            </h2>
-                        </div>
-                    </Link>
-
-                    {/* Category 3 */}
-                    <Link to={config?.cat3_link || '/catalog'} className="group relative h-[500px] block overflow-hidden">
-                        {/* Background Video Layer (Z-0) */}
-                        <div className="absolute inset-0 z-0 bg-gray-900">
-                            {config?.cat3_img ? (
-                                <video
-                                    src={config.cat3_img}
-                                    className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105"
-                                    autoPlay loop muted playsInline
-                                    style={{ pointerEvents: 'none' }}
-                                />
-                            ) : (
-                                <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70" />
-                            )}
-                        </div>
-
-                        {/* Gradient Overlay Layer (Z-10) */}
-                        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none transition-opacity" />
-
-                        {/* Content Layer (Z-20) */}
-                        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
-                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-2xl">
-                                {config?.cat3_title || 'Coolers'}
-                            </h2>
-                        </div>
-                    </Link>
+                                {/* Layer 2: Text Content (Clickable? No, parent Link handles click. Visual only) */}
+                                <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+                                    <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-2xl">
+                                        {title}
+                                    </h2>
+                                </div>
+                            </Link>
+                        );
+                    })}
                 </div>
             </section>
 
