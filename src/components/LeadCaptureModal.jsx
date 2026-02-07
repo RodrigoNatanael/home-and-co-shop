@@ -3,7 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2, Lock, MapPin, Phone } from 'lucide-react'; // Agregamos iconos
 import { supabase } from '../supabaseclient';
 
-export default function LeadCaptureModal({ isOpen, onClose, cartItems, cartTotal, discountInfo }) {
+export default function LeadCaptureModal({
+    isOpen,
+    onClose,
+    cartItems = [],
+    cartTotal = 0,
+    discountInfo = { amount: 0, code: '' }
+}) {
     // Estados para datos personales y de envío
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');

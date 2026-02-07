@@ -165,7 +165,13 @@ export default function CartDrawer() {
                                     <Button
                                         size="lg"
                                         className="w-full text-lg h-16 flex justify-between items-center px-8"
-                                        onClick={() => setIsCheckoutModalOpen(true)}
+                                        onClick={() => {
+                                            console.log("Datos pasando al modal:", {
+                                                cartTotal,
+                                                cartItemsLength: cart.length
+                                            });
+                                            setIsCheckoutModalOpen(true);
+                                        }}
                                     >
                                         <span>FINALIZAR COMPRA</span>
                                         <Lock size={20} />
