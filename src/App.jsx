@@ -18,23 +18,35 @@ import CartDrawer from './components/cart/CartDrawer';
 import WhatsAppButton from './components/ui/WhatsAppButton';
 import LuckyWheel from './components/marketing/LuckyWheel';
 import UrgencyBanner from './components/ui/UrgencyBanner';
-import ChatBot from './components/ChatBot';
+import ChatBot from './components/ChatBot'; // Importación correcta
 
-// Wrapper para manejar el Layout de la página
+// Wrapper inteligente para manejar qué se ve y qué no
 function Layout({ children }) {
   const location = useLocation();
+  // Detectamos si estamos en CUALQUIER parte del panel de admin
   const isAdminPanel = location.pathname.startsWith('/admin-home-co');
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      <CartDrawer />
-      <WhatsAppButton />
+    <div className="flex flex-col min-h-screen relative">
+      {/* 1. Elementos Públicos (Se ocultan en Admin) */}
+      {!isAdminPanel && <Navbar />}
+      {!isAdminPanel && <CartDrawer />}
+      {!isAdminPanel && <UrgencyBanner />}
+
+      {/* 2. Contenido Principal (Las Páginas) */}
       <main className="flex-grow">
         {children}
       </main>
-      {!isAdminPanel && <ChatBot />}
-      <Footer />
+
+      {/* 3. Elementos Flotantes y Footer (Se ocultan en Admin) */}
+      {!isAdminPanel && (
+        <>
+          <WhatsAppButton />
+          <LuckyWheel />
+          <ChatBot /> {/* Aquí está el Chatbot */}
+          <Footer />
+        </>
+      )}
     </div>
   );
 }
@@ -69,14 +81,12 @@ function App() {
             <Route path="/terminos" element={<Terms />} />
             <Route path="/compra-exitosa" element={<Success />} />
 
-            {/* Panel de Administración (Ubicado antes del NotFound) */}
-            <Route path="/admin-home-co" element={<AdminPanel />} />
+            {/* Panel de Administración */}
+            <Route path="/admin-home-co/*" element={<AdminPanel />} />
 
-            {/* El comodín "*" SIEMPRE debe ir al final */}
+            {/* El comodín "*" SIEMPRE al final */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-          <LuckyWheel />
-          <UrgencyBanner />
         </Layout>
       </Router>
     </CartProvider>
