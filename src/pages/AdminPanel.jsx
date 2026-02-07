@@ -904,9 +904,13 @@ export default function AdminPanel() {
                                     <div className="space-y-3">
                                         <input type="text" name="cat1_title" value={siteConfig.cat1_title} onChange={handleConfigChange} placeholder="Título" className="w-full border p-2 rounded text-sm" />
                                         <input type="text" name="cat1_link" value={siteConfig.cat1_link} onChange={handleConfigChange} placeholder="Link (/catalog?...)" className="w-full border p-2 rounded text-sm" />
-                                        <input type="text" name="cat1_img" value={siteConfig.cat1_img} onChange={handleConfigChange} placeholder="URL Imagen" className="w-full border p-2 rounded text-sm" />
+                                        <input type="text" name="cat1_img" value={siteConfig.cat1_img} onChange={handleConfigChange} placeholder="URL Video (MP4)" className="w-full border p-2 rounded text-sm" />
                                     </div>
-                                    {siteConfig.cat1_img && <img src={siteConfig.cat1_img} alt="Preview" className="mt-2 w-full h-24 object-cover rounded" />}
+                                    {siteConfig.cat1_img && (
+                                        <div className="mt-2 w-full h-24 bg-black rounded overflow-hidden">
+                                            <video src={siteConfig.cat1_img} className="w-full h-full object-cover" muted loop autoPlay />
+                                        </div>
+                                    )}
                                 </div>
                                 {/* Cat 2 */}
                                 <div className="bg-gray-50 p-4 rounded border">
@@ -914,9 +918,13 @@ export default function AdminPanel() {
                                     <div className="space-y-3">
                                         <input type="text" name="cat2_title" value={siteConfig.cat2_title} onChange={handleConfigChange} placeholder="Título" className="w-full border p-2 rounded text-sm" />
                                         <input type="text" name="cat2_link" value={siteConfig.cat2_link} onChange={handleConfigChange} placeholder="Link (/catalog?...)" className="w-full border p-2 rounded text-sm" />
-                                        <input type="text" name="cat2_img" value={siteConfig.cat2_img} onChange={handleConfigChange} placeholder="URL Imagen" className="w-full border p-2 rounded text-sm" />
+                                        <input type="text" name="cat2_img" value={siteConfig.cat2_img} onChange={handleConfigChange} placeholder="URL Video (MP4)" className="w-full border p-2 rounded text-sm" />
                                     </div>
-                                    {siteConfig.cat2_img && <img src={siteConfig.cat2_img} alt="Preview" className="mt-2 w-full h-24 object-cover rounded" />}
+                                    {siteConfig.cat2_img && (
+                                        <div className="mt-2 w-full h-24 bg-black rounded overflow-hidden">
+                                            <video src={siteConfig.cat2_img} className="w-full h-full object-cover" muted loop autoPlay />
+                                        </div>
+                                    )}
                                 </div>
                                 {/* Cat 3 */}
                                 <div className="bg-gray-50 p-4 rounded border">
@@ -924,9 +932,13 @@ export default function AdminPanel() {
                                     <div className="space-y-3">
                                         <input type="text" name="cat3_title" value={siteConfig.cat3_title} onChange={handleConfigChange} placeholder="Título" className="w-full border p-2 rounded text-sm" />
                                         <input type="text" name="cat3_link" value={siteConfig.cat3_link} onChange={handleConfigChange} placeholder="Link (/catalog?...)" className="w-full border p-2 rounded text-sm" />
-                                        <input type="text" name="cat3_img" value={siteConfig.cat3_img} onChange={handleConfigChange} placeholder="URL Imagen" className="w-full border p-2 rounded text-sm" />
+                                        <input type="text" name="cat3_img" value={siteConfig.cat3_img} onChange={handleConfigChange} placeholder="URL Video (MP4)" className="w-full border p-2 rounded text-sm" />
                                     </div>
-                                    {siteConfig.cat3_img && <img src={siteConfig.cat3_img} alt="Preview" className="mt-2 w-full h-24 object-cover rounded" />}
+                                    {siteConfig.cat3_img && (
+                                        <div className="mt-2 w-full h-24 bg-black rounded overflow-hidden">
+                                            <video src={siteConfig.cat3_img} className="w-full h-full object-cover" muted loop autoPlay />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
