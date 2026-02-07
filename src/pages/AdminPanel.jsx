@@ -94,16 +94,17 @@ export default function AdminPanel() {
         cat3_title: ''
     });
 
+    const [availableCategories, setAvailableCategories] = useState([]);
+
     useEffect(() => {
         fetchProducts();
         fetchBanners();
         fetchCombos();
         fetchManualSales();
         fetchAllSales(); // Unified Fetch
-        fetchManualSales();
-        fetchAllSales(); // Unified Fetch
         fetchWheelData();
         fetchSiteConfig();
+        fetchUniqueCategories();
     }, []);
 
     // Refresh Wheel/Config Data when tab becomes active
@@ -124,6 +125,27 @@ export default function AdminPanel() {
             });
             setSiteConfig(newConfig);
         }
+    };
+
+    const fetchUniqueCategories = async () => {
+        const { data, error } = await supabase
+            .from('products')
+            .select('category');
+
+        if (data) {
+            // Extract unique categories
+            const unique = [...new Set(data.map(item => item.category))].filter(Boolean);
+            setAvailableCategories(unique);
+        }
+    };
+
+    const handleCategorySelect = (e, catPrefix) => {
+        const selectedCategory = e.target.value;
+        setSiteConfig(prev => ({
+            ...prev,
+            [`${catPrefix}_title`]: selectedCategory,
+            [`${catPrefix}_link`]: `/catalog?category=${selectedCategory}`
+        }));
     };
 
     const handleConfigChange = (e) => {
@@ -898,36 +920,6 @@ export default function AdminPanel() {
                                 <Palette size={20} className="text-blue-600" /> Categorías Destacadas
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                const [availableCategories, setAvailableCategories] = useState([]);
-
-    useEffect(() => {
-                                    fetchProducts();
-                                fetchSiteConfig();
-                                fetchUniqueCategories();
-    }, []);
-
-    const fetchUniqueCategories = async () => {
-        const {data, error} = await supabase
-                                .from('products')
-                                .select('category');
-
-                                if (data) {
-            // Extract unique categories
-            const unique = [...new Set(data.map(item => item.category))].filter(Boolean);
-                                setAvailableCategories(unique);
-        }
-    };
-
-    // ... (existing functions)
-
-    const handleCategorySelect = (e, catPrefix) => {
-        const selectedCategory = e.target.value;
-        setSiteConfig(prev => ({
-                                    ...prev,
-                                    [`${catPrefix}_title`]: selectedCategory,
-                                [`${catPrefix}_link`]: `/catalog?category=${selectedCategory}`
-        }));
-    };
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     {[1, 2, 3].map(num => (
@@ -1722,6 +1714,7 @@ export default function AdminPanel() {
                                 </div>
                             </div>
                         )}
+
 
                         {/* --- CONTENT: RULETA --- */}
                         {activeTab === 'wheel' && (
