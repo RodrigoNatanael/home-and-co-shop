@@ -810,13 +810,96 @@ export default function AdminPanel() {
         else fetchCombos();
     };
 
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // ... (existing helper function usually here, but state is top level)
+
+    // Helper to close menu when selecting a tab on mobile
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        if (tab === 'all_sales') {
+            const count = allSales.length;
+            localStorage.setItem('admin_seen_count', count.toString());
+            setNewSalesCount(0);
+        }
+        setIsMobileMenuOpen(false);
+    };
+
     return (
-        <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 md:px-8">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex justify-between items-center mb-8 border-b pb-4">
+        <div className="min-h-screen bg-gray-50 pb-12">
+            {/* --- MOBILE HEADER (Sticky) --- */}
+            <div className="md:hidden sticky top-0 z-50 bg-white border-b shadow-sm p-4 flex justify-between items-center">
+                <h1 className="font-display font-bold text-xl text-gray-800">Panel Admin</h1>
+                <button
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg focus:outline-none"
+                    aria-label="Toggle Menu"
+                >
+                    {isMobileMenuOpen ? <Trash2 size={24} className="rotate-45" /> : <div className="space-y-1.5"><span className="block w-6 h-0.5 bg-gray-800"></span><span className="block w-6 h-0.5 bg-gray-800"></span><span className="block w-6 h-0.5 bg-gray-800"></span></div>}
+                </button>
+            </div>
+
+            {/* --- MOBILE MENU OVERLAY (Drawer) --- */}
+            {isMobileMenuOpen && (
+                <div className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}>
+                    <div className="absolute top-[60px] left-0 right-0 bg-white border-b shadow-lg p-4 space-y-2 animate-in slide-in-from-top-10" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => handleTabChange('products')}
+                            className={`w-full text-left px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-3 active:scale-95 transition-all ${activeTab === 'products' ? 'bg-brand-primary text-white' : 'bg-gray-50 text-gray-600'}`}
+                        >
+                            <Package size={18} /> Productos
+                        </button>
+                        <button
+                            onClick={() => handleTabChange('manual_sales')}
+                            className={`w-full text-left px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-3 active:scale-95 transition-all ${activeTab === 'manual_sales' ? 'bg-purple-600 text-white' : 'bg-gray-50 text-gray-600'}`}
+                        >
+                            <FileText size={18} /> Ventas Manuales
+                        </button>
+                        <button
+                            onClick={() => handleTabChange('all_sales')}
+                            className={`w-full text-left px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-3 active:scale-95 transition-all relative ${activeTab === 'all_sales' ? 'bg-green-600 text-white' : 'bg-gray-50 text-gray-600'}`}
+                        >
+                            <DollarSign size={18} /> Todas las Ventas
+                            {newSalesCount > 0 && (
+                                <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                                    {newSalesCount} Nuevas
+                                </span>
+                            )}
+                        </button>
+                        <button
+                            onClick={() => handleTabChange('banners')}
+                            className={`w-full text-left px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-3 active:scale-95 transition-all ${activeTab === 'banners' ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-600'}`}
+                        >
+                            <ImageIcon size={18} /> Banners
+                        </button>
+                        <button
+                            onClick={() => handleTabChange('combos')}
+                            className={`w-full text-left px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-3 active:scale-95 transition-all ${activeTab === 'combos' ? 'bg-orange-500 text-white' : 'bg-gray-50 text-gray-600'}`}
+                        >
+                            <CheckSquare size={18} /> Combos
+                        </button>
+                        <button
+                            onClick={() => handleTabChange('wheel')}
+                            className={`w-full text-left px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-3 active:scale-95 transition-all ${activeTab === 'wheel' ? 'bg-pink-500 text-white' : 'bg-gray-50 text-gray-600'}`}
+                        >
+                            <Dices size={18} /> Ruleta
+                        </button>
+                        <button
+                            onClick={() => handleTabChange('design')}
+                            className={`w-full text-left px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-3 active:scale-95 transition-all ${activeTab === 'design' ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-600'}`}
+                        >
+                            <Palette size={18} /> Diseño
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <div className="max-w-6xl mx-auto px-4 md:px-8 md:pt-24">
+                {/* --- DESKTOP HEADER & TABS (Hidden on Mobile) --- */}
+                <div className="hidden md:flex justify-between items-center mb-8 border-b pb-4">
                     <h1 className="font-display font-bold text-3xl">Panel de Administración</h1>
 
-                    {/* TABS */}
+                    {/* DESKTOP TABS */}
                     <div className="flex bg-gray-200 p-1 rounded-lg">
                         <button
                             onClick={() => setActiveTab('products')}
@@ -845,7 +928,6 @@ export default function AdminPanel() {
                         <button
                             onClick={() => {
                                 setActiveTab('all_sales');
-                                // Reset Notification
                                 const count = allSales.length;
                                 localStorage.setItem('admin_seen_count', count.toString());
                                 setNewSalesCount(0);
