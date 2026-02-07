@@ -148,7 +148,7 @@ export default function LeadCaptureModal({
 
             const { data, error: funcError } = await supabase.functions.invoke('create-checkout', {
                 body: {
-                    unit_price: unit_price,
+                    unit_price: Math.round(unit_price), // Asegurar entero
                     title: `Pedido Home & Co - ${name}`,
                     quantity: 1,
                     payer: { email: email }
