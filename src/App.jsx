@@ -42,58 +42,57 @@ function Layout({ children }) {
           {/* EL CHATBOT YA NO ESTÁ ACÁ ADENTRO */}
           <Footer />
         </>
-      )}
-    </div>
-  );
+
+      );
 }
 
-// Componente para detectar ruta y ocultar Chatbot en Admin
-// (Este "Wrapper" lo controla desde afuera del Layout)
-function ChatBotWrapper() {
+      // Componente para detectar ruta y ocultar Chatbot en Admin
+      // (Este "Wrapper" lo controla desde afuera del Layout)
+      function ChatBotWrapper() {
   const location = useLocation();
-  const isAdminPanel = location.pathname.startsWith('/admin-home-co');
+      const isAdminPanel = location.pathname.startsWith('/admin-home-co');
 
-  if (isAdminPanel) return null; // No mostrar en Admin
-  return <ChatBot />;
+      if (isAdminPanel) return null; // No mostrar en Admin
+      return <ChatBot />;
 }
 
-function ScrollToTop() {
-  const { pathname } = useLocation();
-  React.useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
-  return null;
+      function ScrollToTop() {
+  const {pathname} = useLocation();
+  React.useEffect(() => {window.scrollTo(0, 0); }, [pathname]);
+      return null;
 }
 
-function App() {
+      function App() {
   return (
-    <CartProvider>
-      <Router>
-        <ScrollToTop />
+      <CartProvider>
+        <Router>
+          <ScrollToTop />
 
-        {/* El Layout maneja el contenido normal */}
-        <Layout>
-          <div className="fixed top-0 left-0 w-full bg-red-600 text-white text-center font-bold z-[9999999] p-2">
-            VERSIÓN DEBUG 5.0 - SI VES ESTO, EL DEPLOY FUNCIONA
-          </div>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/catalog" element={<Catalog />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/envios" element={<Shipping />} />
-            <Route path="/privacidad" element={<Privacy />} />
-            <Route path="/terminos" element={<Terms />} />
-            <Route path="/compra-exitosa" element={<Success />} />
-            <Route path="/admin-home-co/*" element={<AdminPanel />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+          {/* El Layout maneja el contenido normal */}
+          <Layout>
+            <div className="fixed top-0 left-0 w-full bg-red-600 text-white text-center font-bold z-[9999999] p-2">
+              VERSIÓN DEBUG 5.0 - SI VES ESTO, EL DEPLOY FUNCIONA
+            </div>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/catalog" element={<Catalog />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/envios" element={<Shipping />} />
+              <Route path="/privacidad" element={<Privacy />} />
+              <Route path="/terminos" element={<Terms />} />
+              <Route path="/compra-exitosa" element={<Success />} />
+              <Route path="/admin-home-co/*" element={<AdminPanel />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Layout>
 
-        {/* EL CHATBOT ESTÁ ACÁ: LIBRE Y FLOTANDO SOBRE TODO */}
-        <ChatBotWrapper />
+          {/* EL CHATBOT ESTÁ ACÁ: LIBRE Y FLOTANDO SOBRE TODO */}
+          <ChatBotWrapper />
 
-      </Router>
-    </CartProvider>
-  );
+        </Router>
+      </CartProvider>
+      );
 }
 
-export default App;
+      export default App;
