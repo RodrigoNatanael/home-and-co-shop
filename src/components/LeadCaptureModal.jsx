@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2, Lock, MapPin, Phone } from 'lucide-react'; // Agregamos iconos
 import { supabase } from '../supabaseclient';
 
-export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems, discountInfo }) {
+export default function LeadCaptureModal({ isOpen, onClose, cartItems }) {
     // Estados para datos personales y de envío
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -12,36 +12,76 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
     const [city, setCity] = useState('');         // Nuevo
     const [zip, setZip] = useState('');           // Nuevo
 
+    // Local Calculation State
+    const [localTotalData, setLocalTotalData] = useState({ total: 0, subtotal: 0, discount: 0, code: '' });
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    // --- FAILSAFE: CALCULATE TOTAL & DISCOUNT LOCALLY ---
+    React.useEffect(() => {
+        if (!isOpen) return;
+
+        // 1. Calculate Subtotal from Items
+        const rawSubtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+        // 2. Check LocalStorage for Coupon
+        const expiry = localStorage.getItem('wheel_won_expiry');
+        const code = localStorage.getItem('wheel_prize_code');
+        // label is display only
+
+        let discountAmount = 0;
+        let activeCode = '';
+
+        if (expiry && code && Date.now() < parseInt(expiry)) {
+            activeCode = code;
+            if (code === 'HOME10') {
+                discountAmount = rawSubtotal * 0.10;
+            } else if (code === 'HOME5') {
+                discountAmount = rawSubtotal * 0.05;
+            } else if (code === 'DESC1000') {
+                discountAmount = 1000;
+            }
+            // Add more codes if needed
+        }
+
+        const finalTotal = Math.max(0, rawSubtotal - discountAmount);
+
+        setLocalTotalData({
+            subtotal: rawSubtotal,
+            discount: discountAmount,
+            total: finalTotal,
+            code: activeCode
+        });
+
+        console.log("--- MODAL CALCULATION ---");
+        console.log("Subtotal:", rawSubtotal);
+        console.log("Discount:", discountAmount);
+        console.log("Final Total:", finalTotal);
+
+    }, [isOpen, cartItems]);
+    // ----------------------------------------------------
 
     const handlePurchase = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
+        const finalPriceToSend = Math.round(localTotalData.total);
+
         // --- HARDCODE VERIFICATION ---
-        console.log("--- INICIANDO CHECKOUT ---");
-        console.log("Cart Total recibido (Prop):", cartTotal);
-        console.log("Discount Info:", discountInfo);
+        console.log("--- ENVIANDO A MP ---");
+        console.log("Monto Final:", finalPriceToSend);
+        // alert(`ENVIANDO A MP: $${finalPriceToSend}`); // Uncomment to debug alert
         // -----------------------------
 
         try {
 
-            // 1. Limpieza del precio
-            let unit_price;
-            if (typeof cartTotal === 'number') {
-                unit_price = Math.round(cartTotal); // Round to avoid decimals in MP if wanted, or keep float. MP supports decimals but better safe?
-                // Let's keep decimals if needed but MP sometimes issues with too many.
-                // Standard practice: send as float or int. Let's strictly integer if currency doesn't use cents or just standard float.
-                // ARS usually works fine with 2 decimals.
-            } else {
-                const rawPrice = cartTotal;
-                const precioLimpio = String(rawPrice).split(',')[0].replace(/\D/g, '');
-                unit_price = parseInt(precioLimpio, 10);
-            }
+            // 1. Limpieza del precio (Usamos el calculado localmente)
+            const unit_price = Math.round(localTotalData.total);
+            const discount_clean = Math.round(localTotalData.discount);
 
-            if (!unit_price || isNaN(unit_price)) throw new Error("Precio inválido");
+            if (!unit_price || isNaN(unit_price) || unit_price < 0) throw new Error("Precio inválido");
 
             // --- VALIDACIÓN DE STOCK ---
             for (const item of cartItems) {
@@ -177,16 +217,16 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs text-gray-500 font-bold uppercase">Total a Pagar</span>
                                     <span className="font-display font-bold text-2xl text-brand-dark">
-                                        {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(cartTotal)}
+                                        {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(localTotalData.total)}
                                     </span>
                                 </div>
-                                {discountInfo && discountInfo.amount > 0 && (
+                                {localTotalData.discount > 0 && (
                                     <div className="flex justify-between items-center mt-1 border-t border-gray-200 pt-1">
                                         <span className="text-[10px] text-green-600 font-bold uppercase flex items-center gap-1">
-                                            <Lock size={10} /> Descuento aplicado ({discountInfo.code})
+                                            <Lock size={10} /> Descuento aplicado ({localTotalData.code})
                                         </span>
                                         <span className="text-xs font-bold text-green-600">
-                                            - {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(discountInfo.amount)}
+                                            - {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(localTotalData.discount)}
                                         </span>
                                     </div>
                                 )}
