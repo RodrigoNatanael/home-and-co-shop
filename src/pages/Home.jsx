@@ -22,6 +22,10 @@ export default function Home() {
         cat3_title: 'Coolers'
     });
 
+    // --- RESTORED MISSING STATE ---
+    const [products, setProducts] = useState([]);
+    const [combos, setCombos] = useState([]);
+
     useEffect(() => {
         const fetchConfig = async () => {
             const { data, error } = await supabase.from('site_config').select('*');
@@ -34,6 +38,7 @@ export default function Home() {
                         newConfig[configKey] = item.value;
                     }
                 });
+                console.log("Config de diseño cargada:", newConfig); // Debug Log
                 setConfig(newConfig);
             }
         };
@@ -73,11 +78,11 @@ export default function Home() {
     return (
         <div className="min-h-screen bg-brand-light">
             {/* Hero Section: Video or Carousel */}
-            {config.hero_video_url ? (
+            {config?.hero_video_url ? (
                 <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden">
                     <video
                         className="absolute inset-0 w-full h-full object-cover"
-                        src={config.hero_video_url}
+                        src={config?.hero_video_url}
                         autoPlay
                         loop
                         muted
@@ -104,46 +109,46 @@ export default function Home() {
             <section className="py-0">
                 <div className="grid grid-cols-1 md:grid-cols-3">
                     {/* Category 1 */}
-                    <Link to={config.cat1_link} className="group relative h-96 overflow-hidden">
+                    <Link to={config?.cat1_link || '#'} className="group relative h-96 overflow-hidden">
                         <div className="absolute inset-0 bg-gray-800 transition-transform duration-700 group-hover:scale-105">
                             <div
                                 className="w-full h-full bg-cover bg-center opacity-70 group-hover:opacity-60 transition-opacity"
-                                style={{ backgroundImage: `url('${config.cat1_img}')` }}
+                                style={{ backgroundImage: `url('${config?.cat1_img}')` }}
                             />
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center">
                             <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-lg">
-                                {config.cat1_title}
+                                {config?.cat1_title}
                             </h2>
                         </div>
                     </Link>
 
                     {/* Category 2 */}
-                    <Link to={config.cat2_link} className="group relative h-96 overflow-hidden">
+                    <Link to={config?.cat2_link || '#'} className="group relative h-96 overflow-hidden">
                         <div className="absolute inset-0 bg-gray-800 transition-transform duration-700 group-hover:scale-105">
                             <div
                                 className="w-full h-full bg-cover bg-center opacity-70 group-hover:opacity-60 transition-opacity"
-                                style={{ backgroundImage: `url('${config.cat2_img}')` }}
+                                style={{ backgroundImage: `url('${config?.cat2_img}')` }}
                             />
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center">
                             <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-lg">
-                                {config.cat2_title}
+                                {config?.cat2_title}
                             </h2>
                         </div>
                     </Link>
 
                     {/* Category 3 */}
-                    <Link to={config.cat3_link} className="group relative h-96 overflow-hidden">
+                    <Link to={config?.cat3_link || '#'} className="group relative h-96 overflow-hidden">
                         <div className="absolute inset-0 bg-gray-800 transition-transform duration-700 group-hover:scale-105">
                             <div
                                 className="w-full h-full bg-cover bg-center opacity-70 group-hover:opacity-60 transition-opacity"
-                                style={{ backgroundImage: `url('${config.cat3_img}')` }}
+                                style={{ backgroundImage: `url('${config?.cat3_img}')` }}
                             />
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center">
                             <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-lg">
-                                {config.cat3_title}
+                                {config?.cat3_title}
                             </h2>
                         </div>
                     </Link>
