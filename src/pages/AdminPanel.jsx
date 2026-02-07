@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseclient';
-import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square, User, DollarSign, FileText, MessageCircle, Globe, ShoppingBag, TrendingUp, Search, Calendar } from 'lucide-react';
+import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square, User, DollarSign, FileText, MessageCircle, Globe, ShoppingBag, TrendingUp, Search, Calendar, Dices, Gift } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export default function AdminPanel() {
@@ -74,13 +74,48 @@ export default function AdminPanel() {
     const [uploading, setUploading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
+    // --- RULETA STATE ---
+    const [wheelConfig, setWheelConfig] = useState([]);
+    const [wheelLeads, setWheelLeads] = useState([]);
+    const [loadingWheel, setLoadingWheel] = useState(false);
+
     useEffect(() => {
         fetchProducts();
         fetchBanners();
         fetchCombos();
         fetchManualSales();
         fetchAllSales(); // Unified Fetch
+        fetchManualSales();
+        fetchAllSales(); // Unified Fetch
+        fetchWheelData();
     }, []);
+
+    // --- FETCH RULETA ---
+    const fetchWheelData = async () => {
+        setLoadingWheel(true);
+        const { data: config } = await supabase.from('wheel_config').select('*').order('id');
+        const { data: leads } = await supabase.from('wheel_leads').select('*').order('created_at', { ascending: false });
+
+        if (config) setWheelConfig(config);
+        if (leads) setWheelLeads(leads);
+        setLoadingWheel(false);
+    };
+
+    const handleUpdateWheelConfig = async (id, field, value) => {
+        // Optimistic Update
+        setWheelConfig(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+
+        const { error } = await supabase
+            .from('wheel_config')
+            .update({ [field]: value })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating wheel config:', error);
+            alert('Error al actualizar configuración');
+            fetchWheelData(); // Revert
+        }
+    };
 
     // --- FETCH DATA ---
     const fetchProducts = async () => {
@@ -718,6 +753,12 @@ export default function AdminPanel() {
                             className={`px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'all_sales' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             <DollarSign size={16} /> Todas las Ventas
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('wheel')}
+                            className={`px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'wheel' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <Dices size={16} /> Ruleta
                         </button>
                     </div>
                 </div>
@@ -1404,6 +1445,124 @@ export default function AdminPanel() {
                                         );
                                     });
                                 })()}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- CONTENT: RULETA --- */}
+                {activeTab === 'wheel' && (
+                    <div className="space-y-8">
+                        {/* CONFIGURATION */}
+                        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                            <h2 className="font-bold text-xl mb-4 flex items-center gap-2">
+                                <Dices size={24} className="text-[#d4af37]" /> Configuración de Premios
+                            </h2>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Editá los premios, probabilidades y stock. La suma de probabilidades NO necesita ser 100 (se calcula proporcionalmente), pero es recomendado.
+                            </p>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-gray-50 text-xs uppercase font-bold text-gray-500">
+                                        <tr>
+                                            <th className="p-3">Etiqueta (Visible)</th>
+                                            <th className="p-3">Valor / Código</th>
+                                            <th className="p-3">Probabilidad (0-100)</th>
+                                            <th className="p-3">Stock Real</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {wheelConfig.map(prize => (
+                                            <tr key={prize.id} className="hover:bg-gray-50">
+                                                <td className="p-3">
+                                                    <input
+                                                        type="text"
+                                                        value={prize.label}
+                                                        onChange={(e) => handleUpdateWheelConfig(prize.id, 'label', e.target.value)}
+                                                        className="border rounded p-1 w-full"
+                                                    />
+                                                </td>
+                                                <td className="p-3">
+                                                    <input
+                                                        type="text"
+                                                        value={prize.value}
+                                                        onChange={(e) => handleUpdateWheelConfig(prize.id, 'value', e.target.value)}
+                                                        className="border rounded p-1 w-full font-mono font-bold text-blue-600"
+                                                    />
+                                                </td>
+                                                <td className="p-3">
+                                                    <input
+                                                        type="number"
+                                                        value={prize.probability}
+                                                        onChange={(e) => handleUpdateWheelConfig(prize.id, 'probability', parseInt(e.target.value) || 0)}
+                                                        className="border rounded p-1 w-20 text-center"
+                                                    />
+                                                </td>
+                                                <td className="p-3">
+                                                    <input
+                                                        type="number"
+                                                        value={prize.stock}
+                                                        onChange={(e) => handleUpdateWheelConfig(prize.id, 'stock', parseInt(e.target.value) || 0)}
+                                                        className={`border rounded p-1 w-20 text-center font-bold ${prize.stock === 0 ? 'text-red-500 bg-red-50' : 'text-green-600'}`}
+                                                    />
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* LEADS */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
+                                <h2 className="font-bold flex items-center gap-2">
+                                    <User size={20} /> Participantes (Leads)
+                                </h2>
+                                <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
+                                    Total: {wheelLeads.length}
+                                </span>
+                            </div>
+                            <div className="max-h-[500px] overflow-y-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-white text-xs uppercase font-bold text-gray-500 sticky top-0 z-10 shadow-sm">
+                                        <tr>
+                                            <th className="p-3">Fecha</th>
+                                            <th className="p-3">Nombre</th>
+                                            <th className="p-3">WhatsApp</th>
+                                            <th className="p-3">Premio Ganado</th>
+                                            <th className="p-3">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {wheelLeads.map(lead => (
+                                            <tr key={lead.id} className="hover:bg-gray-50">
+                                                <td className="p-3 text-gray-500 text-xs">
+                                                    {new Date(lead.created_at).toLocaleDateString()} {new Date(lead.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </td>
+                                                <td className="p-3 font-bold">{lead.name}</td>
+                                                <td className="p-3 font-mono">{lead.whatsapp}</td>
+                                                <td className="p-3">
+                                                    <span className={`text-xs font-bold px-2 py-1 rounded ${lead.prize_won === 'Sigue Participando' || lead.prize_won === 'NO_PRIZE' ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700'}`}>
+                                                        {lead.prize_won}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3">
+                                                    <a
+                                                        href={`https://wa.me/${lead.whatsapp}?text=Hola ${lead.name}, gracias por participar en la Ruleta de Home & Co! 🎁`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-green-600 hover:text-green-800"
+                                                        title="Enviar WhatsApp"
+                                                    >
+                                                        <MessageCircle size={18} />
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>

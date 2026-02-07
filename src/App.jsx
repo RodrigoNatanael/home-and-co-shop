@@ -16,6 +16,8 @@ import AdminPanel from './pages/AdminPanel';
 import { CartProvider } from './context/CartContext';
 import CartDrawer from './components/cart/CartDrawer';
 import WhatsAppButton from './components/ui/WhatsAppButton';
+import LuckyWheel from './components/marketing/LuckyWheel';
+import UrgencyBanner from './components/ui/UrgencyBanner';
 
 // Wrapper para manejar el Layout de la página
 function Layout({ children }) {
@@ -68,6 +70,8 @@ function App() {
             {/* El comodín "*" SIEMPRE debe ir al final */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <LuckyWheel />
+          <UrgencyBanner />
         </Layout>
       </Router>
     </CartProvider>
