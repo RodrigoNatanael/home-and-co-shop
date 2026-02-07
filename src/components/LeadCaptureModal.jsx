@@ -165,10 +165,10 @@ export default function LeadCaptureModal({
                 throw new Error("No se recibió la URL de pago de Mercado Pago.");
             }
 
-        } catch (err) {
-            console.error('Error crítico en el proceso de compra:', err);
+        } catch (error) {
+            console.error('Error crítico en el proceso de compra:', error);
             // Show specific error if it's a logic error (like stock), otherwise generic
-            setError(err.message || 'Hubo un error al procesar. Intenta nuevamente.');
+            setError(error.message || 'Hubo un error al procesar. Intenta nuevamente.');
             setLoading(false); // Stop loading on error
         } finally {
             // If we are here and have no error, we are redirecting. 
