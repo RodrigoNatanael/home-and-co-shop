@@ -97,8 +97,13 @@ const LuckyWheel = () => {
         const finalDeg = 1800 + (360 - (winnerIndex * segmentSize));
         setRotation(finalDeg);
 
+        // --- SAVE RESULT IMMEDIATELY (Before Animation Ends) ---
+        // As requested: Save lead with prize immediately to avoid data loss
+        saveResult(winner).catch(err => console.error("CRITICAL: Failed to save lead during spin:", err));
+        // -------------------------------------------------------
+
         // Wait for animation (5s)
-        setTimeout(async () => {
+        setTimeout(() => {
             setSpinning(false);
             setSelectedPrize(winner);
 
@@ -110,8 +115,6 @@ const LuckyWheel = () => {
                 zIndex: 9999
             });
 
-            // Save Result
-            await saveResult(winner);
             setStep('result');
 
         }, 5000);
@@ -128,13 +131,27 @@ const LuckyWheel = () => {
             .eq('id', prize.id);
 
         // 2. Save Lead
-        await supabase
+        console.log("Attempting to save lead to Supabase:", {
+            name: formData.name,
+            whatsapp: formData.whatsapp,
+            prize_won: prize.label
+        });
+
+        const { data: leadData, error: leadError } = await supabase
             .from('wheel_leads')
             .insert([{
                 name: formData.name,
                 whatsapp: formData.whatsapp,
                 prize_won: prize.label
-            }]);
+            }])
+            .select();
+
+        if (leadError) {
+            console.error("❌ ERROR SAVING LEAD:", leadError);
+            // Optional: fallback to localStorage or retry?
+        } else {
+            console.log("✅ LEAD SAVED SUCCESSFULLY:", leadData);
+        }
 
         // 3. Local Storage
         localStorage.setItem('wheel_played', 'true');

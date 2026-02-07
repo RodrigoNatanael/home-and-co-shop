@@ -90,6 +90,13 @@ export default function AdminPanel() {
         fetchWheelData();
     }, []);
 
+    // Refresh Wheel Data when tab becomes active
+    useEffect(() => {
+        if (activeTab === 'wheel') {
+            fetchWheelData();
+        }
+    }, [activeTab]);
+
     // --- FETCH RULETA ---
     const fetchWheelData = async () => {
         setLoadingWheel(true);
