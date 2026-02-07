@@ -18,9 +18,13 @@ import CartDrawer from './components/cart/CartDrawer';
 import WhatsAppButton from './components/ui/WhatsAppButton';
 import LuckyWheel from './components/marketing/LuckyWheel';
 import UrgencyBanner from './components/ui/UrgencyBanner';
+import ChatBot from './components/ChatBot';
 
 // Wrapper para manejar el Layout de la página
 function Layout({ children }) {
+  const location = useLocation();
+  const isAdminPanel = location.pathname.startsWith('/admin-home-co');
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -29,6 +33,7 @@ function Layout({ children }) {
       <main className="flex-grow">
         {children}
       </main>
+      {!isAdminPanel && <ChatBot />}
       <Footer />
     </div>
   );
