@@ -21,10 +21,19 @@ export default function LeadCaptureModal({ isOpen, onClose, cartTotal, cartItems
         setError(null);
 
         try {
+
             // 1. Limpieza del precio
-            const rawPrice = cartTotal;
-            const precioLimpio = String(rawPrice).split(',')[0].replace(/\D/g, '');
-            const unit_price = parseInt(precioLimpio, 10);
+            let unit_price;
+            if (typeof cartTotal === 'number') {
+                unit_price = Math.round(cartTotal); // Round to avoid decimals in MP if wanted, or keep float. MP supports decimals but better safe?
+                // Let's keep decimals if needed but MP sometimes issues with too many.
+                // Standard practice: send as float or int. Let's strictly integer if currency doesn't use cents or just standard float.
+                // ARS usually works fine with 2 decimals.
+            } else {
+                const rawPrice = cartTotal;
+                const precioLimpio = String(rawPrice).split(',')[0].replace(/\D/g, '');
+                unit_price = parseInt(precioLimpio, 10);
+            }
 
             if (!unit_price || isNaN(unit_price)) throw new Error("Precio inválido");
 

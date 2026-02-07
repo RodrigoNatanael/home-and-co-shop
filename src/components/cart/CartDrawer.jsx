@@ -12,7 +12,8 @@ export default function CartDrawer() {
         closeCart,
         removeFromCart,
         updateQuantity,
-        cartTotal
+        cartSubtotal,
+        discountInfo
     } = useCart();
 
     const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
@@ -135,8 +136,26 @@ export default function CartDrawer() {
                             {/* Footer */}
                             {cart.length > 0 && (
                                 <div className="p-6 border-t border-gray-200 bg-gray-50">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <span className="text-gray-500 font-bold uppercase tracking-wider">Total Est.</span>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-gray-500 font-bold uppercase tracking-wider text-sm">Subtotal</span>
+                                        <span className="font-mono text-gray-500">
+                                            {formatPrice(cartSubtotal)}
+                                        </span>
+                                    </div>
+
+                                    {discountInfo && discountInfo.amount > 0 && (
+                                        <div className="flex justify-between items-center mb-4 bg-green-50 p-2 rounded border border-green-200 animate-in fade-in">
+                                            <span className="text-green-700 font-bold uppercase tracking-wider text-sm flex items-center gap-1">
+                                                <ShoppingBag size={14} /> Descuento ({discountInfo.code})
+                                            </span>
+                                            <span className="font-mono font-bold text-green-700">
+                                                - {formatPrice(discountInfo.amount)}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-between items-center mb-6 pt-2 border-t border-gray-200">
+                                        <span className="text-black font-bold uppercase tracking-wider text-lg">Total</span>
                                         <span className="font-display font-bold text-3xl">
                                             {formatPrice(cartTotal)}
                                         </span>

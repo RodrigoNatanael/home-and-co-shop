@@ -67,9 +67,68 @@ export function CartProvider({ children }) {
     const closeCart = () => setIsCartOpen(false);
     const openCart = () => setIsCartOpen(true);
 
+    // --- DISCOUNT / RULETA LOGIC ---
+    const [discountInfo, setDiscountInfo] = useState({ amount: 0, label: '', code: '' });
+
+    // Check urgency/expiry periodically
+    useEffect(() => {
+        const checkDiscount = () => {
+            const expiry = localStorage.getItem('wheel_won_expiry');
+            const code = localStorage.getItem('wheel_prize_code');
+            const label = localStorage.getItem('wheel_prize_label');
+
+            if (!expiry || !code || !label) {
+                setDiscountInfo({ amount: 0, label: '', code: '' });
+                return;
+            }
+
+            if (Date.now() > parseInt(expiry)) {
+                // Expired
+                setDiscountInfo({ amount: 0, label: '', code: '' });
+                return;
+            }
+
+            // Calculate Discount Amount
+            let discountAmount = 0;
+            const currentTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+            if (code === 'HOME10') {
+                discountAmount = currentTotal * 0.10;
+            } else if (code === 'HOME5') {
+                discountAmount = currentTotal * 0.05;
+            } else if (code === 'DESC1000') {
+                discountAmount = 1000;
+            } else if (code === 'FREESHIP') {
+                // Handle freeship logic if needed, for now 0 monetary discount
+                discountAmount = 0;
+            }
+
+            setDiscountInfo({
+                amount: discountAmount,
+                label,
+                code
+            });
+        };
+
+        // Check immediately and then every second
+        checkDiscount();
+        const interval = setInterval(checkDiscount, 1000); // 1s sync with UrgencyBanner
+
+        // Listen for storage events (win happening in another tab or component)
+        window.addEventListener('storage', checkDiscount);
+        window.addEventListener('wheel_win', checkDiscount); // Custom event if needed
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('storage', checkDiscount);
+            window.removeEventListener('wheel_win', checkDiscount);
+        };
+    }, [cart]);
+
     // Derived state
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-    const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const cartSubtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const cartTotal = Math.max(0, cartSubtotal - discountInfo.amount); // FINAL TOTAL
 
     return (
         <CartContext.Provider value={{
@@ -83,7 +142,9 @@ export function CartProvider({ children }) {
             closeCart,
             openCart,
             cartCount,
-            cartTotal
+            cartSubtotal, // Original Price
+            cartTotal,    // Final Price (with discount)
+            discountInfo  // { amount, label, code }
         }}>
             {children}
         </CartContext.Provider>
