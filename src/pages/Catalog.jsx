@@ -55,14 +55,14 @@ export default function Catalog() {
     };
 
     return (
-        <div className="pt-20 min-h-screen bg-white">
+        <div className="pt-20 min-h-screen bg-white dark:bg-slate-900 transition-colors">
             <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
 
                 {/* Header */}
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="font-display font-bold text-4xl uppercase">Colección</h1>
+                    <h1 className="font-display font-bold text-4xl uppercase dark:text-white transition-colors">Colección</h1>
                     <button
-                        className="md:hidden flex items-center gap-2 font-bold uppercase text-sm border-b border-black pb-1"
+                        className="md:hidden flex items-center gap-2 font-bold uppercase text-sm border-b border-black dark:border-white pb-1 dark:text-white transition-colors"
                         onClick={() => setIsFilterOpen(true)}
                     >
                         <Filter size={18} /> Filtros
@@ -73,16 +73,16 @@ export default function Catalog() {
                     {/* Sidebar Filters (Desktop) */}
                     <aside className="hidden md:block w-64 shrink-0">
                         <div className="sticky top-24">
-                            <h3 className="font-bold text-lg mb-6 uppercase border-b border-gray-200 pb-2">Filtros</h3>
+                            <h3 className="font-bold text-lg mb-6 uppercase border-b border-gray-200 dark:border-slate-700 pb-2 dark:text-white transition-colors">Filtros</h3>
 
                             <div className="mb-8">
-                                <h4 className="font-bold text-sm text-gray-500 mb-4 uppercase tracking-wider">Categoría</h4>
+                                <h4 className="font-bold text-sm text-gray-500 dark:text-gray-400 mb-4 uppercase tracking-wider">Categoría</h4>
                                 <ul className="space-y-3">
                                     {categories.map(cat => (
                                         <li key={cat}>
                                             <button
                                                 onClick={() => handleCategoryChange(cat)}
-                                                className={`text-left w-full hover:underline transition-all ${selectedCategory === cat ? 'font-bold text-black' : 'text-gray-600'}`}
+                                                className={`text-left w-full hover:underline transition-all ${selectedCategory === cat ? 'font-bold text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}
                                             >
                                                 {cat}
                                             </button>
@@ -100,21 +100,21 @@ export default function Catalog() {
                                 initial={{ x: '100%' }}
                                 animate={{ x: 0 }}
                                 exit={{ x: '100%' }}
-                                className="bg-white w-3/4 h-full p-6 shadow-2xl"
+                                className="bg-white dark:bg-slate-800 w-3/4 h-full p-6 shadow-2xl transition-colors"
                             >
                                 <div className="flex justify-between items-center mb-8">
-                                    <h2 className="font-display font-bold text-2xl uppercase">Filtros</h2>
-                                    <button onClick={() => setIsFilterOpen(false)}><X size={24} /></button>
+                                    <h2 className="font-display font-bold text-2xl uppercase dark:text-white">Filtros</h2>
+                                    <button onClick={() => setIsFilterOpen(false)} className="dark:text-white"><X size={24} /></button>
                                 </div>
 
                                 <div>
-                                    <h4 className="font-bold text-sm text-gray-500 mb-4 uppercase tracking-wider">Categoría</h4>
+                                    <h4 className="font-bold text-sm text-gray-500 dark:text-gray-400 mb-4 uppercase tracking-wider">Categoría</h4>
                                     <ul className="space-y-4">
                                         {categories.map(cat => (
                                             <li key={cat}>
                                                 <button
                                                     onClick={() => handleCategoryChange(cat)}
-                                                    className={`text-left w-full text-lg ${selectedCategory === cat ? 'font-bold text-black' : 'text-gray-600'}`}
+                                                    className={`text-left w-full text-lg ${selectedCategory === cat ? 'font-bold text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}
                                                 >
                                                     {cat}
                                                 </button>
@@ -134,7 +134,7 @@ export default function Catalog() {
                             ))}
                         </div>
                         {filteredProducts.length === 0 && (
-                            <div className="py-20 text-center text-gray-500">
+                            <div className="py-20 text-center text-gray-500 dark:text-gray-400">
                                 No se encontraron productos en esta categoría.
                             </div>
                         )}

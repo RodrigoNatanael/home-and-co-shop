@@ -200,22 +200,22 @@ export default function LeadCaptureModal({
                 <>
                     <motion.div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60]" onClick={onClose} />
                     <motion.div className="fixed inset-0 z-[70] flex items-center justify-center p-4 overflow-y-auto">
-                        <motion.div className="bg-white w-full max-w-md p-6 shadow-2xl border-2 border-brand-dark relative my-8">
+                        <motion.div className="bg-white dark:bg-slate-800 w-full max-w-md p-6 shadow-2xl border-2 border-brand-dark dark:border-white relative my-8">
 
                             {/* Header */}
                             <div className="flex justify-between items-center mb-4">
                                 <div>
-                                    <h3 className="font-display font-bold text-xl uppercase text-brand-dark">Datos de Envío</h3>
-                                    <p className="text-xs text-gray-500">¿A dónde te enviamos tu compra?</p>
+                                    <h3 className="font-display font-bold text-xl uppercase text-brand-dark dark:text-white">Datos de Envío</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">¿A dónde te enviamos tu compra?</p>
                                 </div>
-                                <button onClick={onClose}><X size={24} className="text-brand-dark" /></button>
+                                <button onClick={onClose}><X size={24} className="text-brand-dark dark:text-white" /></button>
                             </div>
 
                             {/* Resumen Precio */}
-                            <div className="mb-4 bg-gray-50 p-3 border border-gray-200">
+                            <div className="mb-4 bg-gray-50 dark:bg-slate-700 p-3 border border-gray-200 dark:border-slate-600">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-xs text-gray-500 font-bold uppercase">Total a Pagar</span>
-                                    <span className="font-display font-bold text-2xl text-brand-dark">
+                                    <span className="text-xs text-gray-500 dark:text-gray-300 font-bold uppercase">Total a Pagar</span>
+                                    <span className="font-display font-bold text-2xl text-brand-dark dark:text-white">
                                         {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(safeTotal)}
                                     </span>
                                 </div>
@@ -236,34 +236,34 @@ export default function LeadCaptureModal({
 
                                 {/* Datos Personales */}
                                 <div className="grid grid-cols-1 gap-3">
-                                    <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 focus:border-brand-dark outline-none text-sm" placeholder="Nombre Completo" />
-                                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 focus:border-brand-dark outline-none text-sm" placeholder="Email" />
+                                    <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:border-brand-dark dark:focus:border-white outline-none text-sm" placeholder="Nombre Completo" />
+                                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:border-brand-dark dark:focus:border-white outline-none text-sm" placeholder="Email" />
                                     <div className="relative">
                                         <Phone size={16} className="absolute left-3 top-3 text-gray-400" />
-                                        <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className="w-full pl-9 pr-3 py-2 border-2 border-gray-300 focus:border-brand-dark outline-none text-sm" placeholder="Teléfono (para el correo)" />
+                                        <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className="w-full pl-9 pr-3 py-2 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:border-brand-dark dark:focus:border-white outline-none text-sm" placeholder="Teléfono (para el correo)" />
                                     </div>
                                 </div>
 
-                                <div className="border-t border-gray-200 my-2 pt-2">
-                                    <p className="text-xs font-bold text-brand-dark uppercase mb-2 flex items-center gap-1"><MapPin size={12} /> Dirección de Entrega</p>
+                                <div className="border-t border-gray-200 dark:border-slate-600 my-2 pt-2">
+                                    <p className="text-xs font-bold text-brand-dark dark:text-white uppercase mb-2 flex items-center gap-1"><MapPin size={12} /> Dirección de Entrega</p>
                                 </div>
 
                                 {/* Dirección */}
-                                <input type="text" required value={address} onChange={e => setAddress(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 focus:border-brand-dark outline-none text-sm" placeholder="Calle y Altura (Ej: San Martin 123)" />
+                                <input type="text" required value={address} onChange={e => setAddress(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:border-brand-dark dark:focus:border-white outline-none text-sm" placeholder="Calle y Altura (Ej: San Martin 123)" />
 
                                 <div className="grid grid-cols-2 gap-3">
-                                    <input type="text" required value={city} onChange={e => setCity(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 focus:border-brand-dark outline-none text-sm" placeholder="Ciudad / Localidad" />
-                                    <input type="text" required value={zip} onChange={e => setZip(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 focus:border-brand-dark outline-none text-sm" placeholder="Código Postal" />
+                                    <input type="text" required value={city} onChange={e => setCity(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:border-brand-dark dark:focus:border-white outline-none text-sm" placeholder="Ciudad / Localidad" />
+                                    <input type="text" required value={zip} onChange={e => setZip(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:border-brand-dark dark:focus:border-white outline-none text-sm" placeholder="Código Postal" />
                                 </div>
 
                                 {submitError && <div className="text-red-500 text-xs bg-red-50 p-2">{submitError}</div>}
 
-                                <button type="submit" disabled={loading} className="w-full mt-4 bg-brand-dark text-white py-3 font-bold text-lg uppercase flex justify-center items-center gap-2 hover:bg-black transition-all shadow-lg">
+                                <button type="submit" disabled={loading} className="w-full mt-4 bg-brand-dark dark:bg-white text-white dark:text-brand-dark py-3 font-bold text-lg uppercase flex justify-center items-center gap-2 hover:bg-black dark:hover:bg-gray-200 transition-all shadow-lg">
                                     {loading ? <Loader2 className="animate-spin" /> : "IR A PAGAR"}
                                 </button>
                             </form>
 
-                            <p className="mt-3 text-center text-[10px] text-gray-500">
+                            <p className="mt-3 text-center text-[10px] text-gray-500 dark:text-gray-400">
                                 <Lock size={10} className="inline mr-1" />
                                 Tus datos están protegidos. El envío se coordina por WhatsApp una vez realizado el pago.
                             </p>

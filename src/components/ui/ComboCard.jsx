@@ -21,7 +21,7 @@ export default function ComboCard({ combo }) {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-full"
+            className="group bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-slate-700 overflow-hidden flex flex-col h-full"
         >
             {/* Image Container */}
             <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
@@ -55,27 +55,27 @@ export default function ComboCard({ combo }) {
             {/* Content */}
             <div className="p-6 flex flex-col flex-1">
                 <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-brand-dark transition-colors">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-brand-dark dark:group-hover:text-brand-accent transition-colors">
                         {combo.name}
                     </h3>
 
                     {/* Price */}
                     <div className="mb-4">
-                        <span className="text-2xl font-bold text-brand-dark">
+                        <span className="text-2xl font-bold text-brand-dark dark:text-brand-accent">
                             {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(combo.price)}
                         </span>
                     </div>
 
                     {/* Included Items List */}
                     {includedProducts.length > 0 && (
-                        <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                            <h4 className="text-xs font-bold text-gray-500 uppercase mb-2 flex items-center gap-1">
+                        <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3 mb-4">
+                            <h4 className="text-xs font-bold text-gray-500 dark:text-gray-300 uppercase mb-2 flex items-center gap-1">
                                 <Package size={12} /> Incluye:
                             </h4>
                             <ul className="space-y-1">
                                 {includedProducts.map((prod, idx) => (
-                                    <li key={idx} className="text-sm text-gray-700 flex items-start gap-2">
-                                        <Check size={14} className="text-green-500 mt-0.5 shrink-0" />
+                                    <li key={idx} className="text-sm text-gray-700 dark:text-gray-200 flex items-start gap-2">
+                                        <Check size={14} className="text-green-500 dark:text-green-400 mt-0.5 shrink-0" />
                                         <span className="line-clamp-1">{prod.name}</span>
                                     </li>
                                 ))}

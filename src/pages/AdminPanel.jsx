@@ -2,6 +2,7 @@
 import { supabase } from '../supabaseclient';
 import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square, User, DollarSign, FileText, MessageCircle, Globe, ShoppingBag, TrendingUp, Search, Calendar, Dices, Gift, Palette } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function AdminPanel() {
     const [activeTab, setActiveTab] = useState('products'); // 'products' | 'banners' | 'combos' | 'manual_sales'
@@ -823,17 +824,20 @@ export default function AdminPanel() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-12">
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-12 transition-colors">
             {/* --- MOBILE HEADER (Sticky) --- */}
-            <div className="lg:hidden sticky top-0 z-50 bg-white border-b shadow-sm p-4 flex justify-between items-center">
-                <h1 className="font-display font-bold text-xl text-gray-800">Panel Admin</h1>
-                <button
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg focus:outline-none"
-                    aria-label="Toggle Menu"
-                >
-                    {isMobileMenuOpen ? <Trash2 size={24} className="rotate-45" /> : <div className="space-y-1.5"><span className="block w-6 h-0.5 bg-gray-800"></span><span className="block w-6 h-0.5 bg-gray-800"></span><span className="block w-6 h-0.5 bg-gray-800"></span></div>}
-                </button>
+            <div className="lg:hidden sticky top-0 z-50 bg-white dark:bg-slate-900 border-b dark:border-slate-800 shadow-sm p-4 flex justify-between items-center transition-colors">
+                <h1 className="font-display font-bold text-xl text-gray-800 dark:text-white">Panel Admin</h1>
+                <div className="flex items-center gap-4">
+                    <ThemeToggle />
+                    <button
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg focus:outline-none"
+                        aria-label="Toggle Menu"
+                    >
+                        {isMobileMenuOpen ? <Trash2 size={24} className="rotate-45" /> : <div className="space-y-1.5"><span className="block w-6 h-0.5 bg-gray-800 dark:bg-white"></span><span className="block w-6 h-0.5 bg-gray-800 dark:bg-white"></span><span className="block w-6 h-0.5 bg-gray-800 dark:bg-white"></span></div>}
+                    </button>
+                </div>
             </div>
 
             {/* --- MOBILE MENU OVERLAY (Drawer) --- */}
@@ -893,8 +897,11 @@ export default function AdminPanel() {
 
             <div className="max-w-6xl mx-auto px-4 md:px-8 md:pt-24">
                 {/* --- DESKTOP HEADER & TABS (Hidden on Mobile) --- */}
-                <div className="hidden lg:flex justify-between items-center mb-8 border-b pb-4">
-                    <h1 className="font-display font-bold text-3xl">Panel de Administración</h1>
+                <div className="hidden lg:flex justify-between items-center mb-8 border-b dark:border-slate-800 pb-4">
+                    <div className="flex items-center gap-4">
+                        <h1 className="font-display font-bold text-3xl dark:text-white">Panel de Administración</h1>
+                        <ThemeToggle />
+                    </div>
 
                     {/* DESKTOP TABS */}
                     <div className="flex bg-gray-200 p-1 rounded-lg">
@@ -1089,17 +1096,17 @@ export default function AdminPanel() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Product Form */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 sticky top-24">
-                                <h2 className="font-bold text-xl mb-4 flex items-center gap-2">
+                            <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 sticky top-24 transition-colors">
+                                <h2 className="font-bold text-xl mb-4 flex items-center gap-2 dark:text-white">
                                     <Plus size={20} /> Nuevo Producto
                                 </h2>
                                 <form onSubmit={handleProductSubmit} className="space-y-4">
-                                    <input type="text" name="id" value={productFormData.id} onChange={handleProductInputChange} placeholder="ID (Opcional)" className="w-full border p-2 rounded" />
-                                    <input type="text" name="name" value={productFormData.name} onChange={handleProductInputChange} required placeholder="Nombre *" className="w-full border p-2 rounded" />
-                                    <input type="number" name="price" value={productFormData.price} onChange={handleProductInputChange} required placeholder="Precio *" className="w-full border p-2 rounded" />
-                                    <input type="number" name="cost_price" value={productFormData.cost_price} onChange={handleProductInputChange} placeholder="Precio de Costo (Admin)" className="w-full border p-2 rounded bg-yellow-50" />
-                                    <input type="number" name="stock" value={productFormData.stock} onChange={handleProductInputChange} required placeholder="Stock Inicial *" className="w-full border p-2 rounded" />
-                                    <select name="category" value={productFormData.category} onChange={handleProductInputChange} required className="w-full border p-2 rounded">
+                                    <input type="text" name="id" value={productFormData.id} onChange={handleProductInputChange} placeholder="ID (Opcional)" className="w-full border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white" />
+                                    <input type="text" name="name" value={productFormData.name} onChange={handleProductInputChange} required placeholder="Nombre *" className="w-full border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white" />
+                                    <input type="number" name="price" value={productFormData.price} onChange={handleProductInputChange} required placeholder="Precio *" className="w-full border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white" />
+                                    <input type="number" name="cost_price" value={productFormData.cost_price} onChange={handleProductInputChange} placeholder="Precio de Costo (Admin)" className="w-full border dark:border-slate-600 p-2 rounded bg-yellow-50 dark:bg-yellow-900/20 dark:text-yellow-100" />
+                                    <input type="number" name="stock" value={productFormData.stock} onChange={handleProductInputChange} required placeholder="Stock Inicial *" className="w-full border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white" />
+                                    <select name="category" value={productFormData.category} onChange={handleProductInputChange} required className="w-full border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white">
                                         <option value="">Categoría...</option>
                                         <option value="Mates">Mates</option>
                                         <option value="Termos">Termos</option>
@@ -1116,7 +1123,7 @@ export default function AdminPanel() {
                                             value={productFormData.previous_price}
                                             onChange={handleProductInputChange}
                                             placeholder="Precio Anterior (Opcional)"
-                                            className="w-full border p-2 rounded text-sm"
+                                            className="w-full border dark:border-slate-600 p-2 rounded text-sm dark:bg-slate-700 dark:text-white"
                                         />
                                         <div className="border p-2 rounded bg-gray-50 max-h-32 overflow-y-auto">
                                             <p className="text-xs font-bold text-gray-500 mb-1">Etiquetas:</p>
@@ -1158,33 +1165,33 @@ export default function AdminPanel() {
 
                         {/* Product List */}
                         <div className="lg:col-span-2">
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                                <div className="p-4 bg-gray-50 border-b flex justify-between">
+                            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden transition-colors">
+                                <div className="p-4 bg-gray-50 dark:bg-slate-700 border-b dark:border-slate-600 flex justify-between text-gray-800 dark:text-white">
                                     <h2 className="font-bold">Inventario</h2>
                                 </div>
                                 <div className="p-0">
                                     {products.map(p => (
-                                        <div key={p.id} className="p-4 border-b flex items-center gap-4 hover:bg-gray-50">
-                                            <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                                        <div key={p.id} className="p-4 border-b dark:border-slate-700 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+                                            <div className="w-12 h-12 bg-gray-100 dark:bg-slate-600 rounded overflow-hidden flex-shrink-0">
                                                 {p.image_url && <img src={p.image_url} alt="" className="w-full h-full object-cover" />}
                                             </div>
                                             <div className="flex-1">
-                                                <h3 className="font-bold text-sm">{p.name}</h3>
-                                                <p className="text-xs text-gray-500">{p.id}</p>
+                                                <h3 className="font-bold text-sm dark:text-white">{p.name}</h3>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{p.id}</p>
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right">
-                                                    <p className="font-bold text-sm">{new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(p.price)}</p>
+                                                    <p className="font-bold text-sm dark:text-white">{new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(p.price)}</p>
                                                 </div>
                                                 <div className="flex flex-col items-end">
-                                                    <span className="text-[10px] uppercase text-gray-400 font-bold">Stock</span>
+                                                    <span className="text-[10px] uppercase text-gray-400 dark:text-gray-500 font-bold">Stock</span>
                                                     <input
                                                         type="number"
                                                         defaultValue={p.stock}
-                                                        className="w-16 border rounded p-1 text-sm text-right font-bold"
+                                                        className="w-16 border dark:border-slate-600 rounded p-1 text-sm text-right font-bold dark:bg-slate-700 dark:text-white"
                                                         onBlur={(e) => handleUpdateStock('products', p.id, e.target.value)}
                                                     />
-                                                    {p.cost_price && <span className="text-[10px] text-yellow-600 font-bold mt-1">Costo: ${p.cost_price}</span>}
+                                                    {p.cost_price && <span className="text-[10px] text-yellow-600 dark:text-yellow-400 font-bold mt-1">Costo: ${p.cost_price}</span>}
                                                 </div>
                                                 <button onClick={() => handleProductDelete(p.id)} className="text-gray-400 hover:text-red-500 p-2">
                                                     <Trash2 size={18} />
@@ -1203,13 +1210,13 @@ export default function AdminPanel() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Banner Form */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 sticky top-24">
-                                <h2 className="font-bold text-xl mb-4 flex items-center gap-2">
+                            <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 sticky top-24">
+                                <h2 className="font-bold text-xl mb-4 flex items-center gap-2 dark:text-white">
                                     <Plus size={20} /> Nuevo Banner
                                 </h2>
                                 <form onSubmit={handleBannerSubmit} className="space-y-4">
-                                    <input type="text" name="title" value={bannerFormData.title} onChange={handleBannerInputChange} placeholder="Título Principal (Ej: VERANO 2026)" className="w-full border p-2 rounded" />
-                                    <input type="text" name="link" value={bannerFormData.link} onChange={handleBannerInputChange} placeholder="Link destino (Ej: /catalog?category=Mates)" className="w-full border p-2 rounded" />
+                                    <input type="text" name="title" value={bannerFormData.title} onChange={handleBannerInputChange} placeholder="Título Principal (Ej: VERANO 2026)" className="w-full border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white" />
+                                    <input type="text" name="link" value={bannerFormData.link} onChange={handleBannerInputChange} placeholder="Link destino (Ej: /catalog?category=Mates)" className="w-full border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white" />
 
                                     <div className="border-2 border-dashed border-gray-300 rounded p-4 text-center">
                                         <input type="file" onChange={handleBannerImageChange} className="hidden" id="banner-file" />
@@ -1228,14 +1235,14 @@ export default function AdminPanel() {
 
                         {/* Banner List */}
                         <div className="lg:col-span-2">
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                                <div className="p-4 bg-gray-50 border-b flex justify-between">
-                                    <h2 className="font-bold">Banners Activos</h2>
+                            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+                                <div className="p-4 bg-gray-50 dark:bg-slate-700 border-b dark:border-slate-600 flex justify-between">
+                                    <h2 className="font-bold dark:text-white">Banners Activos</h2>
                                 </div>
                                 <div className="p-4 grid grid-cols-1 gap-4">
                                     {banners.map(b => (
-                                        <div key={b.id} className="border rounded-lg overflow-hidden relative group">
-                                            <div className="h-40 w-full bg-gray-100">
+                                        <div key={b.id} className="border dark:border-slate-700 rounded-lg overflow-hidden relative group">
+                                            <div className="h-40 w-full bg-gray-100 dark:bg-slate-700">
                                                 <img src={b.image_url} alt="" className="w-full h-full object-cover" />
                                             </div>
                                             <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
@@ -1246,13 +1253,13 @@ export default function AdminPanel() {
                                                     <Trash2 size={20} />
                                                 </button>
                                             </div>
-                                            <div className="p-3 bg-white">
-                                                <h3 className="font-bold text-sm truncate">{b.title || '(Sin título)'}</h3>
+                                            <div className="p-3 bg-white dark:bg-slate-800">
+                                                <h3 className="font-bold text-sm truncate dark:text-white">{b.title || '(Sin título)'}</h3>
                                                 <p className="text-xs text-gray-400 truncate">{b.link}</p>
                                             </div>
                                         </div>
                                     ))}
-                                    {banners.length === 0 && <p className="text-gray-500 text-center py-8">No hay banners.</p>}
+                                    {banners.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-center py-8">No hay banners.</p>}
                                 </div>
                             </div>
                         </div>
@@ -1264,22 +1271,22 @@ export default function AdminPanel() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Combo Form */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 sticky top-24">
-                                <h2 className="font-bold text-xl mb-4 flex items-center gap-2">
+                            <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 sticky top-24 transition-colors">
+                                <h2 className="font-bold text-xl mb-4 flex items-center gap-2 dark:text-white">
                                     <Plus size={20} /> Nuevo Combo
                                 </h2>
                                 <form onSubmit={handleComboSubmit} className="space-y-4">
-                                    <input type="text" name="name" value={comboFormData.name} onChange={handleComboInputChange} required placeholder="Nombre del Combo *" className="w-full border p-2 rounded" />
-                                    <input type="number" name="price" value={comboFormData.price} onChange={handleComboInputChange} required placeholder="Precio Especial *" className="w-full border p-2 rounded" />
-                                    <input type="number" name="stock" value={comboFormData.stock} onChange={handleComboInputChange} required placeholder="Stock Combo *" className="w-full border p-2 rounded" />
+                                    <input type="text" name="name" value={comboFormData.name} onChange={handleComboInputChange} required placeholder="Nombre del Combo *" className="w-full border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white" />
+                                    <input type="number" name="price" value={comboFormData.price} onChange={handleComboInputChange} required placeholder="Precio Especial *" className="w-full border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white" />
+                                    <input type="number" name="stock" value={comboFormData.stock} onChange={handleComboInputChange} required placeholder="Stock Combo *" className="w-full border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white" />
 
-                                    <div className="border border-gray-200 rounded p-3 max-h-48 overflow-y-auto">
-                                        <p className="text-xs font-bold text-gray-500 mb-2 uppercase">Incluir Productos:</p>
+                                    <div className="border border-gray-200 dark:border-slate-600 rounded p-3 max-h-48 overflow-y-auto bg-white dark:bg-slate-700">
+                                        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase">Incluir Productos:</p>
                                         <div className="space-y-2">
                                             {products.map(p => (
-                                                <label key={p.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                                <label key={p.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-600 p-1 rounded">
                                                     <div
-                                                        className={`w-4 h-4 border rounded flex items-center justify-center ${selectedProductIds.includes(p.id) ? 'bg-black border-black text-white' : 'border-gray-300'}`}
+                                                        className={`w-4 h-4 border rounded flex items-center justify-center ${selectedProductIds.includes(p.id) ? 'bg-black dark:bg-white border-black dark:border-white text-white dark:text-black' : 'border-gray-300 dark:border-gray-500'}`}
                                                     >
                                                         {selectedProductIds.includes(p.id) && <CheckSquare size={12} />}
                                                     </div>
@@ -1289,7 +1296,7 @@ export default function AdminPanel() {
                                                         onChange={() => toggleProductSelection(p.id)}
                                                         className="hidden"
                                                     />
-                                                    <span className="text-sm truncate">{p.name}</span>
+                                                    <span className="text-sm truncate dark:text-white">{p.name}</span>
                                                 </label>
                                             ))}
                                         </div>
@@ -1312,37 +1319,37 @@ export default function AdminPanel() {
 
                         {/* Combo List */}
                         <div className="lg:col-span-2">
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                                <div className="p-4 bg-gray-50 border-b flex justify-between">
-                                    <h2 className="font-bold">Combos Activos</h2>
+                            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+                                <div className="p-4 bg-gray-50 dark:bg-slate-700 border-b dark:border-slate-600 flex justify-between">
+                                    <h2 className="font-bold dark:text-white">Combos Activos</h2>
                                 </div>
                                 <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {combos.map(c => (
-                                        <div key={c.id} className="border rounded-lg overflow-hidden flex flex-col bg-white hover:shadow-md transition-shadow">
-                                            <div className="h-48 bg-gray-100 relative">
+                                        <div key={c.id} className="border dark:border-slate-700 rounded-lg overflow-hidden flex flex-col bg-white dark:bg-slate-800 hover:shadow-md transition-shadow">
+                                            <div className="h-48 bg-gray-100 dark:bg-slate-700 relative">
                                                 {c.image_url && <img src={c.image_url} alt="" className="w-full h-full object-cover" />}
-                                                <button onClick={() => handleComboDelete(c.id)} className="absolute top-2 right-2 bg-white/90 text-red-500 p-1.5 rounded-full hover:bg-red-50">
+                                                <button onClick={() => handleComboDelete(c.id)} className="absolute top-2 right-2 bg-white/90 dark:bg-slate-800/90 text-red-500 p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30">
                                                     <Trash2 size={16} />
                                                 </button>
-                                                <div className="absolute bottom-2 right-2 bg-white/90 px-2 py-1 rounded text-xs font-bold text-gray-700 shadow-sm flex items-center gap-1">
+                                                <div className="absolute bottom-2 right-2 bg-white/90 dark:bg-slate-800/90 px-2 py-1 rounded text-xs font-bold text-gray-700 dark:text-gray-300 shadow-sm flex items-center gap-1">
                                                     Stock:
                                                     <input
                                                         type="number"
                                                         defaultValue={c.stock}
-                                                        className="w-12 border rounded p-0.5 text-center font-bold"
+                                                        className="w-12 border dark:border-slate-600 rounded p-0.5 text-center font-bold dark:bg-slate-700 dark:text-white"
                                                         onBlur={(e) => handleUpdateStock('combos', c.id, e.target.value)}
                                                     />
                                                 </div>
                                             </div>
                                             <div className="p-4">
-                                                <h3 className="font-bold text-lg mb-1">{c.name}</h3>
-                                                <p className="text-brand-dark font-bold text-xl mb-3">
+                                                <h3 className="font-bold text-lg mb-1 dark:text-white">{c.name}</h3>
+                                                <p className="text-brand-dark dark:text-brand-accent font-bold text-xl mb-3">
                                                     {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(c.price)}
                                                 </p>
 
                                                 {/* Products List Preview */}
                                                 {c.products_json && Array.isArray(c.products_json) && (
-                                                    <div className="text-xs text-gray-500">
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400">
                                                         <span className="font-bold uppercase">Incluye:</span> {c.products_json.map(p => p.name).join(', ')}
                                                     </div>
                                                 )}
@@ -1361,26 +1368,26 @@ export default function AdminPanel() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* New Sale Form */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 sticky top-24">
-                                <h2 className="font-bold text-xl mb-4 flex items-center gap-2">
+                            <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 sticky top-24">
+                                <h2 className="font-bold text-xl mb-4 flex items-center gap-2 dark:text-white">
                                     <Plus size={20} /> Registrar Venta
                                 </h2>
                                 <form onSubmit={handleManualSaleSubmit} className="space-y-4">
                                     {/* Seller & Client */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-xs font-bold text-gray-500 mb-1 block">Vendedor</label>
+                                            <label className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 block">Vendedor</label>
                                             <select
                                                 value={manualSaleFormData.seller}
                                                 onChange={(e) => setManualSaleFormData(prev => ({ ...prev, seller: e.target.value }))}
-                                                className="w-full border p-2 rounded"
+                                                className="w-full border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white"
                                             >
                                                 <option value="Rodrigo">Rodrigo</option>
                                                 <option value="Vane">Vane</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-gray-500 mb-1 block">Cliente</label>
+                                            <label className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 block">Cliente</label>
                                             <div className="flex gap-2">
                                                 <input
                                                     type="text"
@@ -1388,38 +1395,38 @@ export default function AdminPanel() {
                                                     required
                                                     value={manualSaleFormData.client_name}
                                                     onChange={(e) => setManualSaleFormData(prev => ({ ...prev, client_name: e.target.value }))}
-                                                    className="w-1/2 border p-2 rounded"
+                                                    className="w-1/2 border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white"
                                                 />
                                                 <input
                                                     type="tel"
                                                     placeholder="Teléfono (Ej: 261...)"
                                                     value={manualSaleFormData.client_phone}
                                                     onChange={(e) => setManualSaleFormData(prev => ({ ...prev, client_phone: e.target.value }))}
-                                                    className="w-1/2 border p-2 rounded"
+                                                    className="w-1/2 border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white"
                                                 />
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Product Selector */}
-                                    <div className="border p-3 rounded bg-gray-50 max-h-48 overflow-y-auto">
-                                        <p className="text-xs font-bold text-gray-500 mb-2">Agregar Productos:</p>
+                                    <div className="border dark:border-slate-600 p-3 rounded bg-gray-50 dark:bg-slate-700 max-h-48 overflow-y-auto">
+                                        <p className="text-xs font-bold text-gray-500 dark:text-gray-300 mb-2">Agregar Productos:</p>
                                         <div className="space-y-1">
                                             {products.map(p => (
-                                                <div key={p.id} className="flex justify-between items-center bg-white p-2 rounded shadow-sm border">
-                                                    <div className="truncate text-sm flex-1 mr-2">{p.name} (${p.price})</div>
+                                                <div key={p.id} className="flex justify-between items-center bg-white dark:bg-slate-800 p-2 rounded shadow-sm border dark:border-slate-600">
+                                                    <div className="truncate text-sm flex-1 mr-2 dark:text-white">{p.name} (${p.price})</div>
                                                     <button
                                                         type="button"
                                                         onClick={() => handleAddManualItem(p.id, 'product')}
-                                                        className="bg-black text-white px-2 py-1 rounded text-xs font-bold hover:bg-gray-800"
+                                                        className="bg-black dark:bg-slate-900 text-white px-2 py-1 rounded text-xs font-bold hover:bg-gray-800 dark:hover:bg-slate-800"
                                                     >
                                                         +
                                                     </button>
                                                 </div>
                                             ))}
                                             {combos.map(c => (
-                                                <div key={c.id} className="flex justify-between items-center bg-white p-2 rounded shadow-sm border border-purple-100">
-                                                    <div className="truncate text-sm flex-1 mr-2 font-bold text-purple-700">{c.name} (Combo)</div>
+                                                <div key={c.id} className="flex justify-between items-center bg-white dark:bg-slate-800 p-2 rounded shadow-sm border border-purple-100 dark:border-purple-900">
+                                                    <div className="truncate text-sm flex-1 mr-2 font-bold text-purple-700 dark:text-purple-400">{c.name} (Combo)</div>
                                                     <button
                                                         type="button"
                                                         onClick={() => handleAddManualItem(c.id, 'combo')}
@@ -1462,7 +1469,7 @@ export default function AdminPanel() {
 
                                     {/* Payment */}
                                     <div>
-                                        <label className="text-xs font-bold text-gray-500 mb-1 block">Monto Pagado (Si es seña, poné menos)</label>
+                                        <label className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 block">Monto Pagado (Si es seña, poné menos)</label>
                                         <div className="relative">
                                             <DollarSign size={16} className="absolute left-3 top-3 text-gray-400" />
                                             <input
@@ -1470,7 +1477,7 @@ export default function AdminPanel() {
                                                 placeholder="Monto Pagado"
                                                 value={manualSaleFormData.paid_amount}
                                                 onChange={(e) => setManualSaleFormData(prev => ({ ...prev, paid_amount: e.target.value }))}
-                                                className="w-full border p-2 pl-9 rounded font-mono font-bold"
+                                                className="w-full border dark:border-slate-600 p-2 pl-9 rounded font-mono font-bold dark:bg-slate-700 dark:text-white"
                                             />
                                         </div>
                                         {manualSaleFormData.total_amount > 0 && manualSaleFormData.paid_amount < manualSaleFormData.total_amount && (
@@ -1489,30 +1496,30 @@ export default function AdminPanel() {
 
                         {/* History List */}
                         <div className="lg:col-span-2">
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                                <div className="p-4 bg-gray-50 border-b flex justify-between">
+                            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden text-gray-800 dark:text-white">
+                                <div className="p-4 bg-gray-50 dark:bg-slate-700 border-b dark:border-slate-600 flex justify-between">
                                     <h2 className="font-bold">Historial de Ventas</h2>
                                 </div>
                                 <div className="p-0">
                                     {manualSales.map(sale => {
                                         const isDebt = sale.status === 'Pendiente';
                                         return (
-                                            <div key={sale.id} className={`p-4 border-b hover:bg-gray-50 ${isDebt ? 'bg-red-50' : ''}`}>
+                                            <div key={sale.id} className={`p-4 border-b dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 ${isDebt ? 'bg-red-50 dark:bg-red-900/10' : ''}`}>
                                                 <div className="flex justify-between items-start mb-2">
                                                     <div>
-                                                        <h3 className="font-bold text-lg">{sale.client_name}</h3>
+                                                        <h3 className="font-bold text-lg dark:text-white">{sale.client_name}</h3>
                                                         <p className="text-xs text-gray-500 flex items-center gap-1">
                                                             <User size={12} /> {sale.seller} &bull; {new Date(sale.date).toLocaleDateString()} {new Date(sale.date).toLocaleTimeString()}
                                                         </p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${isDebt ? 'bg-red-200 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                                                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${isDebt ? 'bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-100' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'}`}>
                                                             {sale.status}
                                                         </span>
                                                     </div>
                                                 </div>
 
-                                                <div className="text-sm text-gray-600 mb-2">
+                                                <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                                                     {sale.items_json.map(i => `${i.quantity}x ${i.name}`).join(', ')}
                                                 </div>
 
@@ -1562,8 +1569,8 @@ export default function AdminPanel() {
                                                         )}
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-xs text-gray-500">Total</p>
-                                                        <p className="font-bold text-lg">
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">Total</p>
+                                                        <p className="font-bold text-lg dark:text-white">
                                                             {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total_amount)}
                                                         </p>
                                                     </div>
@@ -1571,7 +1578,7 @@ export default function AdminPanel() {
                                             </div>
                                         );
                                     })}
-                                    {manualSales.length === 0 && <p className="text-gray-500 text-center py-8">No hay ventas registradas.</p>}
+                                    {manualSales.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-center py-8">No hay ventas registradas.</p>}
                                 </div>
                             </div>
                         </div>
@@ -1596,46 +1603,46 @@ export default function AdminPanel() {
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm relative overflow-hidden group">
+                                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-100 dark:border-slate-700 shadow-sm relative overflow-hidden group">
                                     <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                         <TrendingUp size={48} className="text-green-600" />
                                     </div>
-                                    <p className="text-xs text-gray-500 font-bold uppercase mb-1 flex items-center gap-1"><Globe size={12} /> Ventas Totales</p>
-                                    <p className="text-3xl font-bold text-green-700">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase mb-1 flex items-center gap-1"><Globe size={12} /> Ventas Totales</p>
+                                    <p className="text-3xl font-bold text-green-700 dark:text-green-500">
                                         {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
                                             allSales.reduce((acc, sale) => acc + (sale.origin === 'MANUAL' ? (sale.paid || 0) : (sale.total || 0)), 0)
                                         )}
                                     </p>
                                     <p className="text-[10px] text-gray-400 mt-2">Recaudación Real</p>
                                 </div>
-                                <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm relative overflow-hidden group">
+                                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-100 dark:border-slate-700 shadow-sm relative overflow-hidden group">
                                     <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                         <Globe size={48} className="text-blue-600" />
                                     </div>
-                                    <p className="text-xs text-gray-500 font-bold uppercase mb-1 flex items-center gap-1"><Globe size={12} /> Web</p>
-                                    <p className="text-2xl font-bold text-blue-700">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase mb-1 flex items-center gap-1"><Globe size={12} /> Web</p>
+                                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-500">
                                         {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
                                             allSales.filter(s => s.origin === 'WEB').reduce((acc, s) => acc + s.total, 0)
                                         )}
                                     </p>
                                 </div>
-                                <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm relative overflow-hidden group">
+                                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-100 dark:border-slate-700 shadow-sm relative overflow-hidden group">
                                     <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                         <ShoppingBag size={48} className="text-purple-600" />
                                     </div>
-                                    <p className="text-xs text-gray-500 font-bold uppercase mb-1 flex items-center gap-1"><ShoppingBag size={12} /> Manual</p>
-                                    <p className="text-2xl font-bold text-purple-700">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase mb-1 flex items-center gap-1"><ShoppingBag size={12} /> Manual</p>
+                                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-500">
                                         {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
                                             allSales.filter(s => s.origin === 'MANUAL').reduce((acc, s) => acc + (s.paid || 0), 0)
                                         )}
                                     </p>
                                 </div>
-                                <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm relative overflow-hidden group">
+                                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-100 dark:border-slate-700 shadow-sm relative overflow-hidden group">
                                     <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                         <DollarSign size={48} className="text-yellow-600" />
                                     </div>
-                                    <p className="text-xs text-gray-500 font-bold uppercase mb-1 flex items-center gap-1"><TrendingUp size={12} /> Ganancia</p>
-                                    <p className="text-2xl font-bold text-yellow-700">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase mb-1 flex items-center gap-1"><TrendingUp size={12} /> Ganancia</p>
+                                    <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-500">
                                         {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
                                             (() => {
                                                 const totalRevenue = allSales.reduce((acc, sale) => acc + (sale.origin === 'MANUAL' ? (sale.paid || 0) : (sale.total || 0)), 0);
@@ -1658,9 +1665,9 @@ export default function AdminPanel() {
 
 
                         {/* LISTA UNIFICADA */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                            <div className="p-4 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
-                                <h2 className="font-bold">Historial Unificado de Ventas</h2>
+                        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+                            <div className="p-4 bg-gray-50 dark:bg-slate-700 border-b dark:border-slate-600 flex flex-col md:flex-row justify-between items-center gap-4">
+                                <h2 className="font-bold dark:text-white">Historial Unificado de Ventas</h2>
                                 {console.log("Cargando ventas (Render):", allSales)}
 
                                 {/* SEARCH BAR */}
@@ -1669,13 +1676,13 @@ export default function AdminPanel() {
                                     <input
                                         type="text"
                                         placeholder="Buscar cliente po nombre o teléfono..."
-                                        className="w-full pl-9 pr-4 py-2 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full pl-9 pr-4 py-2 border dark:border-slate-600 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
                                 </div>
 
-                                <button onClick={fetchAllSales} className="text-sm text-blue-600 hover:underline">Refrescar</button>
+                                <button onClick={fetchAllSales} className="text-sm text-blue-600 hover:underline dark:text-blue-400">Refrescar</button>
                             </div>
 
                             <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
@@ -1727,7 +1734,7 @@ export default function AdminPanel() {
                                         return (
                                             <div key={dateKey}>
                                                 {/* Sticky Header */}
-                                                <div className="bg-gray-100 px-4 py-2 text-xs font-bold text-gray-500 uppercase sticky top-0 z-10 flex items-center gap-2">
+                                                <div className="bg-gray-100 dark:bg-slate-700/80 backdrop-blur-sm px-4 py-2 text-xs font-bold text-gray-500 dark:text-gray-300 uppercase sticky top-0 z-10 flex items-center gap-2 border-b dark:border-slate-600">
                                                     <Calendar size={12} /> {label}
                                                 </div>
 
@@ -1740,26 +1747,26 @@ export default function AdminPanel() {
                                                         const safeItems = Array.isArray(sale.items) ? sale.items : [];
 
                                                         return (
-                                                            <div key={`${sale.origin}-${sale.id}`} className="p-4 hover:bg-gray-50 transition-colors flex flex-col md:flex-row gap-4 justify-between items-start md:items-center border-b last:border-0 relative">
+                                                            <div key={`${sale.origin}-${sale.id}`} className="p-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors flex flex-col md:flex-row gap-4 justify-between items-start md:items-center border-b dark:border-slate-700 last:border-0 relative">
                                                                 <div>
                                                                     <div className="flex items-center gap-2 mb-1">
                                                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white ${sale.origin === 'WEB' ? 'bg-blue-500' : 'bg-purple-500'}`}>
                                                                             {sale.origin || 'N/A'}
                                                                         </span>
-                                                                        <span className="text-xs text-gray-400">
+                                                                        <span className="text-xs text-gray-400 dark:text-gray-500">
                                                                             {sale.date ? new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                                                                         </span>
                                                                     </div>
                                                                     {/* Protección de Mapeo: Optional Chaining */}
-                                                                    <p className="font-bold text-lg">{sale.client || 'Cliente Desconocido'}</p>
-                                                                    <p className="text-sm text-gray-500">
+                                                                    <p className="font-bold text-lg dark:text-white">{sale.client || 'Cliente Desconocido'}</p>
+                                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
                                                                         {safeItems.map(i => `${i?.quantity || 0}x ${i?.name || 'Item'}`).join(', ')}
                                                                     </p>
                                                                 </div>
 
                                                                 <div className="flex items-center gap-6">
                                                                     <div className="text-right">
-                                                                        <p className="font-bold text-xl">
+                                                                        <p className="font-bold text-xl dark:text-white">
                                                                             {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(safeTotal)}
                                                                         </p>
                                                                         {sale.origin === 'MANUAL' && sale.status === 'Pendiente' && (
@@ -1797,17 +1804,17 @@ export default function AdminPanel() {
                 {activeTab === 'wheel' && (
                     <div className="space-y-8">
                         {/* CONFIGURATION */}
-                        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                            <h2 className="font-bold text-xl mb-4 flex items-center gap-2">
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700">
+                            <h2 className="font-bold text-xl mb-4 flex items-center gap-2 dark:text-white">
                                 <Dices size={24} className="text-[#d4af37]" /> Configuración de Premios
                             </h2>
-                            <p className="text-sm text-gray-500 mb-4">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                                 Editá los premios, probabilidades y stock. La suma de probabilidades NO necesita ser 100 (se calcula proporcionalmente), pero es recomendado.
                             </p>
 
                             <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-gray-50 text-xs uppercase font-bold text-gray-500">
+                                <table className="w-full text-sm text-left text-gray-800 dark:text-gray-300">
+                                    <thead className="bg-gray-50 dark:bg-slate-700 text-xs uppercase font-bold text-gray-500 dark:text-gray-300">
                                         <tr>
                                             <th className="p-3">Etiqueta (Visible)</th>
                                             <th className="p-3">Valor / Código</th>
@@ -1815,15 +1822,15 @@ export default function AdminPanel() {
                                             <th className="p-3">Stock Real</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-100">
+                                    <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                                         {wheelConfig.map(prize => (
-                                            <tr key={prize.id} className="hover:bg-gray-50">
+                                            <tr key={prize.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
                                                 <td className="p-3">
                                                     <input
                                                         type="text"
                                                         value={prize.label}
                                                         onChange={(e) => handleUpdateWheelConfig(prize.id, 'label', e.target.value)}
-                                                        className="border rounded p-1 w-full"
+                                                        className="border dark:border-slate-600 rounded p-1 w-full dark:bg-slate-700 dark:text-white"
                                                     />
                                                 </td>
                                                 <td className="p-3">
@@ -1831,7 +1838,7 @@ export default function AdminPanel() {
                                                         type="text"
                                                         value={prize.value}
                                                         onChange={(e) => handleUpdateWheelConfig(prize.id, 'value', e.target.value)}
-                                                        className="border rounded p-1 w-full font-mono font-bold text-blue-600"
+                                                        className="border dark:border-slate-600 rounded p-1 w-full font-mono font-bold text-blue-600 dark:text-blue-400 dark:bg-slate-700"
                                                     />
                                                 </td>
                                                 <td className="p-3">
@@ -1839,7 +1846,7 @@ export default function AdminPanel() {
                                                         type="number"
                                                         value={prize.probability}
                                                         onChange={(e) => handleUpdateWheelConfig(prize.id, 'probability', parseInt(e.target.value) || 0)}
-                                                        className="border rounded p-1 w-20 text-center"
+                                                        className="border dark:border-slate-600 rounded p-1 w-20 text-center dark:bg-slate-700 dark:text-white"
                                                     />
                                                 </td>
                                                 <td className="p-3">
@@ -1847,7 +1854,7 @@ export default function AdminPanel() {
                                                         type="number"
                                                         value={prize.stock}
                                                         onChange={(e) => handleUpdateWheelConfig(prize.id, 'stock', parseInt(e.target.value) || 0)}
-                                                        className={`border rounded p-1 w-20 text-center font-bold ${prize.stock === 0 ? 'text-red-500 bg-red-50' : 'text-green-600'}`}
+                                                        className={`border dark:border-slate-600 rounded p-1 w-20 text-center font-bold ${prize.stock === 0 ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : 'text-green-600 dark:text-green-400 dark:bg-slate-700'}`}
                                                     />
                                                 </td>
                                             </tr>
@@ -1858,18 +1865,18 @@ export default function AdminPanel() {
                         </div>
 
                         {/* LEADS */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                            <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
-                                <h2 className="font-bold flex items-center gap-2">
+                        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+                            <div className="p-4 bg-gray-50 dark:bg-slate-700 border-b dark:border-slate-600 flex justify-between items-center">
+                                <h2 className="font-bold flex items-center gap-2 dark:text-white">
                                     <User size={20} /> Participantes (Leads)
                                 </h2>
-                                <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
+                                <span className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 text-xs font-bold px-2 py-1 rounded-full">
                                     Total: {wheelLeads.length}
                                 </span>
                             </div>
                             <div className="max-h-[500px] overflow-y-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-white text-xs uppercase font-bold text-gray-500 sticky top-0 z-10 shadow-sm">
+                                <table className="w-full text-sm text-left text-gray-800 dark:text-gray-300">
+                                    <thead className="bg-white dark:bg-slate-800 text-xs uppercase font-bold text-gray-500 dark:text-gray-400 sticky top-0 z-10 shadow-sm">
                                         <tr>
                                             <th className="p-3">Fecha</th>
                                             <th className="p-3">Nombre</th>
@@ -1878,13 +1885,13 @@ export default function AdminPanel() {
                                             <th className="p-3">Acción</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-100">
+                                    <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                                         {wheelLeads.map(lead => (
-                                            <tr key={lead.id} className="hover:bg-gray-50">
-                                                <td className="p-3 text-gray-500 text-xs">
+                                            <tr key={lead.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                                                <td className="p-3 text-gray-500 dark:text-gray-400 text-xs">
                                                     {new Date(lead.created_at).toLocaleDateString()} {new Date(lead.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </td>
-                                                <td className="p-3 font-bold">{lead.full_name || lead.name}</td>
+                                                <td className="p-3 font-bold dark:text-white">{lead.full_name || lead.name}</td>
                                                 <td className="p-3 font-mono">{lead.whatsapp}</td>
                                                 <td className="p-3">
                                                     <span className={`text-xs font-bold px-2 py-1 rounded ${lead.prize_won === 'Sigue Participando' || lead.prize_won === 'NO_PRIZE' ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700'}`}>
@@ -1915,7 +1922,7 @@ export default function AdminPanel() {
                 {/* --- PAYMENT MODAL --- */}
                 {paymentModal.open && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl relative animate-in fade-in zoom-in duration-200">
+                        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-sm shadow-xl relative animate-in fade-in zoom-in duration-200">
                             <button
                                 onClick={() => setPaymentModal({ open: false, sale: null, amount: '' })}
                                 className="absolute top-2 right-2 text-gray-400 hover:text-black"
@@ -1923,20 +1930,20 @@ export default function AdminPanel() {
                                 <Plus className="transform rotate-45" size={24} />
                             </button>
 
-                            <h3 className="font-bold text-xl mb-1">Cobrar Saldo</h3>
+                            <h3 className="font-bold text-xl mb-1 dark:text-white">Cobrar Saldo</h3>
                             <p className="text-sm text-gray-500 mb-4">
-                                Cliente: <span className="font-bold">{paymentModal.sale?.client_name}</span>
+                                Cliente: <span className="font-bold dark:text-gray-300">{paymentModal.sale?.client_name}</span>
                             </p>
 
-                            <div className="bg-red-50 p-3 rounded mb-4 text-center">
-                                <p className="text-xs text-red-500 font-bold uppercase">Deuda Actual</p>
-                                <p className="text-2xl font-bold text-red-600">
+                            <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded mb-4 text-center">
+                                <p className="text-xs text-red-500 dark:text-red-400 font-bold uppercase">Deuda Actual</p>
+                                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                                     {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(paymentModal.sale?.total_amount - paymentModal.sale?.paid_amount)}
                                 </p>
                             </div>
 
                             <form onSubmit={handleUpdatePayment}>
-                                <label className="block text-sm font-bold mb-2">Monto a cobrar ahora:</label>
+                                <label className="block text-sm font-bold mb-2 dark:text-white">Monto a cobrar ahora:</label>
                                 <div className="relative mb-4">
                                     <DollarSign size={18} className="absolute left-3 top-3 text-gray-400" />
                                     <input
@@ -1947,7 +1954,7 @@ export default function AdminPanel() {
                                         placeholder="Ingrese monto..."
                                         value={paymentModal.amount}
                                         onChange={(e) => setPaymentModal(prev => ({ ...prev, amount: e.target.value }))}
-                                        className="w-full border p-2 pl-10 rounded text-lg font-bold"
+                                        className="w-full border dark:border-slate-600 p-2 pl-10 rounded text-lg font-bold dark:bg-slate-700 dark:text-white"
                                     />
                                 </div>
 
@@ -1962,32 +1969,32 @@ export default function AdminPanel() {
                 {/* --- DELETE CONFIRMATION MODAL --- */}
                 {deleteModal.open && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl relative animate-in fade-in zoom-in duration-200">
-                            <h3 className="font-bold text-xl mb-4 text-red-600 flex items-center gap-2">
+                        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-sm shadow-xl relative animate-in fade-in zoom-in duration-200">
+                            <h3 className="font-bold text-xl mb-4 text-red-600 dark:text-red-500 flex items-center gap-2">
                                 <Trash2 /> Eliminar Venta
                             </h3>
-                            <p className="text-gray-600 mb-6">
+                            <p className="text-gray-600 dark:text-gray-300 mb-6">
                                 ¿Por qué deseas eliminar la venta de <b>{deleteModal.sale?.client}</b>?
                             </p>
 
                             <div className="space-y-3">
                                 <button
                                     onClick={() => setDeleteModal(prev => ({ ...prev, reason: 'error' }))}
-                                    className={`w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 transition-colors ${deleteModal.reason === 'error' ? 'border-red-500 bg-red-50 font-bold text-red-700' : 'border-gray-200'}`}
+                                    className={`w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ${deleteModal.reason === 'error' ? 'border-red-500 bg-red-50 dark:bg-red-900/30 font-bold text-red-700 dark:text-red-400' : 'border-gray-200 dark:border-slate-600 dark:text-white'}`}
                                 >
                                     Error de Carga
                                     {deleteModal.reason === 'error' && <CheckSquare size={16} />}
                                 </button>
                                 <button
                                     onClick={() => setDeleteModal(prev => ({ ...prev, reason: 'return' }))}
-                                    className={`w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 transition-colors ${deleteModal.reason === 'return' ? 'border-red-500 bg-red-50 font-bold text-red-700' : 'border-gray-200'}`}
+                                    className={`w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ${deleteModal.reason === 'return' ? 'border-red-500 bg-red-50 dark:bg-red-900/30 font-bold text-red-700 dark:text-red-400' : 'border-gray-200 dark:border-slate-600 dark:text-white'}`}
                                 >
                                     Devolución / Cancelación
                                     {deleteModal.reason === 'return' && <CheckSquare size={16} />}
                                 </button>
                                 <button
                                     onClick={() => setDeleteModal(prev => ({ ...prev, reason: 'test' }))}
-                                    className={`w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 transition-colors ${deleteModal.reason === 'test' ? 'border-red-500 bg-red-50 font-bold text-red-700' : 'border-gray-200'}`}
+                                    className={`w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ${deleteModal.reason === 'test' ? 'border-red-500 bg-red-50 dark:bg-red-900/30 font-bold text-red-700 dark:text-red-400' : 'border-gray-200 dark:border-slate-600 dark:text-white'}`}
                                 >
                                     Prueba de Sistema
                                     {deleteModal.reason === 'test' && <CheckSquare size={16} />}

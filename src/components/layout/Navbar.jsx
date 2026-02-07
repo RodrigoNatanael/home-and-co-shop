@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingCart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ThemeToggle from '../ThemeToggle';
 
 export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -21,7 +22,7 @@ export default function Navbar() {
 
     const navBackground = isHome && !isScrolled
         ? 'bg-transparent text-white'
-        : 'bg-white text-brand-dark shadow-md';
+        : 'bg-white dark:bg-slate-900 text-brand-dark dark:text-gray-100 shadow-md';
 
     const linkHover = isHome && !isScrolled
         ? 'hover:text-brand-accent'
@@ -58,28 +59,29 @@ export default function Navbar() {
                     </div>
 
                     {/* Actions */}
-                    <div className="hidden md:flex items-center space-x-4">
-                        <a
-                            href="https://wa.me/5492617523156?text=Hola! Quiero ver el catálogo actualizado de Home & Co"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-brand-accent text-white px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform"
-                        >
-                            PEDIR CATÁLOGO
-                        </a>
-                        <button className={linkHover}>
-                            <ShoppingCart size={24} />
-                        </button>
-                    </div>
+                    <ThemeToggle />
+                    <a
+                        href="https://wa.me/5492617523156?text=Hola! Quiero ver el catálogo actualizado de Home & Co"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-brand-accent text-white px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform"
+                    >
+                        PEDIR CATÁLOGO
+                    </a>
+                    <Link to="/cart" className={linkHover}>
+                        <ShoppingCart size={24} />
+                    </Link>
+                </div>
 
-                    {/* Mobile Menu Button */}
-                    <div className="md:hidden">
-                        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-                            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-                        </button>
-                    </div>
+                {/* Mobile Menu Button */}
+                <div className="md:hidden flex items-center gap-4">
+                    <ThemeToggle />
+                    <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                        {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                    </button>
                 </div>
             </div>
+
 
             {/* Mobile Menu Overlay */}
             <AnimatePresence>
@@ -88,7 +90,7 @@ export default function Navbar() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden bg-brand-dark text-white border-t border-brand-gray overflow-hidden"
+                        className="md:hidden bg-brand-dark dark:bg-slate-950 text-white border-t border-brand-gray dark:border-slate-800 overflow-hidden"
                     >
                         <div className="flex flex-col p-8 space-y-6">
                             {links.map((link) => (
@@ -105,6 +107,6 @@ export default function Navbar() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </nav>
+        </nav >
     );
 }
