@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseclient';
-import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square, User, DollarSign, FileText, MessageCircle, Globe, ShoppingBag, TrendingUp, Search, Calendar, Dices, Gift } from 'lucide-react';
+import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square, User, DollarSign, FileText, MessageCircle, Globe, ShoppingBag, TrendingUp, Search, Calendar, Dices, Gift, Palette } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export default function AdminPanel() {
@@ -80,6 +80,20 @@ export default function AdminPanel() {
     const [wheelLeads, setWheelLeads] = useState([]);
     const [loadingWheel, setLoadingWheel] = useState(false);
 
+    // --- SITE CONFIG STATE ---
+    const [siteConfig, setSiteConfig] = useState({
+        hero_video_url: '',
+        cat1_img: '',
+        cat1_link: '',
+        cat1_title: '',
+        cat2_img: '',
+        cat2_link: '',
+        cat2_title: '',
+        cat3_img: '',
+        cat3_link: '',
+        cat3_title: ''
+    });
+
     useEffect(() => {
         fetchProducts();
         fetchBanners();
@@ -89,14 +103,53 @@ export default function AdminPanel() {
         fetchManualSales();
         fetchAllSales(); // Unified Fetch
         fetchWheelData();
+        fetchSiteConfig();
     }, []);
 
-    // Refresh Wheel Data when tab becomes active
+    // Refresh Wheel/Config Data when tab becomes active
     useEffect(() => {
-        if (activeTab === 'wheel') {
-            fetchWheelData();
-        }
+        if (activeTab === 'wheel') fetchWheelData();
+        if (activeTab === 'design') fetchSiteConfig();
     }, [activeTab]);
+
+    // --- FETCH SITE CONFIG ---
+    const fetchSiteConfig = async () => {
+        const { data, error } = await supabase.from('site_config').select('*');
+        if (data) {
+            const newConfig = { ...siteConfig };
+            data.forEach(item => {
+                newConfig[item.key] = item.value;
+            });
+            setSiteConfig(newConfig);
+        }
+    };
+
+    const handleConfigChange = (e) => {
+        const { name, value } = e.target;
+        setSiteConfig(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSaveConfig = async () => {
+        try {
+            setUploading(true);
+            const updates = Object.keys(siteConfig).map(key => ({
+                key,
+                value: siteConfig[key]
+            }));
+
+            const { error } = await supabase
+                .from('site_config')
+                .upsert(updates, { onConflict: 'key' });
+
+            if (error) throw error;
+            alert('Configuración guardada!');
+        } catch (error) {
+            console.error('Error saving config:', error);
+            alert('Error al guardar configuración');
+        } finally {
+            setUploading(false);
+        }
+    };
 
     // --- FETCH RULETA ---
     const fetchWheelData = async () => {
@@ -789,8 +842,99 @@ export default function AdminPanel() {
                         >
                             <Dices size={16} /> Ruleta
                         </button>
+                        <button
+                            onClick={() => setActiveTab('design')}
+                            className={`px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'design' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <Palette size={16} /> Diseño
+                        </button>
                     </div>
                 </div>
+
+                {/* --- CONTENT: PRODUCTS --- */}
+                {activeTab === 'design' && (
+                    <div className="max-w-4xl mx-auto space-y-8">
+                        {/* Video Banner Section */}
+                        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                            <h2 className="font-bold text-xl mb-4 flex items-center gap-2 border-b pb-2">
+                                <Palette size={20} className="text-purple-600" /> Banner Principal (Video)
+                            </h2>
+                            <div className="mb-4">
+                                <label className="block text-sm font-bold mb-2">URL del Video (MP4)</label>
+                                <input
+                                    type="text"
+                                    name="hero_video_url"
+                                    value={siteConfig.hero_video_url}
+                                    onChange={handleConfigChange}
+                                    placeholder="https://... (Link directo al video)"
+                                    className="w-full border p-2 rounded"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Recomendado: Video corto (8-10s), sin sonido, optimizado para web (menos de 5MB).
+                                    Si se deja vacío, se mostrará el carrusel de imágenes por defecto.
+                                </p>
+                            </div>
+                            {siteConfig.hero_video_url && (
+                                <div className="mt-4 rounded-lg overflow-hidden border border-gray-200">
+                                    <p className="text-xs font-bold bg-gray-100 p-2">Vista Previa:</p>
+                                    <video
+                                        src={siteConfig.hero_video_url}
+                                        autoPlay
+                                        loop
+                                        muted
+                                        className="w-full h-48 object-cover"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Categories Section */}
+                        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                            <h2 className="font-bold text-xl mb-4 flex items-center gap-2 border-b pb-2">
+                                <Palette size={20} className="text-blue-600" /> Categorías Destacadas
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {/* Cat 1 */}
+                                <div className="bg-gray-50 p-4 rounded border">
+                                    <h3 className="font-bold mb-2 text-center uppercase text-gray-700">Categoría 1</h3>
+                                    <div className="space-y-3">
+                                        <input type="text" name="cat1_title" value={siteConfig.cat1_title} onChange={handleConfigChange} placeholder="Título" className="w-full border p-2 rounded text-sm" />
+                                        <input type="text" name="cat1_link" value={siteConfig.cat1_link} onChange={handleConfigChange} placeholder="Link (/catalog?...)" className="w-full border p-2 rounded text-sm" />
+                                        <input type="text" name="cat1_img" value={siteConfig.cat1_img} onChange={handleConfigChange} placeholder="URL Imagen" className="w-full border p-2 rounded text-sm" />
+                                    </div>
+                                    {siteConfig.cat1_img && <img src={siteConfig.cat1_img} alt="Preview" className="mt-2 w-full h-24 object-cover rounded" />}
+                                </div>
+                                {/* Cat 2 */}
+                                <div className="bg-gray-50 p-4 rounded border">
+                                    <h3 className="font-bold mb-2 text-center uppercase text-gray-700">Categoría 2</h3>
+                                    <div className="space-y-3">
+                                        <input type="text" name="cat2_title" value={siteConfig.cat2_title} onChange={handleConfigChange} placeholder="Título" className="w-full border p-2 rounded text-sm" />
+                                        <input type="text" name="cat2_link" value={siteConfig.cat2_link} onChange={handleConfigChange} placeholder="Link (/catalog?...)" className="w-full border p-2 rounded text-sm" />
+                                        <input type="text" name="cat2_img" value={siteConfig.cat2_img} onChange={handleConfigChange} placeholder="URL Imagen" className="w-full border p-2 rounded text-sm" />
+                                    </div>
+                                    {siteConfig.cat2_img && <img src={siteConfig.cat2_img} alt="Preview" className="mt-2 w-full h-24 object-cover rounded" />}
+                                </div>
+                                {/* Cat 3 */}
+                                <div className="bg-gray-50 p-4 rounded border">
+                                    <h3 className="font-bold mb-2 text-center uppercase text-gray-700">Categoría 3</h3>
+                                    <div className="space-y-3">
+                                        <input type="text" name="cat3_title" value={siteConfig.cat3_title} onChange={handleConfigChange} placeholder="Título" className="w-full border p-2 rounded text-sm" />
+                                        <input type="text" name="cat3_link" value={siteConfig.cat3_link} onChange={handleConfigChange} placeholder="Link (/catalog?...)" className="w-full border p-2 rounded text-sm" />
+                                        <input type="text" name="cat3_img" value={siteConfig.cat3_img} onChange={handleConfigChange} placeholder="URL Imagen" className="w-full border p-2 rounded text-sm" />
+                                    </div>
+                                    {siteConfig.cat3_img && <img src={siteConfig.cat3_img} alt="Preview" className="mt-2 w-full h-24 object-cover rounded" />}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Save Button */}
+                        <div className="sticky bottom-4 bg-white p-4 rounded-lg shadow-lg border border-purple-200 flex justify-end">
+                            <Button onClick={handleSaveConfig} className="bg-purple-600 hover:bg-purple-700 text-white w-full md:w-auto">
+                                <Save className="mr-2" size={18} /> GUARDAR CAMBIOS DE DISEÑO
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 {/* --- CONTENT: PRODUCTS --- */}
                 {activeTab === 'products' && (

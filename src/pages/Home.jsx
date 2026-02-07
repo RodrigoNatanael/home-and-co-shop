@@ -9,10 +9,31 @@ import ComboCard from '../components/ui/ComboCard';
 import { Button } from '../components/ui/Button';
 
 export default function Home() {
-    const [products, setProducts] = useState([]);
-    const [combos, setCombos] = useState([]);
+    const [config, setConfig] = useState({
+        hero_video_url: '',
+        cat1_img: 'https://images.unsplash.com/photo-1616422838323-95e263c9b78e?q=80&w=1780&auto=format&fit=crop',
+        cat1_link: '/catalog?category=Mates',
+        cat1_title: 'Mates',
+        cat2_img: 'https://images.unsplash.com/photo-1605152276897-4f618f831968?q=80&w=2070&auto=format&fit=crop',
+        cat2_link: '/catalog?category=Hidratación',
+        cat2_title: 'Hidratación',
+        cat3_img: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=2070&auto=format&fit=crop',
+        cat3_link: '/catalog?category=Coolers',
+        cat3_title: 'Coolers'
+    });
 
     useEffect(() => {
+        const fetchConfig = async () => {
+            const { data, error } = await supabase.from('site_config').select('*');
+            if (data) {
+                const newConfig = { ...config };
+                data.forEach(item => {
+                    newConfig[item.key] = item.value;
+                });
+                setConfig(newConfig);
+            }
+        };
+
         const fetchProducts = async () => {
             const { data, error } = await supabase
                 .from('products')
@@ -37,6 +58,7 @@ export default function Home() {
             }
         };
 
+        fetchConfig();
         fetchProducts();
         fetchCombos();
     }, []);
@@ -46,45 +68,78 @@ export default function Home() {
 
     return (
         <div className="min-h-screen bg-brand-light">
-            {/* Hero Section */}
-            <BannerCarousel />
+            {/* Hero Section: Video or Carousel */}
+            {config.hero_video_url ? (
+                <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden">
+                    <video
+                        className="absolute inset-0 w-full h-full object-cover"
+                        src={config.hero_video_url}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <div className="text-center text-white p-4">
+                            <h1 className="font-display font-bold text-5xl md:text-7xl mb-6 tracking-tight drop-shadow-xl">
+                                HOME & CO
+                            </h1>
+                            <Link to="/catalog">
+                                <Button variant="primary" size="lg" className="bg-white text-brand-dark hover:bg-gray-100 border-none shadow-xl transform hover:scale-105 transition-transform">
+                                    COMPRAR AHORA <ArrowRight className="ml-2" />
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <BannerCarousel />
+            )}
 
-            {/* Featured Categories (Lifestyle Strips) */}
+            {/* Featured Categories (Dynamic) */}
             <section className="py-0">
                 <div className="grid grid-cols-1 md:grid-cols-3">
-                    {/* Category 1: Mates */}
-                    <Link to="/catalog?category=Mates" className="group relative h-96 overflow-hidden">
+                    {/* Category 1 */}
+                    <Link to={config.cat1_link} className="group relative h-96 overflow-hidden">
                         <div className="absolute inset-0 bg-gray-800 transition-transform duration-700 group-hover:scale-105">
-                            {/* Placeholder Img */}
-                            <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1616422838323-95e263c9b78e?q=80&w=1780&auto=format&fit=crop')] bg-cover bg-center opacity-70 group-hover:opacity-60 transition-opacity" />
+                            <div
+                                className="w-full h-full bg-cover bg-center opacity-70 group-hover:opacity-60 transition-opacity"
+                                style={{ backgroundImage: `url('${config.cat1_img}')` }}
+                            />
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2">
-                                Mates
+                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-lg">
+                                {config.cat1_title}
                             </h2>
                         </div>
                     </Link>
 
-                    {/* Category 2: Hidratación */}
-                    <Link to="/catalog?category=Hidratación" className="group relative h-96 overflow-hidden">
+                    {/* Category 2 */}
+                    <Link to={config.cat2_link} className="group relative h-96 overflow-hidden">
                         <div className="absolute inset-0 bg-gray-800 transition-transform duration-700 group-hover:scale-105">
-                            <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1605152276897-4f618f831968?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-70 group-hover:opacity-60 transition-opacity" />
+                            <div
+                                className="w-full h-full bg-cover bg-center opacity-70 group-hover:opacity-60 transition-opacity"
+                                style={{ backgroundImage: `url('${config.cat2_img}')` }}
+                            />
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2">
-                                Hidratación
+                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-lg">
+                                {config.cat2_title}
                             </h2>
                         </div>
                     </Link>
 
-                    {/* Category 3: Coolers */}
-                    <Link to="/catalog?category=Coolers" className="group relative h-96 overflow-hidden">
+                    {/* Category 3 */}
+                    <Link to={config.cat3_link} className="group relative h-96 overflow-hidden">
                         <div className="absolute inset-0 bg-gray-800 transition-transform duration-700 group-hover:scale-105">
-                            <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-70 group-hover:opacity-60 transition-opacity" />
+                            <div
+                                className="w-full h-full bg-cover bg-center opacity-70 group-hover:opacity-60 transition-opacity"
+                                style={{ backgroundImage: `url('${config.cat3_img}')` }}
+                            />
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2">
-                                Coolers
+                            <h2 className="font-display font-bold text-4xl text-white tracking-wide uppercase border-b-4 border-transparent group-hover:border-white transition-all pb-2 drop-shadow-lg">
+                                {config.cat3_title}
                             </h2>
                         </div>
                     </Link>
