@@ -157,46 +157,46 @@ export default function Home() {
             <section className="bg-white  border-y border-gray-200  py-16 transition-colors">
                 <div className="max-w-7xl mx-auto px-4 md:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                        <div className="flex flex-col items-center">
-                            <Truck size={48} strokeWidth={1} className="mb-4 text-brand-dark  transition-colors" />
-                            <h3 className="font-display font-bold text-xl mb-2  a todo el país</h3>
-<p className="text-gray-500 max-w-xs">Llevamos la aventura a tu puerta, estés donde estés.</p>
+
                         <div className="flex flex-col items-center">
                             <Truck size={48} strokeWidth={1} className="mb-4 text-brand-dark transition-colors" />
                             {/* ACÁ ESTABA EL ERROR: Faltaba cerrar el > y poner el texto bien */}
                             <h3 className="font-display font-bold text-xl mb-2">Envíos a todo el país</h3>
                             <p className="text-gray-500 max-w-xs text-center">Llevamos la aventura a tu puerta, estés donde estés.</p>
-                        </div>            </section>
-
-                    {/* Featured Products Grid */}
-                    <section id="featured-products" className="py-20 max-w-7xl mx-auto px-4 md:px-8">
-                        <div className="flex justify-between items-end mb-12">
-                            <h2 className="font-display font-bold text-4xl text-brand-dark  transition-colors">DESTACADOS</h2>
-                            <Link to="/catalog" className="text-brand-dark  font-bold border-b-2 border-brand-dark  uppercase tracking-widest hover:text-gray-600  hover:border-gray-600  transition-colors">
-                                Ver Todo
-                            </Link>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {featuredProducts.map(product => (
-                                <ProductCard key={product.id} product={product} />
+                    </div>
+                </div>
+            </section>
+
+            {/* Featured Products Grid */}
+            <section id="featured-products" className="py-20 max-w-7xl mx-auto px-4 md:px-8">
+                <div className="flex justify-between items-end mb-12">
+                    <h2 className="font-display font-bold text-4xl text-brand-dark  transition-colors">DESTACADOS</h2>
+                    <Link to="/catalog" className="text-brand-dark  font-bold border-b-2 border-brand-dark  uppercase tracking-widest hover:text-gray-600  hover:border-gray-600  transition-colors">
+                        Ver Todo
+                    </Link>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {featuredProducts.map(product => (
+                        <ProductCard key={product.id} product={product} />
+                    ))}
+                </div>
+            </section>
+
+            {/* Combos Section */}
+            {combos.length > 0 && (
+                <section className="py-20 bg-gray-50  transition-colors">
+                    <div className="max-w-7xl mx-auto px-4 md:px-8">
+                        <h2 className="font-display font-bold text-4xl text-brand-dark  mb-12 text-center uppercase tracking-tight transition-colors">Ofertas de Combos</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {combos.map(combo => (
+                                <ComboCard key={combo.id} combo={combo} />
                             ))}
                         </div>
-                    </section>
-
-                    {/* Combos Section */}
-                    {combos.length > 0 && (
-                        <section className="py-20 bg-gray-50  transition-colors">
-                            <div className="max-w-7xl mx-auto px-4 md:px-8">
-                                <h2 className="font-display font-bold text-4xl text-brand-dark  mb-12 text-center uppercase tracking-tight transition-colors">Ofertas de Combos</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                    {combos.map(combo => (
-                                        <ComboCard key={combo.id} combo={combo} />
-                                    ))}
-                                </div>
-                            </div>
-                        </section>
-                    )}
-                </div>
-                );
+                    </div>
+                </section>
+            )}
+        </div>
+    );
 }
 
