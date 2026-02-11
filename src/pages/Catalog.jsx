@@ -82,7 +82,7 @@ export default function Catalog() {
                                         <li key={cat}>
                                             <button
                                                 onClick={() => handleCategoryChange(cat)}
-                                                className={`text-left w-full hover:underline transition-all ${selectedCategory === cat ? 'font-bold text-black  : 'text-gray-600 
+                                                className={`text-left w-full hover:underline transition-all ${selectedCategory === cat ? 'font-bold text-black' : 'text-gray-600'}`}
                                             >
                                                 {cat}
                                             </button>
@@ -103,8 +103,10 @@ export default function Catalog() {
                                 className="bg-white  w-3/4 h-full p-6 shadow-2xl transition-colors"
                             >
                                 <div className="flex justify-between items-center mb-8">
-                                    <h2 className="font-display font-bold text-2xl uppercase 
-                                    <button onClick={() => setIsFilterOpen(false)} className=" size={24} /></button>
+                                    <h2 className="font-display font-bold text-2xl uppercase">Filtros</h2>
+                                    <button onClick={() => setIsFilterOpen(false)} className="p-2">
+                                        <X size={24} />
+                                    </button>
                                 </div>
 
                                 <div>
@@ -114,7 +116,7 @@ export default function Catalog() {
                                             <li key={cat}>
                                                 <button
                                                     onClick={() => handleCategoryChange(cat)}
-                                                    className={`text-left w-full text-lg ${selectedCategory === cat ? 'font-bold text-black  : 'text-gray-600 
+                                                    className={`text-left w-full text-lg ${selectedCategory === cat ? 'font-bold text-black' : 'text-gray-600'}`}
                                                 >
                                                     {cat}
                                                 </button>
@@ -134,7 +136,7 @@ export default function Catalog() {
                             ))}
                         </div>
                         {filteredProducts.length === 0 && (
-                            <div className="py-20 text-center text-gray-500 
+                            <div className="py-20 text-center text-gray-500">
                                 No se encontraron productos en esta categoría.
                             </div>
                         )}
