@@ -68,19 +68,19 @@ export default function ComboCard({ combo }) {
 
                     {/* Included Items List */}
                     {includedProducts.length > 0 && (
-                        <div className="bg-gray-50  rounded-lg p-3 mb-4">
-                            <h4 className="text-xs font-bold text-gray-500  uppercase mb-2 flex items-center gap-1">
-                                <Package size={12} /> Incluye:
-                            </h4>
-                            <ul className="space-y-1">
-                                {includedProducts.map((prod, idx) => (
-                                    <li key={idx} className="text-sm text-gray-700  flex items-start gap-2">
-                                        <Check size={14} className="text-green-500  mt-0.5 shrink-0" />
-                                        <span className="line-clamp-1">{prod.name}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                        <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                        <h4 className="text-xs font-bold text-gray-500  uppercase mb-2 flex items-center gap-1">
+                            <Package size={12} /> Incluye:
+                        </h4>
+                        <ul className="space-y-1">
+                            {includedProducts.map((prod, idx) => (
+                                <li key={idx} className="text-sm text-gray-700  flex items-start gap-2">
+                                    <Check size={14} className="text-green-500  mt-0.5 shrink-0" />
+                                    <span className="line-clamp-1">{prod.name}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                     )}
                 </div>
 
