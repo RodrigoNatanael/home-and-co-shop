@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+ï»¿import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseclient';
 import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square, User, DollarSign, FileText, MessageCircle, Globe, ShoppingBag, TrendingUp, Search, Calendar, Dices, Gift, Palette } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -29,7 +29,7 @@ export default function AdminPanel() {
     const [generatingAI, setGeneratingAI] = useState(false);
     const handleGenerateDescription = async () => {
         if (!productFormData.name || !productFormData.category) {
-            alert('?? Primero escribí el Nombre y elegí la Categoría para que la IA sepa qué vender.');
+            alert('?? Primero escribÃ­ el Nombre y elegÃ­ la CategorÃ­a para que la IA sepa quÃ© vender.');
             return;
         }
         try {
@@ -37,7 +37,7 @@ export default function AdminPanel() {
             const desc = await generateProductDescription(productFormData.name, productFormData.category);
             setProductFormData(prev => ({ ...prev, description: desc }));
         } catch (error) {
-            alert('No pudimos generar la descripción en este momento. ¡Probá de nuevo!');
+            alert('No pudimos generar la descripciÃ³n en este momento. Â¡ProbÃ¡ de nuevo!');
         } finally {
             setGeneratingAI(false);
         }
@@ -189,9 +189,9 @@ export default function AdminPanel() {
                 .upsert(updates, { onConflict: 'id' });
 
             if (error) throw error;
-            alert('Configuración guardada exitosamente!');
+            alert('ConfiguraciÃ³n guardada exitosamente!');
         } catch (error) {
-            console.error('Error detallado al guardar configuración:', error);
+            console.error('Error detallado al guardar configuraciÃ³n:', error);
             alert('Error al guardar: ' + (error.message || error.details || JSON.stringify(error)));
         } finally {
             setUploading(false);
@@ -220,7 +220,7 @@ export default function AdminPanel() {
 
         if (error) {
             console.error('Error updating wheel config:', error);
-            alert('Error al actualizar configuración');
+            alert('Error al actualizar configuraciÃ³n');
             fetchWheelData(); // Revert
         }
     };
@@ -277,7 +277,7 @@ export default function AdminPanel() {
     const handleProductSubmit = async (e) => {
         e.preventDefault();
         if (!productFormData.name || !productFormData.price || !productFormData.category) {
-            alert('Por favor completá los campos obligatorios');
+            alert('Por favor completÃ¡ los campos obligatorios');
             return;
         }
 
@@ -328,7 +328,7 @@ export default function AdminPanel() {
     };
 
     const handleProductDelete = async (id) => {
-        if (!confirm('¿Borrar producto?')) return;
+        if (!confirm('Â¿Borrar producto?')) return;
         const { error } = await supabase.from('products').delete().eq('id', id);
         if (error) alert('Error deleting');
         else fetchProducts();
@@ -407,7 +407,7 @@ export default function AdminPanel() {
     };
 
     const handleBannerDelete = async (id) => {
-        if (!confirm('¿Borrar banner?')) return;
+        if (!confirm('Â¿Borrar banner?')) return;
         const { error } = await supabase.from('banners').delete().eq('id', id);
         if (error) alert('Error deleting');
         else fetchBanners();
@@ -795,7 +795,7 @@ export default function AdminPanel() {
     };
 
     const handleCloseDay = () => {
-        if (!confirm('¿Confirmás el cierre de hoy?')) return;
+        if (!confirm('Â¿ConfirmÃ¡s el cierre de hoy?')) return;
 
         const totalWeb = allSales.filter(s => s.origin === 'WEB').reduce((acc, s) => acc + s.total, 0);
         const totalManual = allSales.filter(s => s.origin === 'MANUAL').reduce((acc, s) => acc + (s.paid || 0), 0);
@@ -825,7 +825,7 @@ export default function AdminPanel() {
     };
 
     const handleComboDelete = async (id) => {
-        if (!confirm('¿Borrar combo?')) return;
+        if (!confirm('Â¿Borrar combo?')) return;
         const { error } = await supabase.from('combos').delete().eq('id', id);
         if (error) alert('Error deleting combo');
         else fetchCombos();
@@ -916,7 +916,7 @@ export default function AdminPanel() {
                             onClick={() => handleTabChange('design')}
                             className={`w-full text-left px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-3 active:scale-95 transition-all ${activeTab === 'design' ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-600'}`}
                         >
-                            <Palette size={18} /> Diseño
+                            <Palette size={18} /> DiseÃ±o
                         </button>
                     </div>
                 </div>
@@ -926,7 +926,7 @@ export default function AdminPanel() {
                 {/* --- DESKTOP HEADER & TABS (Hidden on Mobile) --- */}
                 <div className="hidden lg:flex justify-between items-center mb-8 border-b  pb-4">
                     <div className="flex items-center gap-4">
-                        <h1 className="font-display font-bold text-3xl">Panel de Administración</h1>
+                        <h1 className="font-display font-bold text-3xl">Panel de AdministraciÃ³n</h1>
                         <ThemeToggle />
                     </div>
 
@@ -985,7 +985,7 @@ export default function AdminPanel() {
                             onClick={() => setActiveTab('design')}
                             className={`px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'design' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <Palette size={16} /> Diseño
+                            <Palette size={16} /> DiseÃ±o
                         </button>
                     </div>
                 </div>
@@ -1010,7 +1010,7 @@ export default function AdminPanel() {
                                 />
                                 <p className="text-xs text-gray-500 mt-1">
                                     Recomendado: Video corto (8-10s), sin sonido, optimizado para web (menos de 5MB).
-                                    Si se deja vacío, se mostrará el carrusel de imágenes por defecto.
+                                    Si se deja vacÃ­o, se mostrarÃ¡ el carrusel de imÃ¡genes por defecto.
                                 </p>
                             </div>
                             {siteConfig.hero_video_url && (
@@ -1030,19 +1030,19 @@ export default function AdminPanel() {
                         {/* Categories Section */}
                         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                             <h2 className="font-bold text-xl mb-4 flex items-center gap-2 border-b pb-2">
-                                <Palette size={20} className="text-blue-600" /> Categorías Destacadas
+                                <Palette size={20} className="text-blue-600" /> CategorÃ­as Destacadas
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {[1, 2, 3].map(num => (
                                     <div key={num} className="bg-gray-50 p-4 rounded border flex flex-col gap-4">
                                         <h3 className="font-bold text-center uppercase text-gray-700 border-b pb-2">
-                                            Categoría {num}
+                                            CategorÃ­a {num}
                                         </h3>
 
-                                        {/* Selector de Categoría */}
+                                        {/* Selector de CategorÃ­a */}
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 mb-1">
-                                                Seleccionar Categoría
+                                                Seleccionar CategorÃ­a
                                             </label>
                                             <select
                                                 name={`cat${num}_title`}
@@ -1060,7 +1060,7 @@ export default function AdminPanel() {
                                         {/* Link Generado */}
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 mb-1">
-                                                Link de Navegación (Auto)
+                                                Link de NavegaciÃ³n (Auto)
                                             </label>
                                             <div className="flex items-center bg-gray-200 rounded px-2 py-2">
                                                 <Globe size={14} className="text-gray-500 mr-2" />
@@ -1111,7 +1111,7 @@ export default function AdminPanel() {
                             {/* Save Button */}
                             <div className="sticky bottom-4 bg-white p-4 rounded-lg shadow-lg border border-purple-200 flex justify-end">
                                 <Button onClick={handleSaveConfig} className="bg-purple-600 hover:bg-purple-700 text-white w-full md:w-auto">
-                                    <Save className="mr-2" size={18} /> GUARDAR CAMBIOS DE DISEÑO
+                                    <Save className="mr-2" size={18} /> GUARDAR CAMBIOS DE DISEÃ‘O
                                 </Button>
                             </div>
                         </div>
@@ -1134,7 +1134,7 @@ export default function AdminPanel() {
                                     <input type="number" name="cost_price" value={productFormData.cost_price} onChange={handleProductInputChange} placeholder="Precio de Costo (Admin)" className="w-full border p-2 rounded bg-yellow-50" />
                                     <input type="number" name="stock" value={productFormData.stock} onChange={handleProductInputChange} required placeholder="Stock Inicial *" className="w-full border p-2 rounded" />
                                     <select name="category" value={productFormData.category} onChange={handleProductInputChange} required className="w-full border p-2 rounded">
-                                        <option value="">Categoría...</option>
+                                        <option value="">CategorÃ­a...</option>
                                         <option value="Mates">Mates</option>
                                         <option value="Termos">Termos</option>
                                         <option value="Botellas">Botellas</option>
@@ -1154,7 +1154,7 @@ export default function AdminPanel() {
                                         />
                                         <div className="border p-2 rounded bg-gray-50 max-h-32 overflow-y-auto">
                                             <p className="text-xs font-bold text-gray-500 mb-1">Etiquetas:</p>
-                                            {['NUEVO', 'MÁS VENDIDO', 'ENVÍO GRATIS', 'PREMIUM'].map(tag => (
+                                            {['NUEVO', 'MÃS VENDIDO', 'ENVÃO GRATIS', 'PREMIUM'].map(tag => (
                                                 <label key={tag} className="flex items-center gap-2 cursor-pointer text-xs mb-1">
                                                     <input
                                                         type="checkbox"
@@ -1183,7 +1183,7 @@ export default function AdminPanel() {
                                             {generatingAI ? <>?? Pensando...</> : <>? Mejorar con IA</>}
                                         </button>
                                     </div>
-                                    <textarea name="description" value={productFormData.description} onChange={handleProductInputChange} placeholder="Descripción" rows="3" className="w-full border p-2 rounded" />
+                                    <textarea name="description" value={productFormData.description} onChange={handleProductInputChange} placeholder="DescripciÃ³n" rows="3" className="w-full border p-2 rounded" />
 
                                     <div className="border-2 border-dashed border-gray-300 rounded p-4 text-center">
                                         <input type="file" onChange={handleProductImageChange} className="hidden" id="prod-file" />
@@ -1252,7 +1252,7 @@ export default function AdminPanel() {
                                     <Plus size={20} /> Nuevo Banner
                                 </h2>
                                 <form onSubmit={handleBannerSubmit} className="space-y-4">
-                                    <input type="text" name="title" value={bannerFormData.title} onChange={handleBannerInputChange} placeholder="Título Principal (Ej: VERANO 2026)" className="w-full border p-2 rounded" />
+                                    <input type="text" name="title" value={bannerFormData.title} onChange={handleBannerInputChange} placeholder="TÃ­tulo Principal (Ej: VERANO 2026)" className="w-full border p-2 rounded" />
                                     <input type="text" name="link" value={bannerFormData.link} onChange={handleBannerInputChange} placeholder="Link destino (Ej: /catalog?category=Mates)" className="w-full border p-2 rounded" />
 
                                     <div className="border-2 border-dashed border-gray-300 rounded p-4 text-center">
@@ -1291,7 +1291,7 @@ export default function AdminPanel() {
                                                 </button>
                                             </div>
                                             <div className="p-3 bg-white">
-                                                <h3 className="font-bold text-sm truncate">{b.title || '(Sin título)'}</h3>
+                                                <h3 className="font-bold text-sm truncate">{b.title || '(Sin tÃ­tulo)'}</h3>
                                                 <p className="text-xs text-gray-400 truncate">{b.link}</p>
                                             </div>
                                         </div>
@@ -1436,7 +1436,7 @@ export default function AdminPanel() {
                                                 />
                                                 <input
                                                     type="tel"
-                                                    placeholder="Teléfono (Ej: 261...)"
+                                                    placeholder="TelÃ©fono (Ej: 261...)"
                                                     value={manualSaleFormData.client_phone}
                                                     onChange={(e) => setManualSaleFormData(prev => ({ ...prev, client_phone: e.target.value }))}
                                                     className="w-1/2 border p-2 rounded"
@@ -1506,7 +1506,7 @@ export default function AdminPanel() {
 
                                     {/* Payment */}
                                     <div>
-                                        <label className="text-xs font-bold text-gray-500  mb-1 block">Monto Pagado (Si es seña, poné menos)</label>
+                                        <label className="text-xs font-bold text-gray-500  mb-1 block">Monto Pagado (Si es seÃ±a, ponÃ© menos)</label>
                                         <div className="relative">
                                             <DollarSign size={16} className="absolute left-3 top-3 text-gray-400" />
                                             <input
@@ -1585,7 +1585,7 @@ export default function AdminPanel() {
                                                                     };
                                                                     const phone = formatPhone(sale.client_phone);
                                                                     const amount = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(sale.total_amount - sale.paid_amount);
-                                                                    const text = `Hola ${sale.client_name}! ?? Te recordamos que quedó un saldo pendiente de ${amount} por tu compra en Home & Co. Avisanos cuando puedas transferir! Gracias!`;
+                                                                    const text = `Hola ${sale.client_name}! ?? Te recordamos que quedÃ³ un saldo pendiente de ${amount} por tu compra en Home & Co. Avisanos cuando puedas transferir! Gracias!`;
                                                                     const link = phone
                                                                         ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
                                                                         : `https://wa.me/?text=${encodeURIComponent(text)}`;
@@ -1596,7 +1596,7 @@ export default function AdminPanel() {
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
                                                                             className="bg-[#25D366] text-white p-1 rounded hover:scale-110 transition-transform"
-                                                                            title={phone ? `Enviar a ${phone}` : "Abrir WhatsApp (Sin número)"}
+                                                                            title={phone ? `Enviar a ${phone}` : "Abrir WhatsApp (Sin nÃºmero)"}
                                                                         >
                                                                             <MessageCircle size={14} />
                                                                         </a>
@@ -1651,7 +1651,7 @@ export default function AdminPanel() {
                                                 allSales.reduce((acc, sale) => acc + (sale.origin === 'MANUAL' ? (sale.paid || 0) : (sale.total || 0)), 0)
                                             )}
                                         </p>
-                                        <p className="text-[10px] text-gray-400 mt-2">Recaudación Real</p>
+                                        <p className="text-[10px] text-gray-400 mt-2">RecaudaciÃ³n Real</p>
                                     </div>
                                     <div className="bg-white  p-4 rounded-lg border border-gray-100  shadow-sm relative overflow-hidden group">
                                         <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -1713,7 +1713,7 @@ export default function AdminPanel() {
                                         <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
                                         <input
                                             type="text"
-                                            placeholder="Buscar cliente po nombre o teléfono..."
+                                            placeholder="Buscar cliente po nombre o telÃ©fono..."
                                             className="w-full pl-9 pr-4 py-2 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -1778,7 +1778,7 @@ export default function AdminPanel() {
 
                                                     {/* Sales for this date */}
                                                     {groups[dateKey].map(sale => {
-                                                        // Try/Catch en el Render (Protección contra fallos en fila individual)
+                                                        // Try/Catch en el Render (ProtecciÃ³n contra fallos en fila individual)
                                                         try {
                                                             const safeTotal = (isNaN(sale.total) || sale.total === null) ? 0 : sale.total;
                                                             const safePaid = (isNaN(sale.paid) || sale.paid === null) ? 0 : sale.paid;
@@ -1795,7 +1795,7 @@ export default function AdminPanel() {
                                                                                 {sale.date ? new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                                                                             </span>
                                                                         </div>
-                                                                        {/* Protección de Mapeo: Optional Chaining */}
+                                                                        {/* ProtecciÃ³n de Mapeo: Optional Chaining */}
                                                                         <p className="font-bold text-lg">{sale.client || 'Cliente Desconocido'}</p>
                                                                         <p className="text-sm text-gray-500">
                                                                             {safeItems.map(i => `${i?.quantity || 0}x ${i?.name || 'Item'}`).join(', ')}
@@ -1846,10 +1846,10 @@ export default function AdminPanel() {
                             {/* CONFIGURATION */}
                             <div className="bg-white  p-6 rounded-lg shadow-sm border border-gray-200">
                                 <h2 className="font-bold text-xl mb-4 flex items-center gap-2">
-                                    <Dices size={24} className="text-[#d4af37]" /> Configuración de Premios
+                                    <Dices size={24} className="text-[#d4af37]" /> ConfiguraciÃ³n de Premios
                                 </h2>
                                 <p className="text-sm text-gray-500  mb-4">
-                                    Editá los premios, probabilidades y stock. La suma de probabilidades NO necesita ser 100 (se calcula proporcionalmente), pero es recomendado.
+                                    EditÃ¡ los premios, probabilidades y stock. La suma de probabilidades NO necesita ser 100 (se calcula proporcionalmente), pero es recomendado.
                                 </p>
 
                                 <div className="overflow-x-auto">
@@ -1857,7 +1857,7 @@ export default function AdminPanel() {
                                         <thead className="bg-gray-50 text-xs uppercase font-bold text-gray-500">
                                             <tr>
                                                 <th className="p-3">Etiqueta (Visible)</th>
-                                                <th className="p-3">Valor / Código</th>
+                                                <th className="p-3">Valor / CÃ³digo</th>
                                                 <th className="p-3">Probabilidad (0-100)</th>
                                                 <th className="p-3">Stock Real</th>
                                             </tr>
@@ -1922,7 +1922,7 @@ export default function AdminPanel() {
                                     <th className="p-3">Nombre</th>
                                     <th className="p-3">WhatsApp</th>
                                     <th className="p-3">Premio Ganado</th>
-                                    <th className="p-3">Acción</th>
+                                    <th className="p-3">AcciÃ³n</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -1956,117 +1956,118 @@ export default function AdminPanel() {
                     </div>
                 </div >
             </div >
-            )
-
-
-}
+            </div>
+                </div>
+            </div>
+        )}
 
             {/* --- PAYMENT MODAL --- */}
-            {
-                paymentModal.open && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white  rounded-lg p-6 w-full max-w-sm shadow-xl relative animate-in fade-in zoom-in duration-200">
-                            <button
-                                onClick={() => setPaymentModal({ open: false, sale: null, amount: '' })}
-                                className="absolute top-2 right-2 text-gray-400 hover:text-black"
-                            >
-                                <Plus className="transform rotate-45" size={24} />
-                            </button>
+            {paymentModal.open && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl relative animate-in fade-in zoom-in duration-200">
+                        <button
+                            onClick={() => setPaymentModal({ open: false, sale: null, amount: '' })}
+                            className="absolute top-2 right-2 text-gray-400 hover:text-black"
+                        >
+                            <Plus className="transform rotate-45" size={24} />
+                        </button>
 
-                            <h3 className="font-bold text-xl mb-1">Registrar Saldo</h3>
-                            <p className="text-sm text-gray-500 mb-4">
-                                Cliente: <span className="font-bold">{paymentModal.sale?.client}</span>
+                        <h3 className="font-bold text-xl mb-1">Registrar Saldo</h3>
+                        <p className="text-sm text-gray-500 mb-4">
+                            Cliente: <span className="font-bold">{paymentModal.sale?.client}</span>
+                        </p>
+
+                        <div className="bg-red-50 p-3 rounded mb-4 text-center">
+                            <p className="text-xs text-red-500 font-bold uppercase">Deuda Actual</p>
+                            <p className="text-2xl font-bold text-red-600">
+                                {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(paymentModal.sale?.total_amount - paymentModal.sale?.paid_amount)}
                             </p>
+                        </div>
 
-                            <div className="bg-red-50  p-3 rounded mb-4 text-center">
-                                <p className="text-xs text-red-500  font-bold uppercase">Deuda Actual</p>
-                                <p className="text-2xl font-bold text-red-600">
-                                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(paymentModal.sale?.total_amount - paymentModal.sale?.paid_amount)}
-                                </p>
+                        <form onSubmit={handleUpdatePayment}>
+                            <label className="block text-sm font-bold mb-2">Monto a cobrar ahora:</label>
+                            <div className="relative mb-4">
+                                <DollarSign size={18} className="absolute left-3 top-3 text-gray-400" />
+                                <input
+                                    type="number"
+                                    autoFocus
+                                    required
+                                    min="1"
+                                    placeholder="Ingrese monto..."
+                                    value={paymentModal.amount}
+                                    onChange={(e) => setPaymentModal(prev => ({ ...prev, amount: e.target.value }))}
+                                    className="w-full border p-2 pl-10 rounded text-lg font-bold"
+                                />
                             </div>
 
-                            <form onSubmit={handleUpdatePayment}>
-                                <label className="block text-sm font-bold mb-2">Monto a cobrar ahora:</label>
-                                <div className="relative mb-4">
-                                    <DollarSign size={18} className="absolute left-3 top-3 text-gray-400" />
-                                    <input
-                                        type="number"
-                                        autoFocus
-                                        required
-                                        min="1"
-                                        placeholder="Ingrese monto..."
-                                        value={paymentModal.amount}
-                                        onChange={(e) => setPaymentModal(prev => ({ ...prev, amount: e.target.value }))}
-                                        className="w-full border p-2 pl-10 rounded text-lg font-bold"
-                                    />
-                                </div>
-
-                                <Button type="submit" className="w-full">
-                                    Registrar Pago
-                                </Button>
-                            </form>
-                        </div>
+                            <Button type="submit" className="w-full">
+                                Registrar Pago
+                            </Button>
+                        </form>
                     </div>
-                )
-            }
+                </div>
+            )}
 
             {/* --- DELETE CONFIRMATION MODAL --- */}
-            {
-                deleteModal.open && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white  rounded-lg p-6 w-full max-w-sm shadow-xl relative animate-in fade-in zoom-in duration-200">
-                            <h3 className="font-bold text-xl mb-4 text-red-600  flex items-center gap-2">
-                                <Trash2 /> Eliminar Venta
-                            </h3>
-                            <p className="text-gray-600  mb-6">
-                                ¿Por qué deseas eliminar la venta de <b>{deleteModal.sale?.client}</b>?
+            {deleteModal.open && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl relative animate-in fade-in zoom-in duration-200">
+                        <h3 className="font-bold text-xl mb-4 text-red-600 flex items-center gap-2">
+                            <Trash2 /> Eliminar Venta
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                            Ã‚Â¿Por quÃƒÂ© deseas eliminar la venta de <b>{deleteModal.sale?.client}</b>?
+                        </p>
+
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => setDeleteModal(prev => ({ ...prev, reason: 'error' }))}
+                                className={w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 transition-colors }
+                            >
+                                Error de Carga
+                                {deleteModal.reason === 'error' && <CheckSquare size={16} />}
+                            </button>
+                            <button
+                                onClick={() => setDeleteModal(prev => ({ ...prev, reason: 'return' }))}
+                                className={w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 transition-colors }
+                            >
+                                DevoluciÃƒÂ³n / CancelaciÃƒÂ³n
+                                {deleteModal.reason === 'return' && <CheckSquare size={16} />}
+                            </button>
+                            <button
+                                onClick={() => setDeleteModal(prev => ({ ...prev, reason: 'test' }))}
+                                className={w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 transition-colors }
+                            >
+                                Prueba de Sistema
+                                {deleteModal.reason === 'test' && <CheckSquare size={16} />}
+                            </button>
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => setDeleteModal({ open: false, sale: null, reason: '' })}
+                                className="flex-1 py-2 text-gray-500 font-bold hover:bg-gray-100 rounded"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleConfirmDelete}
+                                disabled={!deleteModal.reason}
+                                className={lex-1 py-2 font-bold rounded text-white }
+                            >
+                                Confirmar
+                            </button>
+                        </div>
+
+                        {deleteModal.sale?.origin === 'MANUAL' && (
+                            <p className="text-xs text-center text-gray-400 mt-4">
+                                * Se repondrÃƒÂ¡ el stock automÃƒÂ¡ticamente.
                             </p>
-
-                            <div className="space-y-3">
-                                <button
-                                    onClick={() => setDeleteModal(prev => ({ ...prev, reason: 'error' }))}
-                                    className={`w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 transition-colors ${deleteModal.reason === 'error' ? 'border-red-500 bg-red-50 font-bold text-red-700' : 'border-gray-200'}`}
-                                >
-                                    Error de Carga
-                                    {deleteModal.reason === 'error' && <CheckSquare size={16} />}
-                                </button>
-                                <button
-                                    onClick={() => setDeleteModal(prev => ({ ...prev, reason: 'return' }))}
-                                    className={`w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 transition-colors ${deleteModal.reason === 'return' ? 'border-red-500 bg-red-50 font-bold text-red-700' : 'border-gray-200'}`}
-                                >
-                                    Devolución / Cancelación
-                                    {deleteModal.reason === 'return' && <CheckSquare size={16} />}
-                                </button>
-                                <button
-                                    onClick={() => setDeleteModal(prev => ({ ...prev, reason: 'test' }))}
-                                    className={`w-full p-3 rounded border text-left flex justify-between items-center hover:bg-red-50 transition-colors ${deleteModal.reason === 'test' ? 'border-red-500 bg-red-50 font-bold text-red-700' : 'border-gray-200'}`}
-                                >
-                                    Prueba de Sistema
-                                    {deleteModal.reason === 'test' && <CheckSquare size={16} />}
-                                </button>
-                            </div>
-
-                            <div className="flex gap-3 mt-6">
-                                <button
-                                    onClick={() => setDeleteModal({ open: false, sale: null, reason: '' })}
-                                    className="flex-1 py-2 text-gray-500 font-bold hover:bg-gray-100 rounded"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handleConfirmDelete}
-                                    disabled={!deleteModal.reason}
-                                    className={`flex-1 py-2 font-bold rounded text-white ${deleteModal.reason ? 'bg-red-600 hover:bg-red-700 shadow-lg' : 'bg-gray-300 cursor-not-allowed'}`}
-                                >
-                                    Confirmar
-                                </button>
-                            </div>
-
-                            {deleteModal.sale?.origin === 'MANUAL' && (
-                                <p className="text-xs text-center text-gray-400 mt-4">
-                                    * Se repondrá el stock automáticamente.
-                )}
-            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
+    </div>
     );
 }
