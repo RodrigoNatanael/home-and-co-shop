@@ -3,8 +3,8 @@ import { supabase } from '../supabaseclient';
 import { Trash2, Upload, Plus, Save, Image as ImageIcon, Package, CheckSquare, Square, User, DollarSign, FileText, MessageCircle, Globe, ShoppingBag, TrendingUp, Search, Calendar, Dices, Gift, Palette } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { generateProductDescription } from '../services/ai';
-import { Button } from '../components/ui/Button';
-import { generateProductDescription } from '../services/ai';
+
+
 
 export default function AdminPanel() {
     const [activeTab, setActiveTab] = useState('products'); // 'products' | 'banners' | 'combos' | 'manual_sales'
@@ -846,15 +846,23 @@ export default function AdminPanel() {
         <div className="min-h-screen bg-gray-50  pb-12 transition-colors">
             {/* --- MOBILE HEADER (Sticky) --- */}
             <div className="lg:hidden sticky top-0 z-50 bg-white  border-b  shadow-sm p-4 flex justify-between items-center transition-colors">
-                <h1 className="font-display font-bold text-xl text-gray-800  Admin</h1>
+                <h1 className="font-display font-bold text-xl text-gray-800">Admin</h1>
                 <div className="flex items-center gap-4">
-                    <ThemeToggle />
+
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         className="p-2 text-gray-600  hover:bg-gray-100  rounded-lg focus:outline-none"
                         aria-label="Toggle Menu"
                     >
-                        {isMobileMenuOpen ? <Trash2 size={24} className="rotate-45" /> : <div className="space-y-1.5"><span className="block w-6 h-0.5 bg-gray-800  className="block w-6 h-0.5 bg-gray-800  className="block w-6 h-0.5 bg-gray-800 
+                        {isMobileMenuOpen ? (
+                            <Trash2 size={24} className="rotate-45" />
+                        ) : (
+                            <div className="space-y-1.5">
+                                <span className="block w-6 h-0.5 bg-gray-800"></span>
+                                <span className="block w-6 h-0.5 bg-gray-800"></span>
+                                <span className="block w-6 h-0.5 bg-gray-800"></span>
+                            </div>
+                        )} 
                     </button>
                 </div>
             </div>
@@ -1116,16 +1124,16 @@ export default function AdminPanel() {
                         {/* Product Form */}
                         <div className="lg:col-span-1">
                             <div className="bg-white  p-6 rounded-lg shadow-sm border border-gray-200  sticky top-24 transition-colors">
-                                <h2 className="font-bold text-xl mb-4 flex items-center gap-2 
+                                <h2 className="font-bold text-xl mb-4 flex items-center gap-2"> 
                                     <Plus size={20} /> Nuevo Producto
                                 </h2>
                                 <form onSubmit={handleProductSubmit} className="space-y-4">
-                                    <input type="text" name="id" value={productFormData.id} onChange={handleProductInputChange} placeholder="ID (Opcional)" className="w-full border  p-2 rounded   />
-                                    <input type="text" name="name" value={productFormData.name} onChange={handleProductInputChange} required placeholder="Nombre *" className="w-full border  p-2 rounded   />
-                                    <input type="number" name="price" value={productFormData.price} onChange={handleProductInputChange} required placeholder="Precio *" className="w-full border  p-2 rounded   />
-                                    <input type="number" name="cost_price" value={productFormData.cost_price} onChange={handleProductInputChange} placeholder="Precio de Costo (Admin)" className="w-full border  p-2 rounded bg-yellow-50   />
-                                    <input type="number" name="stock" value={productFormData.stock} onChange={handleProductInputChange} required placeholder="Stock Inicial *" className="w-full border  p-2 rounded   />
-                                    <select name="category" value={productFormData.category} onChange={handleProductInputChange} required className="w-full border  p-2 rounded  
+                                    <input type="text" name="id" value={productFormData.id} onChange={handleProductInputChange} placeholder="ID (Opcional)" className="w-full border p-2 rounded" />
+                                    <input type="text" name="name" value={productFormData.name} onChange={handleProductInputChange} required placeholder="Nombre *" className="w-full border p-2 rounded" />
+                                    <input type="number" name="price" value={productFormData.price} onChange={handleProductInputChange} required placeholder="Precio *" className="w-full border p-2 rounded" />
+                                    <input type="number" name="cost_price" value={productFormData.cost_price} onChange={handleProductInputChange} placeholder="Precio de Costo (Admin)" className="w-full border p-2 rounded bg-yellow-50" />
+                                    <input type="number" name="stock" value={productFormData.stock} onChange={handleProductInputChange} required placeholder="Stock Inicial *" className="w-full border p-2 rounded" />
+                                    <select name="category" value={productFormData.category} onChange={handleProductInputChange} required className="w-full border p-2 rounded">
                                         <option value="">Categoría...</option>
                                         <option value="Mates">Mates</option>
                                         <option value="Termos">Termos</option>
@@ -1142,7 +1150,7 @@ export default function AdminPanel() {
                                             value={productFormData.previous_price}
                                             onChange={handleProductInputChange}
                                             placeholder="Precio Anterior (Opcional)"
-                                            className="w-full border  p-2 rounded text-sm  
+                                            className="w-full border p-2 rounded text-sm"
                                         />
                                         <div className="border p-2 rounded bg-gray-50 max-h-32 overflow-y-auto">
                                             <p className="text-xs font-bold text-gray-500 mb-1">Etiquetas:</p>
@@ -1165,7 +1173,16 @@ export default function AdminPanel() {
                                         </div>
                                     </div>
 
-<div className='flex justify-end mb-1'><button type='button' onClick={handleGenerateDescription} disabled={generatingAI} className={	ext-xs px-3 py-1 rounded-full flex items-center gap-1 transition-colors }>{generatingAI ? <>🧠 Pensando...</> : <>✨ Mejorar con IA</>}</button></div>
+                                    <div className="flex justify-end mb-1">
+                                        <button
+                                            type="button"
+                                            onClick={handleGenerateDescription}
+                                            disabled={generatingAI}
+                                            className="text-xs px-3 py-1 rounded-full flex items-center gap-1 transition-colors bg-brand-primary text-white hover:bg-brand-dark"
+                                        >
+                                            {generatingAI ? <>🧠 Pensando...</> : <>✨ Mejorar con IA</>}
+                                        </button>
+                                    </div>
                                     <textarea name="description" value={productFormData.description} onChange={handleProductInputChange} placeholder="Descripción" rows="3" className="w-full border p-2 rounded" />
 
                                     <div className="border-2 border-dashed border-gray-300 rounded p-4 text-center">
@@ -1186,7 +1203,7 @@ export default function AdminPanel() {
                         {/* Product List */}
                         <div className="lg:col-span-2">
                             <div className="bg-white  rounded-lg shadow-sm border border-gray-200  overflow-hidden transition-colors">
-                                <div className="p-4 bg-gray-50  border-b  flex justify-between text-gray-800 
+                                <div className="p-4 bg-gray-50 border-b flex justify-between text-gray-800"> 
                                     <h2 className="font-bold">Inventario</h2>
                                 </div>
                                 <div className="p-0">
@@ -1196,19 +1213,19 @@ export default function AdminPanel() {
                                                 {p.image_url && <img src={p.image_url} alt="" className="w-full h-full object-cover" />}
                                             </div>
                                             <div className="flex-1">
-                                                <h3 className="font-bold text-sm 
-                                                <p className="text-xs text-gray-500 
+                                                <h3 className="font-bold text-sm">{p.name}</h3>
+                                                <p className="text-xs text-gray-500">{p.category}</p>
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right">
-                                                    <p className="font-bold text-sm  Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(p.price)}</p>
+                                                    <p className="font-bold text-sm">{new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(p.price)}</p>
                                                 </div>
                                                 <div className="flex flex-col items-end">
                                                     <span className="text-[10px] uppercase text-gray-400  font-bold">Stock</span>
                                                     <input
                                                         type="number"
                                                         defaultValue={p.stock}
-                                                        className="w-16 border  rounded p-1 text-sm text-right font-bold  
+                                                        className="w-16 border rounded p-1 text-sm text-right font-bold"
                                                         onBlur={(e) => handleUpdateStock('products', p.id, e.target.value)}
                                                     />
                                                     {p.cost_price && <span className="text-[10px] text-yellow-600  font-bold mt-1">Costo: ${p.cost_price}</span>}
@@ -1273,8 +1290,8 @@ export default function AdminPanel() {
                                                     <Trash2 size={20} />
                                                 </button>
                                             </div>
-                                            <div className="p-3 bg-white 
-                                                <h3 className="font-bold text-sm truncate  || '(Sin título)'}</h3>
+                                            <div className="p-3 bg-white"> 
+                                                <h3 className="font-bold text-sm truncate">{b.title || '(Sin título)'}</h3>
                                                 <p className="text-xs text-gray-400 truncate">{b.link}</p>
                                             </div>
                                         </div>
