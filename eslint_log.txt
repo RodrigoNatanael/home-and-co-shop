@@ -1,0 +1,7 @@
+
+C:\Users\rodri\OneDrive\Escritorio\SHOP\src\pages\AdminPanel.jsx
+  1315:88  error  Parsing error: Unexpected token ">
+                                <input type="
+
+✖ 1 problem (1 error, 0 warnings)
+
