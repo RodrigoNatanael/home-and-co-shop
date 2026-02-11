@@ -69,7 +69,7 @@ export default function ComboCard({ combo }) {
                     {/* Included Items List */}
                     {includedProducts.length > 0 && (
                         <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                        <h4 className="text-xs font-bold text-gray-500  uppercase mb-2 flex items-center gap-1">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase mb-2 flex items-center gap-1">
                             <Package size={12} /> Incluye:
                         </h4>
                         <ul className="space-y-1">
