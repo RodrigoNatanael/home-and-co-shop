@@ -64,7 +64,7 @@ export default function ProductCard({ product }) {
                                 {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(product.previous_price)}
                             </p>
                         )}
-                        <p className={`text-lg font-bold ${product.previous_price > product.price ? 'text-red-600  : 'text-black 
+                        <p className={`font-bold text-lg ${product.previous_price > product.price ? 'text-red-600' : 'text-black'}`}>
                             {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(product.price)}
                         </p>
                     </div>
