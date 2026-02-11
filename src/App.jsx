@@ -13,8 +13,6 @@ import NotFound from './pages/NotFound';
 import Success from './pages/Success';
 import AdminPanel from './pages/AdminPanel';
 
-// --- CORRECCIÓN CLAVE AQUÍ ---
-// App.jsx vive en src/, así que entra directo a context/ con un solo punto (.)
 import { CartProvider } from './context/CartContext';
 import CartDrawer from './components/cart/CartDrawer';
 import WhatsAppButton from './components/ui/WhatsAppButton';
@@ -22,7 +20,7 @@ import LuckyWheel from './components/marketing/LuckyWheel';
 import UrgencyBanner from './components/ui/UrgencyBanner';
 import ChatBot from './components/ChatBot';
 
-// 1. Wrapper del Layout
+// Wrapper del Layout
 function Layout({ children }) {
   const location = useLocation();
   const isAdminPanel = location.pathname.startsWith('/admin-home-co');
@@ -48,7 +46,7 @@ function Layout({ children }) {
   );
 }
 
-// 2. Wrapper del ChatBot
+// Wrapper del ChatBot
 function ChatBotWrapper() {
   const location = useLocation();
   const isAdminPanel = location.pathname.startsWith('/admin-home-co');
@@ -57,14 +55,14 @@ function ChatBotWrapper() {
   return <ChatBot />;
 }
 
-// 3. Scroll Top
+// Scroll Top
 function ScrollToTop() {
   const { pathname } = useLocation();
   React.useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
 }
 
-// 4. App Principal
+// App Principal
 function App() {
   return (
     <CartProvider>
@@ -84,7 +82,6 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
-        {/* ChatBot Flotante */}
         <ChatBotWrapper />
       </Router>
     </CartProvider>
