@@ -1,17 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { askSommelier } from '../services/ai';
+import { supabase } from '../supabaseclient';
 // Usamos emojis para no depender de librerías por ahora
 // Si querés íconos, descomentá los imports y cambialos abajo
 
 export default function ChatBot() {
     useEffect(() => {
         console.log("🤖 CHATBOT MONTADO Y LISTO PARA LA GUERRA");
+
+        const fetchProducts = async () => {
+            const { data, error } = await supabase
+                .from('products')
+                .select('name, price, stock, category'); // Traemos lo esencial para el bot
+
+            if (error) console.error("Error fetching products for bot:", error);
+            else setProducts(data || []);
+        };
+
+        fetchProducts();
     }, []);
 
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
         { text: "¡Hola! 🧉 Soy el Sommelier Virtual. ¿En qué te ayudo?", sender: 'bot' }
     ]);
+    const [products, setProducts] = useState([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
@@ -23,7 +36,7 @@ export default function ChatBot() {
         setMessages(prev => [...prev, { text: userMsg, sender: 'user' }]);
         setIsLoading(true);
         try {
-            const response = await askSommelier(userMsg);
+            const response = await askSommelier(userMsg, products);
             setMessages(prev => [...prev, { text: response, sender: 'bot' }]);
         } catch (error) {
             setMessages(prev => [...prev, { text: "Error de conexión 🔌", sender: 'bot' }]);

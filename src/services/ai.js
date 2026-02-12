@@ -1,63 +1,69 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Leemos la clave desde el archivo .env
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
+/**
+ * Función para generar descripciones de productos en el Admin
+ */
 export const generateProductDescription = async (name, category) => {
-    if (!API_KEY) {
-        console.error("❌ Falta la API Key de Gemini en el archivo .env");
-        return "Error: Falta configurar la API Key.";
-    }
+    if (!API_KEY) return "Error: Falta configurar la API Key.";
 
     try {
-        // Iniciamos el modelo (usamos Flash por ser rápido y eficiente)
         const genAI = new GoogleGenerativeAI(API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        // La instrucción mágica para el "Vendedor Virtual"
         const prompt = `Actúa como un experto vendedor de e-commerce argentino de la marca 'Home & Co'. 
     Escribe una descripción de venta corta, persuasiva y canchera (máximo 280 caracteres) para un producto llamado "${name}" que pertenece a la categoría "${category}".
     
     Requisitos:
     - Usá lenguaje natural argentino (pero profesional).
-    - Resaltá la calidad.
-    - Incluí 2 o 3 emojis relevantes (mates, fuego, argentina, etc.).
+    - Resaltá la calidad y durabilidad (estilo Rugged/YETI).
+    - Incluí 2 o 3 emojis relevantes.
     - NO uses comillas en la respuesta.`;
 
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
+        return result.response.text();
     } catch (error) {
-        console.error("Error generando descripción con IA:", error);
-        return "No pudimos generar la descripción en este momento. ¡Probá de nuevo!";
+        console.error("Error IA Desc:", error);
+        return "No pudimos generar la descripción.";
     }
 };
 
-export const askSommelier = async (userQuestion) => {
-    if (!API_KEY) {
-        console.error("❌ Falta la API Key de Gemini en el archivo .env");
-        return "¡Hola! Estoy teniendo unos problemitas técnicos. Por favor volvé a intentar más tarde. 🧉";
-    }
+/**
+ * EL VENDEDOR 24/7 - Nueva lógica con conocimiento de productos
+ */
+export const askSommelier = async (userQuestion, products = []) => {
+    if (!API_KEY) return "¡Hola! Estoy configurando mi stock. Consultame en unos minutos o escribinos al WhatsApp. 🧉";
 
     try {
         const genAI = new GoogleGenerativeAI(API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        const prompt = `Actúa como un asistente virtual experto en mates llamado "El Sommelier" de la tienda Home & Co. 
-        Tu tono es amigable, argentino y servicial. 
-        Tu objetivo es recomendar productos (Mates, Termos, Bombillas) según lo que pregunte el usuario: "${userQuestion}".
+        // Convertimos la lista de productos en texto para que la IA los conozca
+        const contextProducts = products.length > 0
+            ? `Tenemos estos productos disponibles: ${products.map(p => `${p.name} ($${p.price})`).join(", ")}.`
+            : "Actualmente estamos renovando stock, pero consultame lo que necesites.";
+
+        const prompt = `
+        Sos el Asistente Comercial experto de "Home & Co", una tienda premium de Mates, Termos y Accesorios en Mendoza.
+        Tu objetivo: Vender, asesorar y cerrar la venta.
         
-        Reglas:
-        - Respuestas cortas (máximo 2 frases).
-        - Si preguntan precios exactos, deciles amablemente que revisen el catálogo.
-        - Usá emojis 🧉.
-        - Si la pregunta no tiene nada que ver con mates/termos, respondé con una broma suave y volvé al tema.`;
+        CONTEXTO DE PRODUCTOS:
+        ${contextProducts}
+
+        REGLAS DE ORO:
+        1. Tono: Argentino canchero pero muy profesional y servicial (estilo premium).
+        2. Conocimiento: Recomendá específicamente los productos de la lista anterior.
+        3. Si el usuario pregunta por algo que NO tenemos: Ofrecé lo más parecido que tengamos y decile "te consigo algo mejor".
+        4. Cierre: Siempre invitá a agregar al carrito o a contactar a Rodrigo/Vane por WhatsApp para envíos a todo el país.
+        5. Respuestas cortas: Máximo 3 frases. Usa emojis 🧉🔥.
+
+        PREGUNTA DEL CLIENTE: "${userQuestion}"`;
 
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
+        return result.response.text();
     } catch (error) {
-        console.error("Error consultando al Sommelier:", error);
-        return "¡Ufa! Se me volcó el agua. ¿Me repetís la pregunta? 🧉";
+        console.error("Error IA Chat:", error);
+        return "¡Ufa! Se me cortó la conexión. ¿Me repetís la consulta? Si no, chateamos por WhatsApp. 🧉";
     }
 };
