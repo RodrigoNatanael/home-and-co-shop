@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseclient';
-import { Trash2, Plus, RefreshCw, ShoppingBag, Video, Image as ImageIcon, Package, CheckSquare, Square } from 'lucide-react';
+import { Trash2, Plus, RefreshCw, ShoppingBag, Video, Image as ImageIcon, Package, CheckSquare, Layers, Palette } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export default function AdminPanel() {
@@ -18,16 +18,13 @@ export default function AdminPanel() {
 
     // --- FORMULARIO PRODUCTO ---
     const [productFormData, setProductFormData] = useState({
-        name: '',
-        price: '',
-        previous_price: '',
-        cost_price: '',
-        category: '',
-        description: '',
-        stock: '',
-        tags: []
+        name: '', price: '', previous_price: '', cost_price: '', category: '', description: '', stock: '',
+        tags: [],
+        variants: '' // String temporal para el input de colores
     });
-    const [productImageFile, setProductImageFile] = useState(null);
+
+    // ESTADO PARA 3 IMÁGENES
+    const [imageFiles, setImageFiles] = useState([null, null, null]);
 
     // --- OTROS FORMULARIOS ---
     const [manualSaleFormData, setManualSaleFormData] = useState({
@@ -88,8 +85,6 @@ export default function AdminPanel() {
     };
 
     // --- LÓGICA PRODUCTOS ---
-
-    // Función para generar ID manualmente (SOLUCIÓN AL ERROR)
     const generateUUID = () => {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -100,10 +95,14 @@ export default function AdminPanel() {
     const handleTagChange = (tag) => {
         setProductFormData(prev => {
             const currentTags = prev.tags || [];
-            return currentTags.includes(tag)
-                ? { ...prev, tags: currentTags.filter(t => t !== tag) }
-                : { ...prev, tags: [...currentTags, tag] };
+            return currentTags.includes(tag) ? { ...prev, tags: currentTags.filter(t => t !== tag) } : { ...prev, tags: [...currentTags, tag] };
         });
+    };
+
+    const handleImageChange = (index, file) => {
+        const newImages = [...imageFiles];
+        newImages[index] = file;
+        setImageFiles(newImages);
     };
 
     const handleProductSubmit = async (e) => {
@@ -111,19 +110,31 @@ export default function AdminPanel() {
         setUploading(true);
 
         try {
-            let imageUrl = null;
-            if (productImageFile) {
-                const fileName = `prod_${Date.now()}_${productImageFile.name.replace(/\s/g, '_')}`;
-                const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, productImageFile);
-                if (uploadError) throw uploadError;
-
-                const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
-                imageUrl = data.publicUrl;
+            // 1. SUBIR IMÁGENES (Loop)
+            const uploadedUrls = [];
+            for (let i = 0; i < imageFiles.length; i++) {
+                const file = imageFiles[i];
+                if (file) {
+                    const fileName = `prod_${Date.now()}_${i}_${file.name.replace(/\s/g, '_')}`;
+                    const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, file);
+                    if (uploadError) throw uploadError;
+                    const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
+                    uploadedUrls.push(data.publicUrl);
+                }
             }
 
-            // CREAMOS EL PRODUCTO CON ID GENERADO MANUALMENTE
+            // Si no hay imágenes, alertar (opcional)
+            if (uploadedUrls.length === 0) {
+                // Podríamos permitir crear sin foto, pero mejor avisar
+            }
+
+            // 2. PROCESAR VARIANTES (String a Array)
+            // Ejemplo entrada: "Rojo, Azul, Verde" -> ["Rojo", "Azul", "Verde"]
+            const variantsArray = productFormData.variants.split(',').map(v => v.trim()).filter(Boolean);
+
+            // 3. CREAR OBJETO
             const newProduct = {
-                id: generateUUID(), // <--- AQUÍ ESTÁ LA MAGIA PARA QUE NO FALLE
+                id: generateUUID(),
                 name: productFormData.name,
                 price: parseFloat(productFormData.price),
                 previous_price: productFormData.previous_price ? parseFloat(productFormData.previous_price) : null,
@@ -132,35 +143,40 @@ export default function AdminPanel() {
                 description: productFormData.description,
                 stock: parseInt(productFormData.stock),
                 tags: productFormData.tags,
-                image_url: imageUrl
+
+                // Nuevos campos
+                variants: variantsArray, // Array de colores
+                image_url: uploadedUrls[0] || null, // La primera es la principal
+                gallery: uploadedUrls // Todas van a la galería
             };
 
             const { error } = await supabase.from('products').insert([newProduct]);
-
             if (error) throw error;
 
-            alert("✅ Producto creado correctamente");
-            setProductFormData({ name: '', price: '', previous_price: '', cost_price: '', category: '', description: '', stock: '', tags: [] });
-            setProductImageFile(null);
+            alert("✅ Producto creado con éxito (Imágenes + Variantes)");
+
+            // Reset
+            setProductFormData({ name: '', price: '', previous_price: '', cost_price: '', category: '', description: '', stock: '', tags: [], variants: '' });
+            setImageFiles([null, null, null]);
             fetchProducts();
 
         } catch (error) {
-            console.error("Error detallado:", error);
-            alert("❌ Error al guardar: " + (error.message || error.details));
+            console.error("Error:", error);
+            alert("❌ Error: " + error.message);
         } finally {
             setUploading(false);
         }
     };
 
     const handleProductDelete = async (id) => {
-        if (confirm("¿Borrar producto permanentemente?")) {
+        if (confirm("¿Borrar producto?")) {
             await supabase.from('products').delete().eq('id', id);
             fetchProducts();
         }
     };
 
-    // --- LÓGICA OTRAS PESTAÑAS ---
-    const handleManualSaleSubmit = async (e) => {
+    // --- LÓGICA OTRAS PESTAÑAS (Resumidas para mantener foco) ---
+    const handleManualSaleSubmit = async (e) => { /* ...mismo código anterior... */
         e.preventDefault();
         const paid = parseFloat(manualSaleFormData.paid_amount) || 0;
         const status = paid >= manualSaleFormData.total_amount ? 'Pagado' : 'Pendiente';
@@ -206,7 +222,6 @@ export default function AdminPanel() {
             <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
                     <h1 className="text-2xl font-black italic tracking-tighter">ADMIN <span className="text-brand-primary">H&C</span></h1>
-
                     <div className="hidden lg:flex gap-1 bg-gray-100 p-1 rounded-lg">
                         {['products', 'manual_sales', 'all_sales', 'banners', 'combos', 'design'].map(t => (
                             <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-2 text-xs font-bold uppercase rounded-md transition-all ${activeTab === t ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-900'}`}>
@@ -229,11 +244,10 @@ export default function AdminPanel() {
 
             <div className="max-w-7xl mx-auto px-4 py-8">
 
-                {/* --- SECCIÓN PRODUCTOS: ESTRUCTURA PRO + FIX ID --- */}
                 {activeTab === 'products' && (
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-                        {/* COLUMNA IZQUIERDA: FORMULARIO */}
+                        {/* FORMULARIO IZQUIERDA */}
                         <div className="lg:col-span-5">
                             <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-md sticky top-24">
                                 <h2 className="font-black text-lg mb-4 flex items-center gap-2 uppercase">
@@ -243,12 +257,7 @@ export default function AdminPanel() {
 
                                     <div>
                                         <label className="text-[10px] font-bold text-gray-400 uppercase">Nombre</label>
-                                        <input
-                                            value={productFormData.name}
-                                            onChange={e => setProductFormData({ ...productFormData, name: e.target.value })}
-                                            className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold focus:border-black outline-none"
-                                            required
-                                        />
+                                        <input value={productFormData.name} onChange={e => setProductFormData({ ...productFormData, name: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold focus:border-black outline-none" required />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3">
@@ -257,7 +266,7 @@ export default function AdminPanel() {
                                             <input type="number" value={productFormData.price} onChange={e => setProductFormData({ ...productFormData, price: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold text-green-600 outline-none" required />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Costo (Admin)</label>
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Costo</label>
                                             <input type="number" value={productFormData.cost_price} onChange={e => setProductFormData({ ...productFormData, cost_price: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl text-gray-400 outline-none" placeholder="Opcional" />
                                         </div>
                                     </div>
@@ -286,9 +295,21 @@ export default function AdminPanel() {
                                         </select>
                                     </div>
 
-                                    {/* ETIQUETAS (Checkboxes) */}
+                                    {/* SECCIÓN VARIANTES / COLORES (NUEVO) */}
+                                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                        <label className="text-xs font-bold text-blue-800 uppercase block mb-2 flex items-center gap-2"><Palette size={14} /> Colores / Variantes</label>
+                                        <input
+                                            placeholder="Ej: Rojo, Azul, Negro Mate (Separar con comas)"
+                                            value={productFormData.variants}
+                                            onChange={e => setProductFormData({ ...productFormData, variants: e.target.value })}
+                                            className="w-full border border-blue-200 p-2 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                                        />
+                                        <p className="text-[10px] text-blue-400 mt-1 font-bold">Se mostrarán como botones en la web.</p>
+                                    </div>
+
+                                    {/* ETIQUETAS */}
                                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                        <label className="text-xs font-bold text-gray-400 uppercase block mb-2">Etiquetas / Filtros</label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase block mb-2">Filtros</label>
                                         <div className="space-y-2">
                                             {['NUEVO', 'OFERTA', 'DESTACADO', 'RUGGED', 'ENVIO GRATIS'].map(tag => (
                                                 <div key={tag} onClick={() => handleTagChange(tag)} className="flex items-center gap-3 cursor-pointer hover:bg-gray-100 p-1 rounded">
@@ -301,24 +322,39 @@ export default function AdminPanel() {
                                         </div>
                                     </div>
 
-                                    <textarea placeholder="Descripción detallada..." value={productFormData.description} onChange={e => setProductFormData({ ...productFormData, description: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl h-24 text-sm outline-none" />
+                                    <textarea placeholder="Descripción..." value={productFormData.description} onChange={e => setProductFormData({ ...productFormData, description: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl h-24 text-sm outline-none" />
 
-                                    <div className="border-2 border-dashed border-gray-200 p-4 rounded-xl text-center hover:bg-gray-50 cursor-pointer relative transition-colors">
-                                        <input type="file" onChange={e => setProductImageFile(e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
-                                        <div className="flex flex-col items-center gap-1">
-                                            <ImageIcon className="text-gray-300" size={24} />
-                                            <p className="text-xs font-bold text-gray-400">{productImageFile ? productImageFile.name : '+ SUBIR FOTO PRINCIPAL'}</p>
+                                    {/* SUBIDA DE IMÁGENES MÚLTIPLE (NUEVO) */}
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Galería de Imágenes (Máx 3)</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[0, 1, 2].map((index) => (
+                                                <div key={index} className="aspect-square border-2 border-dashed border-gray-200 rounded-xl relative hover:bg-gray-50 flex flex-col items-center justify-center cursor-pointer overflow-hidden">
+                                                    <input type="file" onChange={(e) => handleImageChange(index, e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                                                    {imageFiles[index] ? (
+                                                        <div className="w-full h-full relative">
+                                                            <img src={URL.createObjectURL(imageFiles[index])} className="w-full h-full object-cover" />
+                                                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center text-white text-xs font-bold">Cambiar</div>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <ImageIcon className="text-gray-300 mb-1" size={20} />
+                                                            <span className="text-[9px] font-bold text-gray-400">{index === 0 ? 'PRINCIPAL' : `VISTA ${index + 1}`}</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
 
                                     <Button type="submit" className="w-full bg-black text-white py-3 rounded-xl font-bold shadow-lg hover:bg-gray-800 transition-colors" disabled={uploading}>
-                                        {uploading ? 'GUARDANDO...' : 'GUARDAR PRODUCTO'}
+                                        {uploading ? 'SUBIENDO GALERÍA...' : 'GUARDAR PRODUCTO'}
                                     </Button>
                                 </form>
                             </div>
                         </div>
 
-                        {/* COLUMNA DERECHA: INVENTARIO */}
+                        {/* LISTA INVENTARIO (DERECHA) */}
                         <div className="lg:col-span-7">
                             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden h-[800px] flex flex-col">
                                 <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
@@ -329,16 +365,27 @@ export default function AdminPanel() {
                                     {products.map(p => (
                                         <div key={p.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors group">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-14 h-14 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+                                                <div className="w-14 h-14 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden flex-shrink-0 relative">
                                                     {p.image_url ? <img src={p.image_url} alt="" className="w-full h-full object-cover" /> : <Package className="w-full h-full p-3 text-gray-300" />}
+                                                    {/* Indicador de Galería */}
+                                                    {p.gallery && p.gallery.length > 1 && (
+                                                        <div className="absolute bottom-0 right-0 bg-black text-white text-[8px] px-1 rounded-tl font-bold flex items-center gap-0.5">
+                                                            <Layers size={8} /> {p.gallery.length}
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <p className="font-black text-sm text-gray-900 mb-0.5">{p.name}</p>
                                                     <div className="flex gap-2 items-center text-xs text-gray-500">
                                                         <span className="bg-gray-100 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold">{p.category}</span>
                                                         <span className="font-bold text-green-600">${p.price}</span>
-                                                        {p.tags && p.tags.includes('NUEVO') && <span className="text-[9px] bg-black text-white px-1 rounded">NEW</span>}
                                                     </div>
+                                                    {/* Mostrar Variantes si existen */}
+                                                    {p.variants && p.variants.length > 0 && (
+                                                        <div className="flex gap-1 mt-1">
+                                                            {p.variants.map(v => <span key={v} className="text-[9px] border px-1 rounded bg-gray-50 text-gray-500">{v}</span>)}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-6">
@@ -352,20 +399,13 @@ export default function AdminPanel() {
                                             </div>
                                         </div>
                                     ))}
-                                    {products.length === 0 && (
-                                        <div className="h-full flex flex-col items-center justify-center text-gray-300 opacity-50">
-                                            <ShoppingBag size={48} className="mb-2" />
-                                            <p className="text-sm font-bold">Sin productos cargados</p>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 )}
 
-                {/* --- VENTAS MANUALES --- */}
+                {/* OTRAS PESTAÑAS (Ventas, etc. Se mantienen igual) */}
                 {activeTab === 'manual_sales' && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm h-fit">
@@ -414,9 +454,64 @@ export default function AdminPanel() {
                         </div>
                     </div>
                 )}
-
-                {/* --- OTRAS PESTAÑAS (Mantenemos funcionalidad existente) --- */}
-                {/* (Design, Banners, All Sales, Combos se mantienen) */}
+                {activeTab === 'all_sales' && (
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div className="p-6 border-b flex justify-between items-center">
+                            <h2 className="font-black text-lg">Historial de Ventas</h2>
+                        </div>
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-xs">
+                                <tr><th className="p-4">Fecha</th><th className="p-4">Cliente</th><th className="p-4">Origen</th><th className="p-4">Total</th><th className="p-4">Estado</th></tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {allSales.map(s => (
+                                    <tr key={s.id} className="hover:bg-gray-50">
+                                        <td className="p-4">{new Date(s.date).toLocaleDateString()}</td>
+                                        <td className="p-4 font-bold">{s.client}</td>
+                                        <td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold ${s.origin === 'MANUAL' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>{s.origin}</span></td>
+                                        <td className="p-4 font-black">${s.total}</td>
+                                        <td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold ${s.status === 'Pagado' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{s.status}</span></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+                {activeTab === 'design' && (
+                    <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm max-w-2xl mx-auto">
+                        <h2 className="font-black text-xl mb-6 flex items-center gap-2"><Video size={24} /> Configuración Visual Home</h2>
+                        <div className="space-y-6">
+                            <div>
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Video Portada (URL)</label>
+                                <input value={siteConfig.hero_video_url} onChange={e => setSiteConfig({ ...siteConfig, hero_video_url: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-mono text-sm focus:border-black outline-none" placeholder="https://..." />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {[1, 2, 3].map(n => (
+                                    <div key={n}>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Categoría {n}</label>
+                                        <input value={siteConfig[`cat${n}_title`]} onChange={e => setSiteConfig({ ...siteConfig, [`cat${n}_title`]: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-black outline-none" />
+                                    </div>
+                                ))}
+                            </div>
+                            <Button onClick={handleConfigSave} className="w-full bg-black text-white py-4 rounded-xl font-bold shadow-lg">GUARDAR DISEÑO</Button>
+                        </div>
+                    </div>
+                )}
+                {activeTab === 'banners' && (
+                    <div className="bg-white p-6 rounded-2xl border shadow-sm">
+                        <h2 className="font-bold text-lg mb-4">Gestión de Banners</h2>
+                        <form onSubmit={handleBannerSubmit} className="flex gap-4 items-end mb-6">
+                            <div className="flex-1 border-2 border-dashed border-gray-200 p-3 rounded-xl cursor-pointer relative">
+                                <input type="file" onChange={e => setBannerImageFile(e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                <p className="text-center text-xs font-bold text-gray-400">{bannerImageFile ? bannerImageFile.name : 'Click para subir imagen'}</p>
+                            </div>
+                            <Button type="submit" className="bg-black text-white px-6 py-3 rounded-xl font-bold">SUBIR</Button>
+                        </form>
+                        <div className="grid grid-cols-2 gap-4">
+                            {banners.map(b => <img key={b.id} src={b.image_url} className="w-full rounded-xl border shadow-sm" alt="" />)}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
