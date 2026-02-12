@@ -5,7 +5,7 @@ import { ArrowRight, Truck, ShieldCheck, Thermometer } from 'lucide-react';
 import { supabase } from '../supabaseclient';
 import ProductCard from '../components/ProductCard';
 import BannerCarousel from '../components/ui/BannerCarousel';
-import ComboCard from '../components/ui/ComboCard';
+import { ComboCard } from '../components/ui/ComboCard';
 import { Button } from '../components/ui/Button';
 
 export default function Home() {
