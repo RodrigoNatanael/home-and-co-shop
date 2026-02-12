@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingCart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../supabaseclient'; // 1. Importamos Supabase
-import { useCart } from '../context/CartContext'; // (Opcional) Si querés el numerito rojo, dejalo. Si no, borralo.
+import { supabase } from '../../supabaseclient';
+import { useCart } from '../../context/CartContext';
 
 export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
