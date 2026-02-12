@@ -205,17 +205,17 @@ export default function LeadCaptureModal({
                             {/* Header */}
                             <div className="flex justify-between items-center mb-4">
                                 <div>
-                                    <h3 className="font-display font-bold text-xl uppercase text-brand-dark  de Envío</h3>
-                                    <p className="text-xs text-gray-500  dónde te enviamos tu compra?</p>
+                                    <h3 className="font-display font-bold text-xl uppercase text-brand-dark">Datos de Envío</h3>
+                                    <p className="text-xs text-gray-500">¿A dónde te enviamos tu compra?</p>
                                 </div>
-                                <button onClick={onClose}><X size={24} className="text-brand-dark  /></button>
+                                <button onClick={onClose}><X size={24} className="text-brand-dark" /></button>
                             </div>
 
                             {/* Resumen Precio */}
-                            <div className="mb-4 bg-gray-50  p-3 border border-gray-200 
+                            <div className="mb-4 bg-gray-50  p-3 border border-gray-200">
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs text-gray-500  font-bold uppercase">Total a Pagar</span>
-                                    <span className="font-display font-bold text-2xl text-brand-dark 
+                                    <span className="font-display font-bold text-2xl text-brand-dark">
                                         {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(safeTotal)}
                                     </span>
                                 </div>
@@ -263,7 +263,7 @@ export default function LeadCaptureModal({
                                 </button>
                             </form>
 
-                            <p className="mt-3 text-center text-[10px] text-gray-500 
+                            <p className="mt-3 text-center text-[10px] text-gray-500">
                                 <Lock size={10} className="inline mr-1" />
                                 Tus datos están protegidos. El envío se coordina por WhatsApp una vez realizado el pago.
                             </p>
