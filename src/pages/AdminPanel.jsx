@@ -3,7 +3,7 @@ import { supabase } from '../supabaseclient';
 import {
     Trash2, Plus, RefreshCw, ShoppingBag, Video, Image as ImageIcon,
     Package, CheckSquare, FolderPlus, Tag, Settings, Layout, Ticket, Layers, Palette,
-    DollarSign, CheckCircle, AlertCircle
+    DollarSign, CheckCircle, AlertCircle, User, UserPlus, ShoppingCart, Minus
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
@@ -18,7 +18,6 @@ export default function AdminPanel() {
     const [allSales, setAllSales] = useState([]);
     const [siteConfig, setSiteConfig] = useState({ hero_video_url: '', cat1_title: '', cat2_title: '', cat3_title: '' });
 
-    // Estadísticas
     const [stats, setStats] = useState({ totalIncome: 0, pendingIncome: 0 });
 
     // --- ESTADOS FORMULARIOS ---
@@ -26,22 +25,19 @@ export default function AdminPanel() {
     const [imageFiles, setImageFiles] = useState([null, null, null]);
     const [newCategory, setNewCategory] = useState({ name: '', video_url: '' });
 
-    // PRODUCTO
+    // FORM: PRODUCTO
     const [productFormData, setProductFormData] = useState({
         name: '', price: '', previous_price: '', cost_price: '',
         category: '', description: '', stock: '',
         tags: [], variants: ''
     });
 
-    // CAJA / VENTAS (CORREGIDO PARA TU DB)
-    const [saleFormData, setSaleFormData] = useState({
-        client_name: '',
-        products_summary: '',
-        total_amount: '',
-        paid_amount: '',    // <--- Corregido: coincide con tu DB (antes era amount_paid)
-        payment_method: 'Efectivo',
-        notes: ''
-    });
+    // --- NUEVO ESTADO PARA POS (PUNTO DE VENTA) ---
+    const [posSeller, setPosSeller] = useState(''); // 'Rodrigo' o 'Vanesa'
+    const [posClient, setPosClient] = useState({ name: '', email: '', phone: '', instagram: '' });
+    const [posCart, setPosCart] = useState([]); // Array de productos seleccionados
+    const [posItemToAdd, setPosItemToAdd] = useState({ productId: '', quantity: 1 });
+    const [posPayment, setPosPayment] = useState({ amountPaid: '', method: 'Efectivo', notes: '' });
 
     // BANNERS
     const [bannerFormData, setBannerFormData] = useState({ title: '', link: '' });
@@ -79,7 +75,6 @@ export default function AdminPanel() {
         const { data } = await supabase.from('manual_sales').select('*').order('created_at', { ascending: false });
         if (data) {
             setAllSales(data);
-            // Calcular Caja Real (Lo que entró: paid_amount) y Pendiente (Fiado)
             const income = data.reduce((acc, curr) => acc + (parseFloat(curr.paid_amount) || 0), 0);
             const pending = data.reduce((acc, curr) => {
                 const total = parseFloat(curr.total_amount) || 0;
@@ -136,52 +131,130 @@ export default function AdminPanel() {
         setUploading(false);
     };
 
-    // --- LÓGICA VENTAS / CAJA (CORREGIDO paid_amount) ---
-    const handleSaleSubmit = async (e) => {
+    // --- LÓGICA POS (PUNTO DE VENTA) ---
+
+    // 1. Agregar al Carrito
+    const addToCart = () => {
+        const product = products.find(p => p.id === posItemToAdd.productId);
+        if (!product) return;
+
+        // Verificar si ya está en el carrito
+        const existingItem = posCart.find(item => item.id === product.id);
+        if (existingItem) {
+            alert("Este producto ya está en la lista. Bórralo y agrégalo de nuevo si quieres cambiar la cantidad.");
+            return;
+        }
+
+        const newItem = {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: parseInt(posItemToAdd.quantity),
+            subtotal: product.price * parseInt(posItemToAdd.quantity)
+        };
+
+        setPosCart([...posCart, newItem]);
+        setPosItemToAdd({ productId: '', quantity: 1 }); // Reset
+    };
+
+    // 2. Borrar del Carrito
+    const removeFromCart = (index) => {
+        const newCart = [...posCart];
+        newCart.splice(index, 1);
+        setPosCart(newCart);
+    };
+
+    // 3. Calcular Total Carrito
+    const calculateTotal = () => {
+        return posCart.reduce((acc, item) => acc + item.subtotal, 0);
+    };
+
+    // 4. REGISTRAR VENTA FINAL (Magia pura)
+    const handlePOSSubmit = async (e) => {
         e.preventDefault();
 
-        const total = parseFloat(saleFormData.total_amount);
-        const paid = parseFloat(saleFormData.paid_amount); // <--- Corregido
+        // Validaciones
+        if (!posSeller) return alert("⚠️ Selecciona el vendedor (Rodrigo o Vanesa)");
+        if (!posClient.name || !posClient.email) return alert("⚠️ Nombre y Email del cliente son obligatorios para la base de Leads.");
+        if (posCart.length === 0) return alert("⚠️ El carrito está vacío.");
+
+        const totalAmount = calculateTotal();
+        const paidAmount = parseFloat(posPayment.amountPaid) || 0;
 
         let status = 'Pagado';
-        if (paid < total) status = 'Señado / Pendiente';
-        if (paid === 0) status = 'Fiado Total';
+        if (paidAmount < totalAmount) status = 'Señado / Pendiente';
+        if (paidAmount === 0) status = 'Fiado Total';
 
-        const { error } = await supabase.from('manual_sales').insert([{
-            client_name: saleFormData.client_name,
-            products_summary: saleFormData.products_summary,
-            total_amount: total,
-            paid_amount: paid, // <--- Guardamos en la columna correcta de la DB
-            payment_method: saleFormData.payment_method,
-            notes: saleFormData.notes,
-            status: status,
-            created_at: new Date()
-        }]);
+        // Resumen de texto para vista rápida
+        const summaryText = posCart.map(i => `${i.quantity}x ${i.name}`).join(', ');
 
-        if (!error) {
-            setSaleFormData({ client_name: '', products_summary: '', total_amount: '', paid_amount: '', payment_method: 'Efectivo', notes: '' });
+        try {
+            // A. GUARDAR CLIENTE EN LEADS (Si ya existe el email, fallaría si es unique, pero asumimos insert simple)
+            // Usamos upsert por si el email ya existe, actualizar datos
+            await supabase.from('leads').upsert({
+                name: posClient.name,
+                email: posClient.email,
+                metadata: {
+                    phone: posClient.phone,
+                    instagram: posClient.instagram,
+                    first_seller: posSeller
+                },
+                status: 'customer' // Ya compró
+            }, { onConflict: 'email' });
+            // Nota: Si 'email' no es unique key en tu DB, esto creará duplicados. Idealmente email debería ser unique.
+
+            // B. GUARDAR VENTA EN MANUAL_SALES
+            const { error: saleError } = await supabase.from('manual_sales').insert([{
+                client_name: posClient.name,
+                seller: posSeller,
+                products_summary: summaryText,
+                items_json: posCart, // Guardamos el JSON completo
+                total_amount: totalAmount,
+                paid_amount: paidAmount,
+                payment_method: posPayment.method,
+                notes: posPayment.notes,
+                status: status,
+                created_at: new Date()
+            }]);
+
+            if (saleError) throw saleError;
+
+            // C. DESCONTAR STOCK (Loop por cada producto)
+            for (const item of posCart) {
+                // Buscamos el stock actual (para seguridad) o restamos directo si confiamos
+                // Opción segura: RPC call, Opción simple (aquí): Update directo
+                // Primero obtenemos el producto actual para ver su stock real
+                const { data: currentProd } = await supabase.from('products').select('stock').eq('id', item.id).single();
+
+                if (currentProd) {
+                    const newStock = currentProd.stock - item.quantity;
+                    await supabase.from('products').update({ stock: newStock }).eq('id', item.id);
+                }
+            }
+
+            // D. RESETEAR TODO
+            setPosClient({ name: '', email: '', phone: '', instagram: '' });
+            setPosCart([]);
+            setPosPayment({ amountPaid: '', method: 'Efectivo', notes: '' });
+
             fetchSales();
-            alert("💰 Venta/Seña Registrada");
-        } else {
+            fetchProducts(); // Para refrescar stocks en pantalla
+            alert("🎉 Venta Registrada, Cliente Guardado y Stock Descontado!");
+
+        } catch (error) {
+            console.error(error);
             alert("Error: " + error.message);
         }
     };
 
+    // --- ACCIONES VENTAS ---
     const handleSettleDebt = async (sale) => {
-        if (!confirm(`¿Confirmar que ${sale.client_name} pagó el resto ($${sale.total_amount - sale.paid_amount})?`)) return;
-
-        const { error } = await supabase.from('manual_sales')
-            .update({ paid_amount: sale.total_amount, status: 'Pagado' }) // <--- Corregido paid_amount
-            .eq('id', sale.id);
-
-        if (!error) {
-            fetchSales();
-            alert("✅ Deuda saldada exitosamente");
-        }
+        if (!confirm(`¿Saldar deuda de $${sale.total_amount - sale.paid_amount}?`)) return;
+        await supabase.from('manual_sales').update({ paid_amount: sale.total_amount, status: 'Pagado' }).eq('id', sale.id);
+        fetchSales();
     };
-
     const handleDeleteSale = async (id) => {
-        if (!confirm("¿Borrar venta del historial? Esto afectará el total.")) return;
+        if (!confirm("¿Borrar venta? OJO: Esto no devuelve el stock automáticamente.")) return;
         await supabase.from('manual_sales').delete().eq('id', id);
         fetchSales();
     };
@@ -203,14 +276,11 @@ export default function AdminPanel() {
                         {[
                             { id: 'products', label: 'Productos', icon: <Package size={14} /> },
                             { id: 'categories_mgr', label: 'Categorías', icon: <FolderPlus size={14} /> },
-                            { id: 'manual_sales', label: 'Caja / Señas', icon: <DollarSign size={14} /> },
+                            { id: 'manual_sales', label: 'Punto de Venta', icon: <DollarSign size={14} /> },
                             { id: 'banners', label: 'Banners', icon: <ImageIcon size={14} /> },
                             { id: 'design', label: 'Diseño', icon: <Layout size={14} /> }
                         ].map(tab => (
-                            <button
-                                key={tab.id} onClick={() => setActiveTab(tab.id)}
-                                className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase flex items-center gap-2 transition-all ${activeTab === tab.id ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-black'}`}
-                            >
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase flex items-center gap-2 transition-all ${activeTab === tab.id ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-black'}`}>
                                 {tab.icon} {tab.label}
                             </button>
                         ))}
@@ -219,6 +289,7 @@ export default function AdminPanel() {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 py-8">
+
                 {/* 1. PRODUCTOS */}
                 {activeTab === 'products' && (
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -308,71 +379,158 @@ export default function AdminPanel() {
                     </div>
                 )}
 
-                {/* 3. CAJA / VENTAS (CORREGIDO PARA DB ACTUAL) */}
+                {/* 3. POS (NUEVO SISTEMA COMPLETO) */}
                 {activeTab === 'manual_sales' && (
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-                        {/* TARJETAS DE TOTALES */}
+                        {/* TOTALES */}
                         <div className="lg:col-span-12 grid grid-cols-2 gap-4">
                             <div className="bg-black text-white p-6 rounded-2xl shadow-lg">
-                                <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Caja Real (Lo que entró)</p>
+                                <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Caja Real</p>
                                 <p className="text-3xl font-black">${stats.totalIncome.toLocaleString()}</p>
                             </div>
                             <div className="bg-orange-50 border border-orange-100 p-6 rounded-2xl shadow-sm">
-                                <p className="text-[10px] font-bold uppercase text-orange-600 mb-1">Por Cobrar (Fiado/Saldos)</p>
+                                <p className="text-[10px] font-bold uppercase text-orange-600 mb-1">Por Cobrar</p>
                                 <p className="text-3xl font-black text-orange-600">${stats.pendingIncome.toLocaleString()}</p>
                             </div>
                         </div>
 
-                        {/* FORMULARIO DE CARGA */}
-                        <div className="lg:col-span-4 bg-white p-6 rounded-2xl border shadow-md h-fit">
-                            <h2 className="font-black text-lg mb-4 uppercase flex items-center gap-2"><DollarSign /> Nueva Venta / Seña</h2>
-                            <form onSubmit={handleSaleSubmit} className="space-y-4">
-                                <div>
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Cliente</label>
-                                    <input placeholder="Nombre y Apellido" value={saleFormData.client_name} onChange={e => setSaleFormData({ ...saleFormData, client_name: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold" required />
+                        {/* COLUMNA IZQUIERDA: CARGA DE DATOS */}
+                        <div className="lg:col-span-5 space-y-6">
+
+                            {/* 1. SELECCIÓN DE VENDEDOR */}
+                            <div className="bg-white p-6 rounded-2xl border shadow-sm">
+                                <h3 className="font-bold uppercase text-xs text-gray-400 mb-3 flex items-center gap-2"><User size={14} /> Vendedor</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {['Rodrigo', 'Vanesa'].map(seller => (
+                                        <button
+                                            key={seller}
+                                            onClick={() => setPosSeller(seller)}
+                                            className={`py-3 rounded-xl font-bold text-sm border-2 transition-all ${posSeller === seller ? 'border-black bg-black text-white' : 'border-gray-100 hover:border-gray-300'}`}
+                                        >
+                                            {seller.toUpperCase()}
+                                        </button>
+                                    ))}
                                 </div>
+                            </div>
 
-                                <div>
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Productos / Detalle</label>
-                                    <textarea placeholder="Ej: 1 Termo Stanley Verde (Reservado)" value={saleFormData.products_summary} onChange={e => setSaleFormData({ ...saleFormData, products_summary: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl text-sm h-20" required />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Total Venta</label>
-                                        <input type="number" placeholder="$ Total" value={saleFormData.total_amount} onChange={e => setSaleFormData({ ...saleFormData, total_amount: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold" required />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Entrega / Seña</label>
-                                        <input type="number" placeholder="$ Paga hoy" value={saleFormData.paid_amount} onChange={e => setSaleFormData({ ...saleFormData, paid_amount: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold text-green-600" required />
+                            {/* 2. DATOS DEL CLIENTE (LEADS) */}
+                            <div className="bg-white p-6 rounded-2xl border shadow-sm">
+                                <h3 className="font-bold uppercase text-xs text-gray-400 mb-3 flex items-center gap-2"><UserPlus size={14} /> Cliente (Leads DB)</h3>
+                                <div className="space-y-3">
+                                    <input placeholder="Nombre Completo" value={posClient.name} onChange={e => setPosClient({ ...posClient, name: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold" />
+                                    <input placeholder="Email (Obligatorio)" value={posClient.email} onChange={e => setPosClient({ ...posClient, email: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold text-sm" />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <input placeholder="Teléfono" value={posClient.phone} onChange={e => setPosClient({ ...posClient, phone: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl text-sm" />
+                                        <input placeholder="Instagram" value={posClient.instagram} onChange={e => setPosClient({ ...posClient, instagram: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl text-sm" />
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* CALCULADORA VISUAL */}
-                                {saleFormData.total_amount && saleFormData.paid_amount && (
-                                    <div className="p-3 bg-gray-50 rounded-xl flex justify-between items-center text-sm font-bold">
-                                        <span className="text-gray-500">Resta Pagar:</span>
-                                        <span className={saleFormData.total_amount - saleFormData.paid_amount > 0 ? "text-orange-500" : "text-green-600"}>
-                                            ${(saleFormData.total_amount - saleFormData.paid_amount).toLocaleString()}
-                                        </span>
-                                    </div>
-                                )}
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <select value={saleFormData.payment_method} onChange={e => setSaleFormData({ ...saleFormData, payment_method: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold bg-white outline-none">
-                                        <option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option>
+                            {/* 3. AGREGAR PRODUCTOS AL CARRITO */}
+                            <div className="bg-white p-6 rounded-2xl border shadow-sm">
+                                <h3 className="font-bold uppercase text-xs text-gray-400 mb-3 flex items-center gap-2"><ShoppingBag size={14} /> Agregar Productos</h3>
+                                <div className="flex gap-2 mb-3">
+                                    <select
+                                        value={posItemToAdd.productId}
+                                        onChange={e => setPosItemToAdd({ ...posItemToAdd, productId: e.target.value })}
+                                        className="flex-1 border-2 border-gray-100 p-3 rounded-xl font-bold bg-white text-sm"
+                                    >
+                                        <option value="">Seleccionar producto...</option>
+                                        {products.map(p => (
+                                            <option key={p.id} value={p.id}>{p.name} (${p.price}) - Stock: {p.stock}</option>
+                                        ))}
                                     </select>
-                                    <input placeholder="Notas (Opcional)" value={saleFormData.notes} onChange={e => setSaleFormData({ ...saleFormData, notes: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl text-sm" />
+                                    <input
+                                        type="number"
+                                        value={posItemToAdd.quantity}
+                                        onChange={e => setPosItemToAdd({ ...posItemToAdd, quantity: e.target.value })}
+                                        className="w-20 border-2 border-gray-100 p-3 rounded-xl font-bold text-center"
+                                        min="1"
+                                    />
                                 </div>
-
-                                <Button type="submit" className="w-full bg-black text-white py-3 rounded-xl font-bold">REGISTRAR</Button>
-                            </form>
+                                <Button onClick={addToCart} className="w-full bg-black text-white py-3 rounded-xl font-bold text-xs uppercase">
+                                    <Plus size={16} className="mr-2" /> Agregar al Carrito
+                                </Button>
+                            </div>
                         </div>
 
-                        {/* LISTA DE MOVIMIENTOS */}
-                        <div className="lg:col-span-8 bg-white rounded-2xl border shadow-sm overflow-hidden h-[600px] flex flex-col">
-                            <div className="p-4 border-b bg-gray-50 font-bold text-xs text-gray-400 uppercase tracking-widest">Historial de Caja</div>
+                        {/* COLUMNA DERECHA: CARRITO Y CIERRE */}
+                        <div className="lg:col-span-7 space-y-6">
+
+                            {/* 4. CARRITO VISUAL */}
+                            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden min-h-[300px] flex flex-col">
+                                <div className="p-4 border-b bg-gray-50 font-bold text-xs text-gray-400 uppercase flex justify-between">
+                                    <span>Resumen de Venta</span>
+                                    <span>{posCart.length} Items</span>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                                    {posCart.length === 0 ? (
+                                        <div className="h-full flex flex-col items-center justify-center text-gray-300">
+                                            <ShoppingCart size={48} className="mb-2 opacity-50" />
+                                            <p className="text-xs font-bold uppercase">Carrito Vacío</p>
+                                        </div>
+                                    ) : (
+                                        posCart.map((item, idx) => (
+                                            <div key={idx} className="flex justify-between items-center p-3 border border-gray-100 rounded-xl bg-gray-50">
+                                                <div>
+                                                    <p className="font-bold text-sm">{item.name}</p>
+                                                    <p className="text-xs text-gray-500">{item.quantity} x ${item.price}</p>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <span className="font-black text-sm">${item.subtotal}</span>
+                                                    <button onClick={() => removeFromCart(idx)} className="text-red-400 hover:text-red-600"><Minus size={16} /></button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                <div className="p-4 bg-gray-900 text-white flex justify-between items-center">
+                                    <span className="font-bold text-sm uppercase">Total a Pagar</span>
+                                    <span className="font-black text-2xl">${calculateTotal().toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            {/* 5. PAGO Y CONFIRMACIÓN */}
+                            <div className="bg-white p-6 rounded-2xl border shadow-md">
+                                <h3 className="font-bold uppercase text-xs text-gray-400 mb-3 flex items-center gap-2"><DollarSign size={14} /> Confirmar Pago</h3>
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Abona (Seña/Total)</label>
+                                        <input
+                                            type="number"
+                                            placeholder="$"
+                                            value={posPayment.amountPaid}
+                                            onChange={e => setPosPayment({ ...posPayment, amountPaid: e.target.value })}
+                                            className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold text-green-600 text-lg"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Método</label>
+                                        <select
+                                            value={posPayment.method}
+                                            onChange={e => setPosPayment({ ...posPayment, method: e.target.value })}
+                                            className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold bg-white h-[52px]"
+                                        >
+                                            <option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <input
+                                    placeholder="Notas de la venta (Opcional)"
+                                    value={posPayment.notes}
+                                    onChange={e => setPosPayment({ ...posPayment, notes: e.target.value })}
+                                    className="w-full border-2 border-gray-100 p-3 rounded-xl text-sm mb-4"
+                                />
+                                <Button onClick={handlePOSSubmit} className="w-full bg-black text-white py-4 rounded-xl font-black text-lg shadow-xl hover:scale-[1.01] transition-transform">
+                                    REGISTRAR VENTA
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* LISTA HISTORIAL (Igual que antes pero abajo) */}
+                        <div className="lg:col-span-12 bg-white rounded-2xl border shadow-sm overflow-hidden h-[400px] flex flex-col mt-8">
+                            <div className="p-4 border-b bg-gray-50 font-bold text-xs text-gray-400 uppercase tracking-widest">Últimos Movimientos</div>
                             <div className="divide-y divide-gray-100 overflow-y-auto flex-1">
                                 {allSales.map(s => {
                                     const debt = s.total_amount - s.paid_amount;
@@ -386,10 +544,11 @@ export default function AdminPanel() {
                                                 <div>
                                                     <p className="font-black text-sm uppercase flex items-center gap-2">
                                                         {s.client_name}
+                                                        <span className="text-[9px] bg-gray-100 px-1.5 rounded text-gray-500">{s.seller}</span>
                                                         {!isPaid && <span className="text-[9px] bg-orange-500 text-white px-1.5 rounded">DEBE ${debt}</span>}
                                                     </p>
                                                     <p className="text-xs text-gray-500 font-medium">{s.products_summary}</p>
-                                                    <p className="text-[10px] text-gray-400 mt-1">{new Date(s.created_at).toLocaleDateString()} • {s.payment_method} {s.notes && `• ${s.notes}`}</p>
+                                                    <p className="text-[10px] text-gray-400 mt-1">{new Date(s.created_at).toLocaleDateString()} • {s.payment_method}</p>
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end gap-2">
@@ -411,6 +570,7 @@ export default function AdminPanel() {
                                 })}
                             </div>
                         </div>
+
                     </div>
                 )}
 
