@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, ShieldCheck, Zap, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Check, ShieldCheck, MessageCircle, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../supabaseclient';
 import { Button } from '../components/ui/Button';
 import StockScarcity from '../components/ui/StockScarcity';
@@ -15,15 +15,16 @@ export default function ProductDetail() {
     const [loading, setLoading] = useState(true);
     const { addToCart } = useCart();
 
-    // Initial State
-    const [selectedColor, setSelectedColor] = useState('#000000');
+    // Estados para la nueva lógica (Galería y Variantes)
+    const [activeImage, setActiveImage] = useState('');
+    const [selectedVariant, setSelectedVariant] = useState('');
 
     useEffect(() => {
         const fetchProduct = async () => {
             setLoading(true);
             const { data, error } = await supabase
                 .from('products')
-                .select('*, image_url')
+                .select('*') // Trae todo: image_url, gallery, variants, etc.
                 .eq('id', id)
                 .single();
 
@@ -31,8 +32,15 @@ export default function ProductDetail() {
                 console.error('Error fetching product:', error);
             } else {
                 setProduct(data);
-                if (data.colors && data.colors.length > 0) {
-                    setSelectedColor(data.colors[0]);
+                // 1. Setear imagen principal inicial
+                setActiveImage(data.image_url);
+
+                // 2. Setear variante inicial (si existe en la nueva columna 'variants' o la vieja 'colors')
+                if (data.variants && data.variants.length > 0) {
+                    setSelectedVariant(data.variants[0]);
+                } else if (data.colors && data.colors.length > 0) {
+                    // Fallback por si hay productos viejos con la columna colors
+                    setSelectedVariant(data.colors[0]);
                 }
             }
             setLoading(false);
@@ -42,8 +50,8 @@ export default function ProductDetail() {
 
     if (loading) {
         return (
-            <div className="min-h-screen pt-32 flex justify-center">
-                <p>Cargando...</p>
+            <div className="min-h-screen pt-32 flex justify-center font-bold text-xl tracking-wider">
+                <p>CARGANDO EQUIPAMIENTO...</p>
             </div>
         );
     }
@@ -57,11 +65,14 @@ export default function ProductDetail() {
         );
     }
 
-    // 1. Primero definimos el mensaje dinámico
-    const message = `Hola Rodrigo! 👋 Estoy viendo el *${product.name}* en homeandcoarg.com y me gustaría consultar por el stock.`;
-
-    // 2. Creamos el link codificado para que WhatsApp lo entienda
+    // Mensaje de WhatsApp Optimizado
+    const message = `Hola! 👋 Estoy viendo el *${product.name}* (Variante: ${selectedVariant || 'Única'}) en la web y me gustaría consultar stock.`;
     const whatsappUrl = `https://wa.me/5492617523156?text=${encodeURIComponent(message)}`;
+
+    // Calculo de Descuento
+    const discount = product.previous_price
+        ? Math.round(((product.previous_price - product.price) / product.previous_price) * 100)
+        : 0;
 
     return (
         <div className="pt-20 min-h-screen bg-white">
@@ -74,110 +85,148 @@ export default function ProductDetail() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
 
-                    {/* Left Column: Gallery */}
+                    {/* --- COLUMNA IZQUIERDA: GALERÍA --- */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="bg-gray-100 aspect-square flex items-center justify-center relative overflow-hidden group"
+                        className="flex flex-col gap-4"
                     >
-                        <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                        />
+                        {/* Imagen Principal */}
+                        <div className="bg-gray-50 aspect-square flex items-center justify-center relative overflow-hidden rounded-2xl border border-gray-100 group">
+                            <img
+                                src={activeImage || product.image_url}
+                                alt={product.name}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                            {/* Tags flotantes sobre la imagen */}
+                            <div className="absolute top-4 left-4 flex flex-col gap-2">
+                                {discount > 0 && <span className="bg-red-600 text-white text-xs font-black px-3 py-1 rounded-full uppercase shadow-sm">{discount}% OFF</span>}
+                            </div>
+                        </div>
+
+                        {/* Carrusel de Miniaturas (Solo si hay galería) */}
+                        {product.gallery && product.gallery.length > 0 && (
+                            <div className="grid grid-cols-4 gap-3">
+                                {/* Botón para volver a la imagen principal original */}
+                                <button
+                                    onClick={() => setActiveImage(product.image_url)}
+                                    className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeImage === product.image_url ? 'border-black opacity-100' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                >
+                                    <img src={product.image_url} className="w-full h-full object-cover" alt="Principal" />
+                                </button>
+
+                                {/* Botones para las imágenes de la galería */}
+                                {product.gallery.map((img, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => setActiveImage(img)}
+                                        className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeImage === img ? 'border-black opacity-100' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                    >
+                                        <img src={img} className="w-full h-full object-cover" alt={`Vista ${index}`} />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </motion.div>
 
-                    {/* Right Column: Info */}
+                    {/* --- COLUMNA DERECHA: INFO --- */}
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         className="flex flex-col h-full"
                     >
+                        {/* Tags */}
                         <div className="flex flex-wrap gap-2 mb-4">
                             {product.tags && product.tags.map(tag => (
-                                <span key={tag} className="bg-black text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                <span key={tag} className="bg-black text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                                     {tag}
                                 </span>
                             ))}
                         </div>
 
                         <span className="text-gray-500 font-bold uppercase tracking-wider text-sm mb-2">{product.category}</span>
-                        <h1 className="font-display font-bold text-4xl md:text-5xl lg:text-6xl mb-6 leading-none uppercase">{product.name}</h1>
+                        <h1 className="font-display font-black italic text-4xl md:text-5xl lg:text-6xl mb-6 leading-none uppercase tracking-tighter">{product.name}</h1>
 
-                        <div className="flex items-end gap-4 mb-8">
+                        {/* Precios */}
+                        <div className="flex items-end gap-4 mb-8 border-b pb-8 border-gray-100">
                             {product.previous_price > product.price && (
-                                <span className="text-xl text-gray-400 font-medium line-through mb-1">
+                                <span className="text-xl text-gray-300 font-bold line-through mb-2">
                                     {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(product.previous_price)}
                                 </span>
                             )}
-                            <div className={`text-4xl font-bold ${product.previous_price > product.price ? 'text-red-600' : 'text-black'}`}>
+                            <div className={`text-5xl font-black ${product.previous_price > product.price ? 'text-red-600' : 'text-black'}`}>
                                 {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(product.price)}
                             </div>
-                            {product.previous_price > product.price && (
-                                <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider mb-2">
-                                    {Math.round(((product.previous_price - product.price) / product.previous_price) * 100)}% OFF
-                                </span>
-                            )}
                         </div>
 
                         <div className="mb-8">
                             <p className="text-gray-600 text-lg leading-relaxed">{product.description}</p>
                         </div>
 
-                        {/* Color Selector */}
-                        {product.colors && (
+                        {/* SELECTOR DE VARIANTES (NUEVO: TEXTO) */}
+                        {product.variants && product.variants.length > 0 && (
                             <div className="mb-8">
-                                <span className="block font-bold text-sm uppercase tracking-wider mb-3">Color Seleccionado</span>
-                                <div className="flex gap-3">
-                                    {product.colors.map(color => (
+                                <span className="block font-bold text-sm uppercase tracking-wider mb-3 text-gray-900">
+                                    Elegí tu variante: <span className="text-gray-500">{selectedVariant}</span>
+                                </span>
+                                <div className="flex flex-wrap gap-2">
+                                    {product.variants.map(variant => (
                                         <button
-                                            key={color}
-                                            onClick={() => setSelectedColor(color)}
-                                            className={`w-10 h-10 rounded-full border-2 transition-all ${selectedColor === color ? 'border-black scale-110' : 'border-transparent hover:scale-105'}`}
-                                            style={{ backgroundColor: color }}
-                                            aria-label={`Select color ${color}`}
-                                        />
+                                            key={variant}
+                                            onClick={() => setSelectedVariant(variant)}
+                                            className={`px-6 py-2 rounded-lg text-xs font-bold uppercase border-2 transition-all ${selectedVariant === variant
+                                                    ? 'border-black bg-black text-white shadow-lg'
+                                                    : 'border-gray-200 text-gray-500 hover:border-black hover:text-black'
+                                                }`}
+                                        >
+                                            {variant}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
                         )}
 
-                        {/* Tech Specs */}
+                        {/* Características / Features */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
                             {product.features?.map((feature, idx) => (
                                 <div key={idx} className="flex items-start gap-3">
-                                    <Check size={18} className="mt-1 text-black shrink-0" strokeWidth={3} />
+                                    <Check size={18} className="mt-1 text-brand-primary shrink-0" strokeWidth={3} />
                                     <span className="text-gray-700 font-medium text-sm">{feature}</span>
                                 </div>
                             ))}
                         </div>
 
                         {/* Actions */}
-                        <div className="mt-auto pt-8 border-t border-gray-100 flex flex-col gap-4">
-                            <div className="mb-4">
-                                {product.stock > 0 && product.stock <= 3 && <StockScarcity stock={product.stock} />}
+                        <div className="mt-auto pt-4 flex flex-col gap-4">
+                            <div className="mb-2">
+                                {product.stock > 0 && product.stock <= 5 && <StockScarcity stock={product.stock} />}
                             </div>
+
                             <Button
                                 size="lg"
-                                className={`w-full text-lg h-16 ${product.stock === 0 ? 'bg-gray-400 cursor-not-allowed hover:bg-gray-400' : ''}`}
-                                onClick={() => addToCart(product, 1, selectedColor)}
+                                className={`w-full text-lg h-16 rounded-xl font-black uppercase tracking-wide shadow-xl ${product.stock === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:scale-[1.01] transition-transform'}`}
+                                onClick={() => addToCart(product, 1, selectedVariant)}
                                 disabled={product.stock === 0}
                             >
                                 {product.stock === 0 ? 'SIN STOCK' : 'AGREGAR AL EQUIPO'}
                             </Button>
-                            <p className="text-xs text-gray-400 flex items-center justify-center gap-2">
+
+                            <p className="text-xs text-gray-400 flex items-center justify-center gap-2 font-bold mt-2">
                                 <ShieldCheck size={14} /> Garantía asegurada de Home & Co.
                             </p>
-                            <TrustBadges />
+
+                            <div className="mt-4">
+                                <TrustBadges />
+                            </div>
 
                             <a
                                 href={whatsappUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="bg-[#25D366] text-white p-4 rounded-full flex items-center justify-center gap-2 hover:scale-105 transition-transform font-bold"
+                                className="bg-[#25D366] text-white p-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#20bd5a] transition-colors font-bold mt-4 shadow-sm"
                             >
                                 <MessageCircle size={20} />
-                                Consultar por este producto
+                                Consultar por WhatsApp
                             </a>
                         </div>
 
@@ -186,9 +235,6 @@ export default function ProductDetail() {
 
                 <RelatedProducts currentProductId={product.id} category={product.category} />
             </div>
-
-
         </div>
     );
 }
-
