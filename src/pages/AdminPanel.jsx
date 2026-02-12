@@ -16,9 +16,8 @@ export default function AdminPanel() {
     const [allSales, setAllSales] = useState([]);
     const [siteConfig, setSiteConfig] = useState({ hero_video_url: '', cat1_title: '', cat2_title: '', cat3_title: '' });
 
-    // --- FORMULARIO PRODUCTO (Campos completos de tu captura) ---
+    // --- FORMULARIO PRODUCTO ---
     const [productFormData, setProductFormData] = useState({
-        // NO incluimos 'id' aquí para evitar el error de Supabase al crear
         name: '',
         price: '',
         previous_price: '',
@@ -26,7 +25,7 @@ export default function AdminPanel() {
         category: '',
         description: '',
         stock: '',
-        tags: [] // Array para los checkboxes
+        tags: []
     });
     const [productImageFile, setProductImageFile] = useState(null);
 
@@ -50,7 +49,7 @@ export default function AdminPanel() {
         fetchConfig();
     };
 
-    // --- FUNCIONES DE FETCH ---
+    // --- FUNCIONES FETCH ---
     const fetchProducts = async () => {
         const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
         if (data) setProducts(data);
@@ -88,7 +87,16 @@ export default function AdminPanel() {
         }
     };
 
-    // --- LOGICA PRODUCTOS (Checkboxes y Guardado) ---
+    // --- LÓGICA PRODUCTOS ---
+
+    // Función para generar ID manualmente (SOLUCIÓN AL ERROR)
+    const generateUUID = () => {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
     const handleTagChange = (tag) => {
         setProductFormData(prev => {
             const currentTags = prev.tags || [];
@@ -105,7 +113,7 @@ export default function AdminPanel() {
         try {
             let imageUrl = null;
             if (productImageFile) {
-                const fileName = `prod_${Date.now()}_${productImageFile.name.replace(/\s/g, '_')}`; // Limpiamos nombre
+                const fileName = `prod_${Date.now()}_${productImageFile.name.replace(/\s/g, '_')}`;
                 const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, productImageFile);
                 if (uploadError) throw uploadError;
 
@@ -113,8 +121,9 @@ export default function AdminPanel() {
                 imageUrl = data.publicUrl;
             }
 
-            // CREAMOS EL OBJETO LIMPIO (Sin ID para que no falle)
+            // CREAMOS EL PRODUCTO CON ID GENERADO MANUALMENTE
             const newProduct = {
+                id: generateUUID(), // <--- AQUÍ ESTÁ LA MAGIA PARA QUE NO FALLE
                 name: productFormData.name,
                 price: parseFloat(productFormData.price),
                 previous_price: productFormData.previous_price ? parseFloat(productFormData.previous_price) : null,
@@ -122,7 +131,7 @@ export default function AdminPanel() {
                 category: productFormData.category,
                 description: productFormData.description,
                 stock: parseInt(productFormData.stock),
-                tags: productFormData.tags, // Array de strings
+                tags: productFormData.tags,
                 image_url: imageUrl
             };
 
@@ -150,7 +159,7 @@ export default function AdminPanel() {
         }
     };
 
-    // --- LOGICA OTRAS PESTAÑAS ---
+    // --- LÓGICA OTRAS PESTAÑAS ---
     const handleManualSaleSubmit = async (e) => {
         e.preventDefault();
         const paid = parseFloat(manualSaleFormData.paid_amount) || 0;
@@ -220,7 +229,7 @@ export default function AdminPanel() {
 
             <div className="max-w-7xl mx-auto px-4 py-8">
 
-                {/* --- SECCIÓN PRODUCTOS: ESTRUCTURA PRO --- */}
+                {/* --- SECCIÓN PRODUCTOS: ESTRUCTURA PRO + FIX ID --- */}
                 {activeTab === 'products' && (
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
@@ -277,7 +286,7 @@ export default function AdminPanel() {
                                         </select>
                                     </div>
 
-                                    {/* SECCIÓN ETIQUETAS (Checkboxes) */}
+                                    {/* ETIQUETAS (Checkboxes) */}
                                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                                         <label className="text-xs font-bold text-gray-400 uppercase block mb-2">Etiquetas / Filtros</label>
                                         <div className="space-y-2">
@@ -406,8 +415,8 @@ export default function AdminPanel() {
                     </div>
                 )}
 
-                {/* --- OTRAS PESTAÑAS (Manteniendo tu funcionalidad) --- */}
-                {/* ... (Design, Banners, All Sales, Combos se mantienen igual) ... */}
+                {/* --- OTRAS PESTAÑAS (Mantenemos funcionalidad existente) --- */}
+                {/* (Design, Banners, All Sales, Combos se mantienen) */}
             </div>
         </div>
     );
