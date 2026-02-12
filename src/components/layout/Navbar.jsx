@@ -2,16 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingCart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '../supabaseclient'; // 1. Importamos Supabase
+import { useCart } from '../context/CartContext'; // (Opcional) Si querés el numerito rojo, dejalo. Si no, borralo.
 
 export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [categories, setCategories] = useState([]); // 2. Estado para categorías
+
     const location = useLocation();
+    const { totalItems } = useCart(); // (Opcional) Badge del carrito
 
     // Solo transparente en la home
     const isHome = location.pathname === '/';
 
+    // 3. FETCH DE CATEGORÍAS (Lógica Nueva)
     useEffect(() => {
+        const fetchCategories = async () => {
+            const { data } = await supabase
+                .from('categories')
+                .select('name')
+                .order('name');
+
+            if (data) {
+                // Transformamos los datos de Supabase al formato que usa tu Navbar
+                const dynamicLinks = data.map(cat => ({
+                    name: cat.name,
+                    path: `/catalog?category=${encodeURIComponent(cat.name)}`
+                }));
+                // Agregamos "Nosotros" al final
+                setCategories([...dynamicLinks, { name: 'Nosotros', path: '/about' }]);
+            }
+        };
+
+        fetchCategories();
+
+        // Lógica de Scroll original
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 50);
         };
@@ -19,7 +45,7 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Estilos dinámicos según scroll y ubicación
+    // Estilos dinámicos según scroll y ubicación (Lógica Original)
     const navBackground = isHome && !isScrolled
         ? 'bg-transparent text-white'
         : 'bg-white text-brand-dark shadow-md';
@@ -29,13 +55,6 @@ export default function Navbar() {
         : 'hover:text-brand-accent';
 
     const iconColor = isHome && !isScrolled ? 'text-white' : 'text-brand-dark';
-
-    const links = [
-        { name: 'Mates', path: '/catalog?category=Mates' },
-        { name: 'Hidratación', path: '/catalog?category=Hidratación' },
-        { name: 'Coolers', path: '/catalog?category=Coolers' },
-        { name: 'Nosotros', path: '/about' },
-    ];
 
     return (
         <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBackground}`}>
@@ -47,10 +66,10 @@ export default function Navbar() {
                         HOME & CO
                     </Link>
 
-                    {/* 2. MENU DESKTOP (Links + Botón + Carrito) */}
+                    {/* 2. MENU DESKTOP */}
                     <div className="hidden md:flex items-center space-x-8">
-                        {/* Links */}
-                        {links.map((link) => (
+                        {/* Links Dinámicos */}
+                        {categories.map((link) => (
                             <Link
                                 key={link.name}
                                 to={link.path}
@@ -70,20 +89,29 @@ export default function Navbar() {
                             PEDIR CATÁLOGO
                         </a>
 
-                        {/* Carrito Desktop */}
-                        <Link to="/cart" className={`transition-colors ${linkHover}`}>
+                        {/* Carrito Desktop con Badge */}
+                        <Link to="/cart" className={`transition-colors relative ${linkHover}`}>
                             <ShoppingCart size={24} />
+                            {/* Badge rojo si hay items (Opcional) */}
+                            {totalItems > 0 && (
+                                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full">
+                                    {totalItems}
+                                </span>
+                            )}
                         </Link>
                     </div>
 
-                    {/* 3. CONTROLES MOBILE (Carrito + Hamburguesa) */}
+                    {/* 3. CONTROLES MOBILE */}
                     <div className="md:hidden flex items-center gap-4 z-50">
-                        {/* Carrito visible en Mobile también */}
-                        <Link to="/cart" className={iconColor}>
+                        <Link to="/cart" className={`${iconColor} relative`}>
                             <ShoppingCart size={24} />
+                            {totalItems > 0 && (
+                                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full">
+                                    {totalItems}
+                                </span>
+                            )}
                         </Link>
 
-                        {/* Botón Hamburguesa */}
                         <button
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                             className={iconColor}
@@ -99,12 +127,13 @@ export default function Navbar() {
                 {isMobileMenuOpen && (
                     <motion.div
                         initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: '100vh' }} // Pantalla completa para mejor UX
+                        animate={{ opacity: 1, height: '100vh' }}
                         exit={{ opacity: 0, height: 0 }}
                         className="md:hidden absolute top-0 left-0 w-full bg-brand-dark text-white overflow-hidden flex flex-col pt-24 px-8"
                     >
                         <div className="flex flex-col space-y-6">
-                            {links.map((link) => (
+                            {/* Links Dinámicos en Mobile */}
+                            {categories.map((link) => (
                                 <Link
                                     key={link.name}
                                     to={link.path}
@@ -115,7 +144,6 @@ export default function Navbar() {
                                 </Link>
                             ))}
 
-                            {/* El botón de acción también en el menú móvil */}
                             <a
                                 href="https://wa.me/5492617523156?text=Hola! Quiero ver el catálogo actualizado de Home & Co"
                                 target="_blank"
