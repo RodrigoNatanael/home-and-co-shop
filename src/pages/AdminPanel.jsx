@@ -18,7 +18,7 @@ export default function AdminPanel() {
     const [wheelConfig, setWheelConfig] = useState([]);
     const [wheelLeads, setWheelLeads] = useState([]);
     const [isWheelActive, setIsWheelActive] = useState(false);
-
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     // --- FORM DATA ---
     const [productFormData, setProductFormData] = useState({ id: '', name: '', price: '', category: '', description: '', stock: '', previous_price: '', cost_price: '', tags: [] });
     const [bannerFormData, setBannerFormData] = useState({ title: '', link: '' });
