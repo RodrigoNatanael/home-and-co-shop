@@ -2,35 +2,43 @@
 import { supabase } from '../supabaseclient';
 import {
     Trash2, Plus, RefreshCw, ShoppingBag, Video, Image as ImageIcon,
-    Package, CheckSquare, FolderPlus, Tag, Settings, Layout, Ticket, Layers, Palette
+    Package, CheckSquare, FolderPlus, Tag, Settings, Layout, Ticket, Layers, Palette,
+    DollarSign // <--- Agregamos este icono que faltaba
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export default function AdminPanel() {
     // --- ESTADOS NAVEGACIÓN ---
     const [activeTab, setActiveTab] = useState('products');
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // --- ESTADOS DATOS ---
     const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState([]); // Nueva lógica dinámica
+    const [categories, setCategories] = useState([]);
     const [banners, setBanners] = useState([]);
-    const [allSales, setAllSales] = useState([]);
+    const [allSales, setAllSales] = useState([]); // Historial de ventas
     const [siteConfig, setSiteConfig] = useState({ hero_video_url: '', cat1_title: '', cat2_title: '', cat3_title: '' });
+
+    // NUEVO: Estado para estadísticas (Totales)
+    const [stats, setStats] = useState({ totalIncome: 0, totalSales: 0 });
 
     // --- ESTADOS FORMULARIOS ---
     const [uploading, setUploading] = useState(false);
-    const [imageFiles, setImageFiles] = useState([null, null, null]); // 3 Imágenes
+    const [imageFiles, setImageFiles] = useState([null, null, null]);
     const [newCategory, setNewCategory] = useState({ name: '', video_url: '' });
 
-    // FORMULARIO DE PRODUCTO (CON TODOS LOS CAMPOS OPTIMIZADOS)
+    // FORM: PRODUCTO (TU VERSIÓN OPTIMIZADA - INTACTA)
     const [productFormData, setProductFormData] = useState({
         name: '', price: '', previous_price: '', cost_price: '',
         category: '', description: '', stock: '',
         tags: [], variants: ''
     });
 
-    // FORMULARIO BANNERS
+    // NUEVO: FORMULARIO DE VENTA MANUAL (CAJA)
+    const [saleFormData, setSaleFormData] = useState({
+        client_name: '', total_amount: '', products_summary: '', payment_method: 'Efectivo', status: 'Pagado'
+    });
+
+    // FORM: BANNERS
     const [bannerFormData, setBannerFormData] = useState({ title: '', link: '' });
     const [bannerImageFile, setBannerImageFile] = useState(null);
 
@@ -40,9 +48,9 @@ export default function AdminPanel() {
 
     const refreshAll = async () => {
         fetchProducts();
-        fetchCategories(); // Fetch dinámico
+        fetchCategories();
         fetchBanners();
-        fetchSales();
+        fetchSales(); // Ahora calcula totales también
         fetchConfig();
     };
 
@@ -62,9 +70,15 @@ export default function AdminPanel() {
         if (data) setBanners(data);
     };
 
+    // FETCH VENTAS (MEJORADO: CALCULA TOTALES)
     const fetchSales = async () => {
-        const { data: manual } = await supabase.from('manual_sales').select('*').order('created_at', { ascending: false });
-        if (manual) setAllSales(manual);
+        const { data } = await supabase.from('manual_sales').select('*').order('created_at', { ascending: false });
+        if (data) {
+            setAllSales(data);
+            // Calculamos la plata total sumando todo
+            const total = data.reduce((acc, curr) => acc + (parseFloat(curr.total_amount) || 0), 0);
+            setStats({ totalIncome: total, totalSales: data.length });
+        }
     };
 
     const fetchConfig = async () => {
@@ -76,7 +90,7 @@ export default function AdminPanel() {
         }
     };
 
-    // --- LOGICA PRODUCTOS (OPTIMIZADA) ---
+    // --- LOGICA PRODUCTOS (TU LÓGICA EXISTENTE) ---
     const handleTagChange = (tag) => {
         setProductFormData(prev => {
             const currentTags = prev.tags || [];
@@ -96,7 +110,6 @@ export default function AdminPanel() {
         e.preventDefault();
         setUploading(true);
         try {
-            // 1. Subida de Imágenes (Loop 3 fotos)
             const uploadedUrls = [];
             for (let i = 0; i < imageFiles.length; i++) {
                 if (imageFiles[i]) {
@@ -106,10 +119,7 @@ export default function AdminPanel() {
                     uploadedUrls.push(data.publicUrl);
                 }
             }
-
-            // 2. Procesar Variantes
             const variantsArray = productFormData.variants.split(',').map(v => v.trim()).filter(Boolean);
-
             const newProduct = {
                 id: crypto.randomUUID(),
                 ...productFormData,
@@ -118,13 +128,11 @@ export default function AdminPanel() {
                 cost_price: productFormData.cost_price ? parseFloat(productFormData.cost_price) : null,
                 stock: parseInt(productFormData.stock),
                 variants: variantsArray,
-                image_url: uploadedUrls[0] || null, // Principal
-                gallery: uploadedUrls // Galería completa
+                image_url: uploadedUrls[0] || null,
+                gallery: uploadedUrls
             };
-
             const { error } = await supabase.from('products').insert([newProduct]);
             if (error) throw error;
-
             setProductFormData({ name: '', price: '', previous_price: '', cost_price: '', category: '', description: '', stock: '', tags: [], variants: '' });
             setImageFiles([null, null, null]);
             fetchProducts();
@@ -132,6 +140,31 @@ export default function AdminPanel() {
         } catch (err) { alert(err.message); }
         setUploading(false);
     };
+
+    // --- NUEVA LÓGICA VENTAS MANUALES ---
+    const handleSaleSubmit = async (e) => {
+        e.preventDefault();
+        const { error } = await supabase.from('manual_sales').insert([{
+            ...saleFormData,
+            total_amount: parseFloat(saleFormData.total_amount),
+            created_at: new Date()
+        }]);
+
+        if (!error) {
+            setSaleFormData({ client_name: '', total_amount: '', products_summary: '', payment_method: 'Efectivo', status: 'Pagado' });
+            fetchSales(); // Actualiza la lista y los totales
+            alert("💰 Venta Registrada en Caja");
+        } else {
+            alert("Error al registrar venta");
+        }
+    };
+
+    const handleDeleteSale = async (id) => {
+        if (!confirm("¿Borrar esta venta del historial? Esto afectará el total.")) return;
+        await supabase.from('manual_sales').delete().eq('id', id);
+        fetchSales();
+    };
+
 
     // --- LOGICA BANNERS ---
     const handleBannerSubmit = async (e) => {
@@ -158,7 +191,7 @@ export default function AdminPanel() {
                         {[
                             { id: 'products', label: 'Productos', icon: <Package size={14} /> },
                             { id: 'categories_mgr', label: 'Categorías', icon: <FolderPlus size={14} /> },
-                            { id: 'all_sales', label: 'Ventas', icon: <Ticket size={14} /> },
+                            { id: 'all_sales', label: 'Caja / Ventas', icon: <DollarSign size={14} /> }, // Icono actualizado
                             { id: 'banners', label: 'Banners', icon: <ImageIcon size={14} /> },
                             { id: 'design', label: 'Diseño', icon: <Layout size={14} /> }
                         ].map(tab => (
@@ -176,20 +209,17 @@ export default function AdminPanel() {
 
             <div className="max-w-7xl mx-auto px-4 py-8">
 
-                {/* 1. PRODUCTOS (PANEL RESTAURADO + CATEGORÍAS DINÁMICAS) */}
+                {/* 1. PRODUCTOS (TU VERSIÓN PERFECTA) */}
                 {activeTab === 'products' && (
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        {/* FORMULARIO */}
                         <div className="lg:col-span-5">
                             <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-md sticky top-24">
                                 <h2 className="font-black text-lg mb-4 flex items-center gap-2 uppercase"><Plus size={20} /> Nuevo Producto</h2>
                                 <form onSubmit={handleProductSubmit} className="space-y-4">
-
                                     <div>
                                         <label className="text-[10px] font-bold text-gray-400 uppercase">Nombre</label>
                                         <input value={productFormData.name} onChange={e => setProductFormData({ ...productFormData, name: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold focus:border-black outline-none" required />
                                     </div>
-
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <label className="text-[10px] font-bold text-gray-400 uppercase">Precio Venta</label>
@@ -200,7 +230,6 @@ export default function AdminPanel() {
                                             <input type="number" value={productFormData.cost_price} onChange={e => setProductFormData({ ...productFormData, cost_price: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl outline-none text-gray-500" placeholder="Opcional" />
                                         </div>
                                     </div>
-
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <label className="text-[10px] font-bold text-gray-400 uppercase">Precio Anterior</label>
@@ -211,8 +240,6 @@ export default function AdminPanel() {
                                             <input type="number" value={productFormData.stock} onChange={e => setProductFormData({ ...productFormData, stock: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold outline-none" required />
                                         </div>
                                     </div>
-
-                                    {/* SELECTOR DE CATEGORÍA (DINÁMICO) */}
                                     <div>
                                         <label className="text-[10px] font-bold text-gray-400 uppercase">Categoría</label>
                                         <select
@@ -227,8 +254,6 @@ export default function AdminPanel() {
                                             ))}
                                         </select>
                                     </div>
-
-                                    {/* VARIANTES */}
                                     <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                                         <label className="text-xs font-bold text-blue-800 uppercase block mb-1 flex items-center gap-2"><Palette size={14} /> Colores / Variantes</label>
                                         <input
@@ -238,8 +263,6 @@ export default function AdminPanel() {
                                             className="w-full bg-transparent border-b border-blue-200 p-1 outline-none text-sm font-bold text-blue-900"
                                         />
                                     </div>
-
-                                    {/* ETIQUETAS (RESTAURADO) */}
                                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                                         <label className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Filtros / Tags</label>
                                         <div className="grid grid-cols-2 gap-2">
@@ -253,10 +276,7 @@ export default function AdminPanel() {
                                             ))}
                                         </div>
                                     </div>
-
                                     <textarea placeholder="Descripción detallada..." value={productFormData.description} onChange={e => setProductFormData({ ...productFormData, description: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl h-24 text-sm outline-none" />
-
-                                    {/* CARGA DE IMÁGENES (3 FOTOS RESTAURADO) */}
                                     <div className="grid grid-cols-3 gap-2">
                                         {[0, 1, 2].map(i => (
                                             <div key={i} className="aspect-square border-2 border-dashed border-gray-200 rounded-xl relative flex items-center justify-center overflow-hidden hover:bg-gray-50 cursor-pointer">
@@ -275,7 +295,6 @@ export default function AdminPanel() {
                                             </div>
                                         ))}
                                     </div>
-
                                     <Button type="submit" className="w-full bg-black text-white py-3 rounded-xl font-bold shadow-lg hover:bg-gray-800 transition-colors" disabled={uploading}>
                                         {uploading ? 'SUBIENDO...' : 'GUARDAR PRODUCTO'}
                                     </Button>
@@ -283,7 +302,7 @@ export default function AdminPanel() {
                             </div>
                         </div>
 
-                        {/* LISTA INVENTARIO (CON MINIATURAS Y VARIANTES) */}
+                        {/* LISTA INVENTARIO */}
                         <div className="lg:col-span-7">
                             <div className="bg-white rounded-2xl border shadow-sm overflow-hidden h-[800px] flex flex-col">
                                 <div className="p-4 border-b bg-gray-50 flex justify-between items-center font-bold text-xs text-gray-400 uppercase tracking-widest">
@@ -329,7 +348,7 @@ export default function AdminPanel() {
                     </div>
                 )}
 
-                {/* 2. CATEGORÍAS (DINÁMICO) */}
+                {/* 2. CATEGORÍAS (TU VERSIÓN DINÁMICA) */}
                 {activeTab === 'categories_mgr' && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div className="bg-white p-6 rounded-2xl border shadow-md h-fit">
@@ -357,7 +376,60 @@ export default function AdminPanel() {
                     </div>
                 )}
 
-                {/* 3. BANNERS (RESTAURADO) */}
+                {/* 3. VENTAS / CAJA (RESTAURADO Y MEJORADO) */}
+                {activeTab === 'all_sales' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        {/* ESTADÍSTICAS (TOTALES) */}
+                        <div className="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="bg-black text-white p-6 rounded-2xl shadow-lg">
+                                <p className="text-xs font-bold uppercase opacity-60 mb-2">Total Ingresos</p>
+                                <p className="text-3xl font-black">${stats.totalIncome.toLocaleString()}</p>
+                            </div>
+                            <div className="bg-white border p-6 rounded-2xl shadow-sm">
+                                <p className="text-xs font-bold uppercase text-gray-400 mb-2">Ventas Totales</p>
+                                <p className="text-3xl font-black text-gray-900">{stats.totalSales}</p>
+                            </div>
+                        </div>
+
+                        {/* FORMULARIO DE CARGA DE VENTAS */}
+                        <div className="lg:col-span-4 bg-white p-6 rounded-2xl border shadow-md h-fit">
+                            <h2 className="font-black text-lg mb-4 uppercase flex items-center gap-2"><DollarSign /> Registrar Venta</h2>
+                            <form onSubmit={handleSaleSubmit} className="space-y-4">
+                                <input placeholder="Nombre Cliente" value={saleFormData.client_name} onChange={e => setSaleFormData({ ...saleFormData, client_name: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold" required />
+                                <input type="number" placeholder="Monto Total" value={saleFormData.total_amount} onChange={e => setSaleFormData({ ...saleFormData, total_amount: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold text-green-600" required />
+                                <input placeholder="Productos (Resumen)" value={saleFormData.products_summary} onChange={e => setSaleFormData({ ...saleFormData, products_summary: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl text-sm" />
+                                <select value={saleFormData.payment_method} onChange={e => setSaleFormData({ ...saleFormData, payment_method: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold bg-white outline-none">
+                                    <option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option>
+                                </select>
+                                <Button type="submit" className="w-full bg-black text-white py-3 rounded-xl font-bold">REGISTRAR VENTA</Button>
+                            </form>
+                        </div>
+
+                        {/* HISTORIAL DE VENTAS */}
+                        <div className="lg:col-span-8 bg-white rounded-2xl border shadow-sm overflow-hidden h-[600px] flex flex-col">
+                            <div className="p-4 border-b bg-gray-50 font-bold text-xs text-gray-400 uppercase tracking-widest">Historial Reciente</div>
+                            <div className="divide-y divide-gray-100 overflow-y-auto flex-1">
+                                {allSales.map(s => (
+                                    <div key={s.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                                        <div>
+                                            <p className="font-black text-sm uppercase">{s.client_name}</p>
+                                            <p className="text-xs text-gray-500">{s.products_summary} • {new Date(s.created_at).toLocaleDateString()}</p>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-right">
+                                                <span className="block font-black text-green-600">${s.total_amount}</span>
+                                                <span className="text-[10px] font-bold uppercase bg-gray-100 px-2 py-0.5 rounded">{s.payment_method}</span>
+                                            </div>
+                                            <button onClick={() => handleDeleteSale(s.id)} className="text-gray-200 hover:text-red-500"><Trash2 size={16} /></button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 4. BANNERS (RESTAURADO) */}
                 {activeTab === 'banners' && (
                     <div className="bg-white p-6 rounded-2xl border shadow-sm">
                         <h2 className="font-bold text-lg mb-4 uppercase">Gestión de Banners</h2>
@@ -379,28 +451,6 @@ export default function AdminPanel() {
                     </div>
                 )}
 
-                {/* 4. VENTAS (RESTAURADO) */}
-                {activeTab === 'all_sales' && (
-                    <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-                        <div className="p-4 border-b bg-gray-50 font-bold text-xs text-gray-400 uppercase tracking-widest">Historial de Ventas Manuales</div>
-                        <table className="w-full text-left text-xs">
-                            <thead className="bg-gray-50 font-bold uppercase text-gray-400">
-                                <tr><th className="p-4">Fecha</th><th className="p-4">Cliente</th><th className="p-4">Total</th><th className="p-4">Estado</th></tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {allSales.map(s => (
-                                    <tr key={s.id} className="hover:bg-gray-50">
-                                        <td className="p-4">{new Date(s.created_at).toLocaleDateString()}</td>
-                                        <td className="p-4 font-bold">{s.client_name}</td>
-                                        <td className="p-4 font-black">${s.total_amount}</td>
-                                        <td className="p-4"><span className="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold uppercase">{s.status || 'Pagado'}</span></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
                 {/* 5. DISEÑO (RESTAURADO) */}
                 {activeTab === 'design' && (
                     <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl border shadow-md">
@@ -409,14 +459,6 @@ export default function AdminPanel() {
                             <div>
                                 <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Video Principal (URL)</label>
                                 <input value={siteConfig.hero_video_url} onChange={e => setSiteConfig({ ...siteConfig, hero_video_url: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-mono text-sm" placeholder="https://..." />
-                            </div>
-                            <div className="grid grid-cols-3 gap-4">
-                                {[1, 2, 3].map(n => (
-                                    <div key={n}>
-                                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Cat. Destacada {n}</label>
-                                        <input value={siteConfig[`cat${n}_title`]} onChange={e => setSiteConfig({ ...siteConfig, [`cat${n}_title`]: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold" />
-                                    </div>
-                                ))}
                             </div>
                             <Button onClick={async () => {
                                 const updates = Object.keys(siteConfig).map(k => ({ id: k, value: siteConfig[k] }));
