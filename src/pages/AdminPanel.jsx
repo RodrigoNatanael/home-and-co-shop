@@ -2,31 +2,37 @@
 import { supabase } from '../supabaseclient';
 import {
     Trash2, Plus, RefreshCw, ShoppingBag, Video, Image as ImageIcon,
-    Package, CheckSquare, FolderPlus, Tag, Settings, Layout, Ticket, List
+    Package, CheckSquare, FolderPlus, Tag, Settings, Layout, Ticket, Layers, Palette
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export default function AdminPanel() {
     // --- ESTADOS NAVEGACIÓN ---
     const [activeTab, setActiveTab] = useState('products');
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // --- ESTADOS DATOS ---
     const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState([]);
+    const [categories, setCategories] = useState([]); // Nueva lógica dinámica
     const [banners, setBanners] = useState([]);
-    const [combos, setCombos] = useState([]);
     const [allSales, setAllSales] = useState([]);
     const [siteConfig, setSiteConfig] = useState({ hero_video_url: '', cat1_title: '', cat2_title: '', cat3_title: '' });
 
     // --- ESTADOS FORMULARIOS ---
     const [uploading, setUploading] = useState(false);
-    const [imageFiles, setImageFiles] = useState([null, null, null]);
+    const [imageFiles, setImageFiles] = useState([null, null, null]); // 3 Imágenes
     const [newCategory, setNewCategory] = useState({ name: '', video_url: '' });
+
+    // FORMULARIO DE PRODUCTO (CON TODOS LOS CAMPOS OPTIMIZADOS)
     const [productFormData, setProductFormData] = useState({
-        name: '', price: '', previous_price: '', cost_price: '', category: '', description: '', stock: '', tags: [], variants: ''
+        name: '', price: '', previous_price: '', cost_price: '',
+        category: '', description: '', stock: '',
+        tags: [], variants: ''
     });
+
+    // FORMULARIO BANNERS
     const [bannerFormData, setBannerFormData] = useState({ title: '', link: '' });
-    const [bannerImage, setBannerImage] = useState(null);
+    const [bannerImageFile, setBannerImageFile] = useState(null);
 
     useEffect(() => {
         refreshAll();
@@ -34,14 +40,13 @@ export default function AdminPanel() {
 
     const refreshAll = async () => {
         fetchProducts();
-        fetchCategories();
+        fetchCategories(); // Fetch dinámico
         fetchBanners();
-        fetchCombos();
         fetchSales();
         fetchConfig();
     };
 
-    // --- FETCH FUNCTIONS ---
+    // --- FETCHS ---
     const fetchProducts = async () => {
         const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
         if (data) setProducts(data);
@@ -55,11 +60,6 @@ export default function AdminPanel() {
     const fetchBanners = async () => {
         const { data } = await supabase.from('banners').select('*').order('created_at', { ascending: false });
         if (data) setBanners(data);
-    };
-
-    const fetchCombos = async () => {
-        const { data } = await supabase.from('combos').select('*').order('created_at', { ascending: false });
-        if (data) setCombos(data);
     };
 
     const fetchSales = async () => {
@@ -76,21 +76,27 @@ export default function AdminPanel() {
         }
     };
 
-    // --- ACCIONES CATEGORÍAS ---
-    const handleAddCategory = async (e) => {
-        e.preventDefault();
-        const { error } = await supabase.from('categories').insert([newCategory]);
-        if (!error) {
-            setNewCategory({ name: '', video_url: '' });
-            fetchCategories();
-        }
+    // --- LOGICA PRODUCTOS (OPTIMIZADA) ---
+    const handleTagChange = (tag) => {
+        setProductFormData(prev => {
+            const currentTags = prev.tags || [];
+            return currentTags.includes(tag)
+                ? { ...prev, tags: currentTags.filter(t => t !== tag) }
+                : { ...prev, tags: [...currentTags, tag] };
+        });
     };
 
-    // --- ACCIONES PRODUCTOS ---
+    const handleImageChange = (index, file) => {
+        const newImages = [...imageFiles];
+        newImages[index] = file;
+        setImageFiles(newImages);
+    };
+
     const handleProductSubmit = async (e) => {
         e.preventDefault();
         setUploading(true);
         try {
+            // 1. Subida de Imágenes (Loop 3 fotos)
             const uploadedUrls = [];
             for (let i = 0; i < imageFiles.length; i++) {
                 if (imageFiles[i]) {
@@ -101,36 +107,50 @@ export default function AdminPanel() {
                 }
             }
 
+            // 2. Procesar Variantes
+            const variantsArray = productFormData.variants.split(',').map(v => v.trim()).filter(Boolean);
+
             const newProduct = {
                 id: crypto.randomUUID(),
                 ...productFormData,
                 price: parseFloat(productFormData.price),
                 previous_price: productFormData.previous_price ? parseFloat(productFormData.previous_price) : null,
+                cost_price: productFormData.cost_price ? parseFloat(productFormData.cost_price) : null,
                 stock: parseInt(productFormData.stock),
-                variants: productFormData.variants.split(',').map(v => v.trim()).filter(Boolean),
-                image_url: uploadedUrls[0] || null,
-                gallery: uploadedUrls
+                variants: variantsArray,
+                image_url: uploadedUrls[0] || null, // Principal
+                gallery: uploadedUrls // Galería completa
             };
 
             const { error } = await supabase.from('products').insert([newProduct]);
             if (error) throw error;
+
             setProductFormData({ name: '', price: '', previous_price: '', cost_price: '', category: '', description: '', stock: '', tags: [], variants: '' });
             setImageFiles([null, null, null]);
             fetchProducts();
+            alert("✅ Producto Guardado con Éxito");
         } catch (err) { alert(err.message); }
         setUploading(false);
     };
 
-    // --- ACCIONES DISEÑO ---
-    const handleConfigSave = async () => {
-        const updates = Object.keys(siteConfig).map(k => ({ id: k, value: siteConfig[k] }));
-        await supabase.from('site_config').upsert(updates);
-        alert("Diseño guardado");
+    // --- LOGICA BANNERS ---
+    const handleBannerSubmit = async (e) => {
+        e.preventDefault();
+        let url = '';
+        if (bannerImageFile) {
+            const fileName = `ban_${Date.now()}`;
+            await supabase.storage.from('product-images').upload(fileName, bannerImageFile);
+            url = supabase.storage.from('product-images').getPublicUrl(fileName).data.publicUrl;
+        }
+        await supabase.from('banners').insert([{ ...bannerFormData, image_url: url }]);
+        setBannerFormData({ title: '', link: '' });
+        setBannerImageFile(null);
+        fetchBanners();
     };
 
     return (
         <div className="min-h-screen bg-gray-50 pb-12 font-sans text-gray-900">
-            {/* NAV PANEL RESTAURADA */}
+            {/* HEADER */}
             <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center overflow-x-auto gap-4">
                     <h1 className="text-xl font-black italic shrink-0">ADMIN H&C</h1>
@@ -156,69 +176,180 @@ export default function AdminPanel() {
 
             <div className="max-w-7xl mx-auto px-4 py-8">
 
-                {/* 1. PRODUCTOS */}
+                {/* 1. PRODUCTOS (PANEL RESTAURADO + CATEGORÍAS DINÁMICAS) */}
                 {activeTab === 'products' && (
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <div className="lg:col-span-5 bg-white p-6 rounded-2xl border shadow-md h-fit">
-                            <h2 className="font-black text-lg mb-4 uppercase flex items-center gap-2"><Plus /> Nuevo Producto</h2>
-                            <form onSubmit={handleProductSubmit} className="space-y-4">
-                                <input placeholder="Nombre" value={productFormData.name} onChange={e => setProductFormData({ ...productFormData, name: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold" required />
-                                <div className="grid grid-cols-2 gap-3">
-                                    <input type="number" placeholder="Precio" value={productFormData.price} onChange={e => setProductFormData({ ...productFormData, price: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold text-green-600" required />
-                                    <input type="number" placeholder="Stock" value={productFormData.stock} onChange={e => setProductFormData({ ...productFormData, stock: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold" required />
+                        {/* FORMULARIO */}
+                        <div className="lg:col-span-5">
+                            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-md sticky top-24">
+                                <h2 className="font-black text-lg mb-4 flex items-center gap-2 uppercase"><Plus size={20} /> Nuevo Producto</h2>
+                                <form onSubmit={handleProductSubmit} className="space-y-4">
+
+                                    <div>
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Nombre</label>
+                                        <input value={productFormData.name} onChange={e => setProductFormData({ ...productFormData, name: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold focus:border-black outline-none" required />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Precio Venta</label>
+                                            <input type="number" value={productFormData.price} onChange={e => setProductFormData({ ...productFormData, price: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold text-green-600 outline-none" required />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Costo (Privado)</label>
+                                            <input type="number" value={productFormData.cost_price} onChange={e => setProductFormData({ ...productFormData, cost_price: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl outline-none text-gray-500" placeholder="Opcional" />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Precio Anterior</label>
+                                            <input type="number" value={productFormData.previous_price} onChange={e => setProductFormData({ ...productFormData, previous_price: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl outline-none" placeholder="Tachado" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Stock Inicial</label>
+                                            <input type="number" value={productFormData.stock} onChange={e => setProductFormData({ ...productFormData, stock: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold outline-none" required />
+                                        </div>
+                                    </div>
+
+                                    {/* SELECTOR DE CATEGORÍA (DINÁMICO) */}
+                                    <div>
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Categoría</label>
+                                        <select
+                                            value={productFormData.category}
+                                            onChange={e => setProductFormData({ ...productFormData, category: e.target.value })}
+                                            className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold bg-white outline-none"
+                                            required
+                                        >
+                                            <option value="">Seleccionar...</option>
+                                            {categories.map(c => (
+                                                <option key={c.id} value={c.name}>{c.name.toUpperCase()}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* VARIANTES */}
+                                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                        <label className="text-xs font-bold text-blue-800 uppercase block mb-1 flex items-center gap-2"><Palette size={14} /> Colores / Variantes</label>
+                                        <input
+                                            placeholder="Ej: Rojo, Azul, Negro (Separar con comas)"
+                                            value={productFormData.variants}
+                                            onChange={e => setProductFormData({ ...productFormData, variants: e.target.value })}
+                                            className="w-full bg-transparent border-b border-blue-200 p-1 outline-none text-sm font-bold text-blue-900"
+                                        />
+                                    </div>
+
+                                    {/* ETIQUETAS (RESTAURADO) */}
+                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Filtros / Tags</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {['OFERTA', 'DESTACADO', 'RUGGED', 'ENVIO GRATIS'].map(tag => (
+                                                <div key={tag} onClick={() => handleTagChange(tag)} className="flex items-center gap-2 cursor-pointer hover:bg-gray-200 p-1 rounded transition-colors">
+                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${productFormData.tags.includes(tag) ? 'bg-black border-black text-white' : 'bg-white border-gray-300'}`}>
+                                                        {productFormData.tags.includes(tag) && <CheckSquare size={12} />}
+                                                    </div>
+                                                    <span className="text-[10px] font-bold uppercase">{tag}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <textarea placeholder="Descripción detallada..." value={productFormData.description} onChange={e => setProductFormData({ ...productFormData, description: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl h-24 text-sm outline-none" />
+
+                                    {/* CARGA DE IMÁGENES (3 FOTOS RESTAURADO) */}
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[0, 1, 2].map(i => (
+                                            <div key={i} className="aspect-square border-2 border-dashed border-gray-200 rounded-xl relative flex items-center justify-center overflow-hidden hover:bg-gray-50 cursor-pointer">
+                                                <input type="file" onChange={e => handleImageChange(i, e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                                                {imageFiles[i] ? (
+                                                    <div className="w-full h-full relative">
+                                                        <img src={URL.createObjectURL(imageFiles[i])} className="w-full h-full object-cover" alt="preview" />
+                                                        <div className="absolute bottom-0 w-full bg-black/50 text-white text-[8px] text-center font-bold py-1">CAMBIAR</div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center">
+                                                        <ImageIcon className="text-gray-300 mx-auto mb-1" size={16} />
+                                                        <span className="text-[8px] font-bold text-gray-400 block">{i === 0 ? 'PORTADA' : `FOTO ${i + 1}`}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <Button type="submit" className="w-full bg-black text-white py-3 rounded-xl font-bold shadow-lg hover:bg-gray-800 transition-colors" disabled={uploading}>
+                                        {uploading ? 'SUBIENDO...' : 'GUARDAR PRODUCTO'}
+                                    </Button>
+                                </form>
+                            </div>
+                        </div>
+
+                        {/* LISTA INVENTARIO (CON MINIATURAS Y VARIANTES) */}
+                        <div className="lg:col-span-7">
+                            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden h-[800px] flex flex-col">
+                                <div className="p-4 border-b bg-gray-50 flex justify-between items-center font-bold text-xs text-gray-400 uppercase tracking-widest">
+                                    Inventario ({products.length})
+                                    <RefreshCw size={14} className="cursor-pointer hover:text-black transition-colors" onClick={fetchProducts} />
                                 </div>
-                                <select value={productFormData.category} onChange={e => setProductFormData({ ...productFormData, category: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold bg-white" required>
-                                    <option value="">Seleccionar categoría...</option>
-                                    {categories.map(c => <option key={c.id} value={c.name}>{c.name.toUpperCase()}</option>)}
-                                </select>
-                                <textarea placeholder="Descripción..." value={productFormData.description} onChange={e => setProductFormData({ ...productFormData, description: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl h-20 text-sm" />
-                                <div className="grid grid-cols-3 gap-2">
-                                    {[0, 1, 2].map(i => (
-                                        <div key={i} className="aspect-square border-2 border-dashed border-gray-100 rounded-xl relative flex items-center justify-center overflow-hidden">
-                                            <input type="file" onChange={e => { const f = [...imageFiles]; f[i] = e.target.files[0]; setImageFiles(f); }} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                                            {imageFiles[i] ? <img src={URL.createObjectURL(imageFiles[i])} className="w-full h-full object-cover" alt="" /> : <ImageIcon className="text-gray-200" />}
+                                <div className="divide-y divide-gray-100 overflow-y-auto flex-1">
+                                    {products.map(p => (
+                                        <div key={p.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors group">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-14 h-14 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden relative">
+                                                    {p.image_url ? <img src={p.image_url} className="w-full h-full object-cover" alt="" /> : <Package className="p-3 text-gray-300" />}
+                                                    {p.gallery && p.gallery.length > 1 && <div className="absolute bottom-0 right-0 bg-black text-white text-[8px] px-1 font-bold flex gap-0.5"><Layers size={8} /> {p.gallery.length}</div>}
+                                                </div>
+                                                <div>
+                                                    <p className="font-black text-sm text-gray-900">{p.name}</p>
+                                                    <div className="flex gap-2 items-center text-xs mt-1">
+                                                        <span className="bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold uppercase">{p.category}</span>
+                                                        <span className="font-bold text-green-600">${p.price}</span>
+                                                        {p.previous_price && <span className="text-gray-400 line-through text-[10px]">${p.previous_price}</span>}
+                                                    </div>
+                                                    {p.variants && p.variants.length > 0 && (
+                                                        <div className="flex gap-1 mt-1">
+                                                            {p.variants.map((v, i) => <span key={i} className="text-[8px] border px-1 rounded bg-white text-gray-500">{v}</span>)}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="text-right">
+                                                    <p className="text-[8px] font-bold text-gray-400 uppercase">Stock</p>
+                                                    <span className={`text-sm font-bold ${p.stock < 5 ? 'text-red-500' : 'text-gray-900'}`}>{p.stock}</span>
+                                                </div>
+                                                <button onClick={() => { if (confirm('¿Borrar?')) supabase.from('products').delete().eq('id', p.id).then(fetchProducts) }} className="p-2 text-gray-200 hover:text-red-500 transition-colors">
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
-                                <Button type="submit" className="w-full bg-black text-white py-3 rounded-xl font-bold" disabled={uploading}>{uploading ? 'GUARDANDO...' : 'GUARDAR PRODUCTO'}</Button>
-                            </form>
-                        </div>
-                        <div className="lg:col-span-7 bg-white rounded-2xl border shadow-sm overflow-hidden h-[600px] flex flex-col">
-                            <div className="p-4 border-b bg-gray-50 flex justify-between items-center font-bold text-xs text-gray-400 uppercase tracking-widest">Inventario ({products.length}) <RefreshCw size={14} className="cursor-pointer" onClick={fetchProducts} /></div>
-                            <div className="divide-y divide-gray-100 overflow-y-auto">
-                                {products.map(p => (
-                                    <div key={p.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                                        <div className="flex items-center gap-4">
-                                            <img src={p.image_url} className="w-12 h-12 rounded-lg object-cover border" alt="" />
-                                            <div>
-                                                <p className="font-black text-sm">{p.name}</p>
-                                                <span className="text-[9px] bg-gray-100 px-2 py-0.5 rounded font-bold uppercase">{p.category}</span>
-                                            </div>
-                                        </div>
-                                        <button onClick={() => { if (confirm('¿Borrar?')) supabase.from('products').delete().eq('id', p.id).then(fetchProducts) }} className="text-gray-200 hover:text-red-500"><Trash2 size={18} /></button>
-                                    </div>
-                                ))}
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* 2. CATEGORÍAS */}
+                {/* 2. CATEGORÍAS (DINÁMICO) */}
                 {activeTab === 'categories_mgr' && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div className="bg-white p-6 rounded-2xl border shadow-md h-fit">
                             <h2 className="font-black text-lg mb-4 uppercase flex items-center gap-2"><FolderPlus /> Crear Categoría</h2>
-                            <form onSubmit={handleAddCategory} className="space-y-4">
-                                <input placeholder="Nombre" value={newCategory.name} onChange={e => setNewCategory({ ...newCategory, name: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold" required />
-                                <input placeholder="URL Video" value={newCategory.video_url} onChange={e => setNewCategory({ ...newCategory, video_url: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-mono text-xs" />
-                                <Button type="submit" className="w-full bg-black text-white py-3 rounded-xl font-bold">GUARDAR</Button>
+                            <form onSubmit={async (e) => {
+                                e.preventDefault();
+                                await supabase.from('categories').insert([newCategory]);
+                                setNewCategory({ name: '', video_url: '' });
+                                fetchCategories();
+                            }} className="space-y-4">
+                                <input placeholder="Nombre (ej: Mates Imperiales)" value={newCategory.name} onChange={e => setNewCategory({ ...newCategory, name: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold" required />
+                                <input placeholder="URL Video (Opcional)" value={newCategory.video_url} onChange={e => setNewCategory({ ...newCategory, video_url: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-mono text-xs" />
+                                <Button type="submit" className="w-full bg-black text-white py-3 rounded-xl font-bold">GUARDAR CATEGORÍA</Button>
                             </form>
                         </div>
                         <div className="bg-white rounded-2xl border shadow-sm divide-y overflow-hidden">
-                            <div className="p-4 bg-gray-50 font-bold text-xs text-gray-400 uppercase">Listado</div>
+                            <div className="p-4 bg-gray-50 font-bold text-[10px] text-gray-400 uppercase tracking-widest">Listado Actual</div>
                             {categories.map(c => (
-                                <div key={c.id} className="p-4 flex justify-between items-center uppercase font-bold text-sm">
-                                    {c.name}
+                                <div key={c.id} className="p-4 flex justify-between items-center group hover:bg-gray-50">
+                                    <span className="font-bold text-sm uppercase">{c.name}</span>
                                     <button onClick={() => supabase.from('categories').delete().eq('id', c.id).then(fetchCategories)} className="text-gray-200 hover:text-red-500"><Trash2 size={16} /></button>
                                 </div>
                             ))}
@@ -226,12 +357,35 @@ export default function AdminPanel() {
                     </div>
                 )}
 
-                {/* 3. VENTAS */}
+                {/* 3. BANNERS (RESTAURADO) */}
+                {activeTab === 'banners' && (
+                    <div className="bg-white p-6 rounded-2xl border shadow-sm">
+                        <h2 className="font-bold text-lg mb-4 uppercase">Gestión de Banners</h2>
+                        <form onSubmit={handleBannerSubmit} className="flex gap-4 items-end mb-6">
+                            <div className="flex-1 border-2 border-dashed border-gray-200 p-3 rounded-xl cursor-pointer relative hover:bg-gray-50">
+                                <input type="file" onChange={e => setBannerImageFile(e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                <p className="text-center text-xs font-bold text-gray-400">{bannerImageFile ? bannerImageFile.name : 'Click para subir imagen'}</p>
+                            </div>
+                            <Button type="submit" className="bg-black text-white px-6 py-3 rounded-xl font-bold">SUBIR</Button>
+                        </form>
+                        <div className="grid grid-cols-2 gap-4">
+                            {banners.map(b => (
+                                <div key={b.id} className="relative group">
+                                    <img src={b.image_url} className="w-full rounded-xl border shadow-sm" alt="" />
+                                    <button onClick={() => supabase.from('banners').delete().eq('id', b.id).then(fetchBanners)} className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14} /></button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* 4. VENTAS (RESTAURADO) */}
                 {activeTab === 'all_sales' && (
                     <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+                        <div className="p-4 border-b bg-gray-50 font-bold text-xs text-gray-400 uppercase tracking-widest">Historial de Ventas Manuales</div>
                         <table className="w-full text-left text-xs">
                             <thead className="bg-gray-50 font-bold uppercase text-gray-400">
-                                <tr><th className="p-4">Fecha</th><th className="p-4">Cliente</th><th className="p-4">Total</th></tr>
+                                <tr><th className="p-4">Fecha</th><th className="p-4">Cliente</th><th className="p-4">Total</th><th className="p-4">Estado</th></tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {allSales.map(s => (
@@ -239,6 +393,7 @@ export default function AdminPanel() {
                                         <td className="p-4">{new Date(s.created_at).toLocaleDateString()}</td>
                                         <td className="p-4 font-bold">{s.client_name}</td>
                                         <td className="p-4 font-black">${s.total_amount}</td>
+                                        <td className="p-4"><span className="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold uppercase">{s.status || 'Pagado'}</span></td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -246,7 +401,7 @@ export default function AdminPanel() {
                     </div>
                 )}
 
-                {/* 4. DISEÑO HOME */}
+                {/* 5. DISEÑO (RESTAURADO) */}
                 {activeTab === 'design' && (
                     <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl border shadow-md">
                         <h2 className="font-black text-xl mb-6 flex items-center gap-2 uppercase"><Settings /> Configuración Home</h2>
@@ -263,7 +418,11 @@ export default function AdminPanel() {
                                     </div>
                                 ))}
                             </div>
-                            <Button onClick={handleConfigSave} className="w-full bg-black text-white py-4 rounded-xl font-bold">GUARDAR DISEÑO</Button>
+                            <Button onClick={async () => {
+                                const updates = Object.keys(siteConfig).map(k => ({ id: k, value: siteConfig[k] }));
+                                await supabase.from('site_config').upsert(updates);
+                                alert("Diseño guardado");
+                            }} className="w-full bg-black text-white py-4 rounded-xl font-bold shadow-lg">GUARDAR DISEÑO</Button>
                         </div>
                     </div>
                 )}
