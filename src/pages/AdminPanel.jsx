@@ -10,7 +10,7 @@ import { Button } from '../components/ui/Button';
 export default function AdminPanel() {
     // --- ESTADOS NAVEGACIÓN ---
     const [activeTab, setActiveTab] = useState('manual_sales');
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Para el menú en celular
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // --- ESTADOS DATOS ---
     const [products, setProducts] = useState([]);
@@ -33,7 +33,7 @@ export default function AdminPanel() {
         tags: [], variants: ''
     });
 
-    // --- NUEVO ESTADO PARA POS (PUNTO DE VENTA) ---
+    // --- ESTADO PARA POS (PUNTO DE VENTA) ---
     const [posSeller, setPosSeller] = useState('');
     const [posClient, setPosClient] = useState({ name: '', email: '', phone: '', instagram: '' });
     const [posCart, setPosCart] = useState([]);
@@ -168,13 +168,38 @@ export default function AdminPanel() {
         const summaryText = posCart.map(i => `${i.quantity}x ${i.name}`).join(', ');
 
         try {
-            await supabase.from('leads').upsert({ name: posClient.name, email: posClient.email, metadata: { phone: posClient.phone, instagram: posClient.instagram, first_seller: posSeller }, status: 'customer' }, { onConflict: 'email' });
-            const { error: saleError } = await supabase.from('manual_sales').insert([{ client_name: posClient.name, seller: posSeller, products_summary: summaryText, items_json: posCart, total_amount: totalAmount, paid_amount: paidAmount, payment_method: posPayment.method, notes: posPayment.notes, status: status, created_at: new Date() }]);
+            // Guardamos datos completos en LEADS (incluyendo Phone e Instagram)
+            await supabase.from('leads').upsert({
+                name: posClient.name,
+                email: posClient.email,
+                metadata: {
+                    phone: posClient.phone,
+                    instagram: posClient.instagram,
+                    first_seller: posSeller
+                },
+                status: 'customer'
+            }, { onConflict: 'email' });
+
+            const { error: saleError } = await supabase.from('manual_sales').insert([{
+                client_name: posClient.name,
+                seller: posSeller,
+                products_summary: summaryText,
+                items_json: posCart,
+                total_amount: totalAmount,
+                paid_amount: paidAmount,
+                payment_method: posPayment.method,
+                notes: posPayment.notes,
+                status: status,
+                created_at: new Date()
+            }]);
+
             if (saleError) throw saleError;
+
             for (const item of posCart) {
                 const { data: currentProd } = await supabase.from('products').select('stock').eq('id', item.id).single();
                 if (currentProd) { await supabase.from('products').update({ stock: currentProd.stock - item.quantity }).eq('id', item.id); }
             }
+
             setPosClient({ name: '', email: '', phone: '', instagram: '' });
             setPosCart([]);
             setPosPayment({ amountPaid: '', method: 'Efectivo', notes: '' });
@@ -207,13 +232,7 @@ export default function AdminPanel() {
             <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
                     <h1 className="text-xl font-black italic shrink-0">ADMIN H&C</h1>
-
-                    {/* MENÚ MÓVIL TOGGLE */}
-                    <button className="lg:hidden p-2" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-                        <Menu size={24} />
-                    </button>
-
-                    {/* MENÚ DESKTOP */}
+                    <button className="lg:hidden p-2" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}><Menu size={24} /></button>
                     <div className="hidden lg:flex gap-1 bg-gray-100 p-1 rounded-xl">
                         {[
                             { id: 'products', label: 'Productos', icon: <Package size={14} /> },
@@ -228,8 +247,6 @@ export default function AdminPanel() {
                         ))}
                     </div>
                 </div>
-
-                {/* MENÚ MÓVIL DESPLEGABLE */}
                 {isMobileMenuOpen && (
                     <div className="lg:hidden bg-white border-t p-2 grid grid-cols-2 gap-2">
                         {[
@@ -239,11 +256,7 @@ export default function AdminPanel() {
                             { id: 'banners', label: 'Banners', icon: <ImageIcon size={14} /> },
                             { id: 'design', label: 'Diseño', icon: <Layout size={14} /> }
                         ].map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
-                                className={`p-3 rounded-lg text-xs font-bold uppercase flex flex-col items-center gap-2 transition-all ${activeTab === tab.id ? 'bg-black text-white' : 'bg-gray-50 text-gray-500'}`}
-                            >
+                            <button key={tab.id} onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }} className={`p-3 rounded-lg text-xs font-bold uppercase flex flex-col items-center gap-2 transition-all ${activeTab === tab.id ? 'bg-black text-white' : 'bg-gray-50 text-gray-500'}`}>
                                 {tab.icon} {tab.label}
                             </button>
                         ))}
@@ -256,7 +269,6 @@ export default function AdminPanel() {
                 {/* 1. PRODUCTOS */}
                 {activeTab === 'products' && (
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        {/* En móvil, el formulario va abajo del listado para ver rápido stock, o arriba para cargar rápido. Dejamos arriba por ahora. */}
                         <div className="lg:col-span-5">
                             <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-md">
                                 <h2 className="font-black text-lg mb-4 flex items-center gap-2 uppercase"><Plus size={20} /> Nuevo Producto</h2>
@@ -270,6 +282,22 @@ export default function AdminPanel() {
                                         <option value="">Categoría...</option>
                                         {categories.map(c => <option key={c.id} value={c.name}>{c.name.toUpperCase()}</option>)}
                                     </select>
+                                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                        <label className="text-xs font-bold text-blue-800 uppercase block mb-1">Colores / Variantes</label>
+                                        <input placeholder="Ej: Rojo, Azul, Negro" value={productFormData.variants} onChange={e => setProductFormData({ ...productFormData, variants: e.target.value })} className="w-full bg-transparent border-b border-blue-200 p-1 outline-none text-sm font-bold text-blue-900" />
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Etiquetas</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {['OFERTA', 'DESTACADO', 'RUGGED', 'ENVIO GRATIS'].map(tag => (
+                                                <div key={tag} onClick={() => handleTagChange(tag)} className="flex items-center gap-2 cursor-pointer hover:bg-gray-200 p-1 rounded">
+                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${productFormData.tags.includes(tag) ? 'bg-black border-black text-white' : 'bg-white border-gray-300'}`}>{productFormData.tags.includes(tag) && <CheckSquare size={12} />}</div>
+                                                    <span className="text-[10px] font-bold uppercase">{tag}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <textarea placeholder="Descripción..." value={productFormData.description} onChange={e => setProductFormData({ ...productFormData, description: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl h-24 text-sm" />
                                     <div className="grid grid-cols-3 gap-2">
                                         {[0, 1, 2].map(i => (
                                             <div key={i} className="aspect-square border-2 border-dashed border-gray-200 rounded-xl relative flex items-center justify-center overflow-hidden">
@@ -320,11 +348,10 @@ export default function AdminPanel() {
                     </div>
                 )}
 
-                {/* 3. POS (PUNTO DE VENTA) - OPTIMIZADO PARA MÓVIL */}
+                {/* 3. POS (PUNTO DE VENTA) - MÓVIL + DATOS COMPLETOS */}
                 {activeTab === 'manual_sales' && (
                     <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8">
 
-                        {/* TOTALES (Siempre visibles arriba) */}
                         <div className="lg:col-span-12 grid grid-cols-2 gap-2 lg:gap-4">
                             <div className="bg-black text-white p-4 lg:p-6 rounded-2xl shadow-lg">
                                 <p className="text-[10px] font-bold uppercase opacity-60">Caja Real</p>
@@ -336,10 +363,8 @@ export default function AdminPanel() {
                             </div>
                         </div>
 
-                        {/* ZONA DE CARGA (Ordenada para móvil) */}
                         <div className="lg:col-span-5 space-y-4 lg:space-y-6 order-2 lg:order-1">
 
-                            {/* VENDEDOR */}
                             <div className="bg-white p-4 lg:p-6 rounded-2xl border shadow-sm">
                                 <h3 className="font-bold uppercase text-xs text-gray-400 mb-3 flex items-center gap-2"><User size={14} /> Vendedor</h3>
                                 <div className="grid grid-cols-2 gap-4">
@@ -351,7 +376,6 @@ export default function AdminPanel() {
                                 </div>
                             </div>
 
-                            {/* AGREGAR PRODUCTOS (Lo subimos en móvil para fácil acceso) */}
                             <div className="bg-white p-4 lg:p-6 rounded-2xl border shadow-sm">
                                 <h3 className="font-bold uppercase text-xs text-gray-400 mb-3 flex items-center gap-2"><ShoppingBag size={14} /> Agregar</h3>
                                 <div className="flex flex-col lg:flex-row gap-2 mb-3">
@@ -366,20 +390,21 @@ export default function AdminPanel() {
                                 </div>
                             </div>
 
-                            {/* CLIENTE */}
+                            {/* CLIENTE COMPLETO (RECUPERADO) */}
                             <div className="bg-white p-4 lg:p-6 rounded-2xl border shadow-sm">
-                                <h3 className="font-bold uppercase text-xs text-gray-400 mb-3 flex items-center gap-2"><UserPlus size={14} /> Cliente</h3>
+                                <h3 className="font-bold uppercase text-xs text-gray-400 mb-3 flex items-center gap-2"><UserPlus size={14} /> Cliente (CRM)</h3>
                                 <div className="space-y-3">
-                                    <input placeholder="Nombre" value={posClient.name} onChange={e => setPosClient({ ...posClient, name: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold" />
-                                    <input placeholder="Email" value={posClient.email} onChange={e => setPosClient({ ...posClient, email: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl text-sm" />
+                                    <input placeholder="Nombre Completo" value={posClient.name} onChange={e => setPosClient({ ...posClient, name: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold" />
+                                    <input placeholder="Email (Obligatorio)" value={posClient.email} onChange={e => setPosClient({ ...posClient, email: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl font-bold text-sm" />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <input placeholder="Teléfono" value={posClient.phone} onChange={e => setPosClient({ ...posClient, phone: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl text-sm" />
+                                        <input placeholder="Instagram" value={posClient.instagram} onChange={e => setPosClient({ ...posClient, instagram: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl text-sm" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* ZONA CARRITO Y PAGO */}
                         <div className="lg:col-span-7 space-y-4 lg:space-y-6 order-1 lg:order-2">
-
-                            {/* CARRITO */}
                             <div className="bg-white rounded-2xl border shadow-sm overflow-hidden flex flex-col">
                                 <div className="p-4 bg-gray-900 text-white flex justify-between items-center">
                                     <span className="font-bold text-sm uppercase">Total a Pagar</span>
@@ -399,7 +424,6 @@ export default function AdminPanel() {
                                 </div>
                             </div>
 
-                            {/* PAGO (CONFIRMACIÓN) */}
                             <div className="bg-white p-4 lg:p-6 rounded-2xl border shadow-md">
                                 <h3 className="font-bold uppercase text-xs text-gray-400 mb-3">Confirmar Pago</h3>
                                 <div className="grid grid-cols-2 gap-3 mb-4">
@@ -408,11 +432,11 @@ export default function AdminPanel() {
                                         <option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option>
                                     </select>
                                 </div>
+                                <input placeholder="Notas (Opcional)" value={posPayment.notes} onChange={e => setPosPayment({ ...posPayment, notes: e.target.value })} className="w-full border-2 border-gray-100 p-3 rounded-xl text-sm mb-4" />
                                 <Button onClick={handlePOSSubmit} className="w-full bg-black text-white py-4 rounded-xl font-black text-lg shadow-xl">REGISTRAR VENTA</Button>
                             </div>
                         </div>
 
-                        {/* HISTORIAL (Abajo de todo) */}
                         <div className="lg:col-span-12 order-3 bg-white rounded-2xl border shadow-sm overflow-hidden h-[400px] flex flex-col">
                             <div className="p-4 border-b bg-gray-50 font-bold text-xs text-gray-400 uppercase">Últimos Movimientos</div>
                             <div className="divide-y divide-gray-100 overflow-y-auto flex-1">
