@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../supabaseclient';
-import { askSommelier } from '../services/ai';
 import { MessageCircle, X, Send, Trash2, Sparkles, CreditCard, Truck, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -9,17 +8,16 @@ export default function ChatBot() {
     const [productsContext, setProductsContext] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Avatar 3D de Mila
     const avatarUrl = "https://img.freepik.com/premium-psd/3d-render-avatar-character_23-2150611765.jpg?w=740";
 
-    // 1. MEMORIA DEL CHAT
+    // 1. MEMORIA
     const [messages, setMessages] = useState(() => {
         try {
             const saved = localStorage.getItem('hc_chat_history');
             return saved ? JSON.parse(saved) : [{
                 id: 1,
                 type: 'bot',
-                text: '¡Hola! ✨ Soy Mila. ¿Buscás algo para el hogar o para el mate?'
+                text: '¡Hola! ✨ Soy Mila. ¿Buscás algo para renovar tu hogar o una buena compañía para el mate?'
             }];
         } catch (e) {
             return [{ id: 1, type: 'bot', text: '¡Hola! ✨ Soy Mila. ¿En qué te ayudo?' }];
@@ -29,16 +27,16 @@ export default function ChatBot() {
     const [inputText, setInputText] = useState('');
     const scrollRef = useRef(null);
 
-    // 2. CARGAR PRODUCTOS (Silenciosamente)
+    // 2. CARGAR PRODUCTOS (El conocimiento de Mila)
     useEffect(() => {
         const fetchProducts = async () => {
-            const { data } = await supabase.from('products').select('name, price, stock, category');
+            const { data } = await supabase.from('products').select('name, price, category');
             if (data) setProductsContext(data);
         };
         fetchProducts();
     }, []);
 
-    // 3. SCROLL AUTOMÁTICO
+    // 3. PERSISTENCIA
     useEffect(() => {
         localStorage.setItem('hc_chat_history', JSON.stringify(messages));
         scrollToBottom();
@@ -49,32 +47,56 @@ export default function ChatBot() {
     };
 
     const clearHistory = () => {
-        setMessages([{ id: Date.now(), type: 'bot', text: '¡Listo! Empecemos de nuevo. ✨' }]);
+        const reset = [{ id: Date.now(), type: 'bot', text: '¡Listo! Empecemos de nuevo. ✨' }];
+        setMessages(reset);
         localStorage.removeItem('hc_chat_history');
     };
 
-    // 4. CEREBRO LOCAL (Respuestas infalibles)
-    const findLocalResponse = (text) => {
+    // 4. CEREBRO HÍBRIDO (Fijo + Buscador en DB)
+    const getBotResponse = (text) => {
         const lower = text.toLowerCase();
 
-        // Saludos
-        if (lower.match(/\b(hola|buen|buenas|holis|alo)\b/)) return "¡Hola! 👋 ¿Cómo estás? ¿Buscás algo en especial o estás mirando?";
+        // --- A. PREGUNTAS FIJAS ---
+        if (lower.match(/\b(hola|buen|buenas|holis|alo)\b/))
+            return { text: "¡Hola! 👋 ¿Cómo estás? Escribí el nombre de lo que buscás (ej: 'Termo') y te digo qué tenemos." };
 
-        // Envíos / Ubicación
-        if (lower.includes('envio') || lower.includes('llegan') || lower.includes('soy de')) return "📦 Hacemos envíos a todo el país. Si sos de Mendoza, coordinamos entrega rápida.";
-        if (lower.includes('donde') || lower.includes('ubicacion') || lower.includes('local')) return "📍 Estamos en Mendoza. Trabajamos mayormente online con envíos a todo el país.";
+        if (lower.includes('envio') || lower.includes('llegan') || lower.includes('soy de'))
+            return { text: "📦 Hacemos envíos a todo el país. Si sos de Mendoza, coordinamos entrega rápida." };
 
-        // Pagos / Precios
-        if (lower.includes('pago') || lower.includes('tarjeta') || lower.includes('cuota')) return "💳 Aceptamos todas las tarjetas. También transferencia (con descuento) y efectivo.";
-        if (lower.includes('precio') || lower.includes('sale') || lower.includes('costo')) return "Los precios están actualizados en la tienda. ¡Fijate que hay promos llevando en efectivo!";
+        if (lower.includes('donde') || lower.includes('ubicacion') || lower.includes('local'))
+            return { text: "📍 Estamos en Mendoza. Trabajamos mayormente online con envíos a todo el país." };
 
-        // Promociones
-        if (lower.includes('promo') || lower.includes('oferta') || lower.includes('descuento')) return "🔥 ¡Sí! Pagando con transferencia tenés un descuento especial. También chequeá la sección de 'Combos'.";
+        if (lower.includes('pago') || lower.includes('tarjeta') || lower.includes('cuota'))
+            return { text: "💳 Aceptamos todas las tarjetas. También transferencia (con descuento) y efectivo." };
 
-        // Mayorista
-        if (lower.includes('mayor') || lower.includes('reventa')) return "Para ventas mayoristas, por favor escribinos directo al WhatsApp para pasarte el catálogo.";
+        // --- B. BUSCADOR INTELIGENTE DE PRODUCTOS ---
+        // Buscamos si alguna palabra del usuario coincide con algún producto
+        const foundProducts = productsContext.filter(p =>
+            lower.includes(p.name.toLowerCase()) ||
+            lower.includes(p.category.toLowerCase()) ||
+            (p.name.toLowerCase().split(' ').some(word => lower.includes(word) && word.length > 3)) // Coincidencia parcial
+        );
 
-        return null; // Si no sabe, devuelve null y pasamos a la IA
+        if (foundProducts.length > 0) {
+            // Tomamos hasta 3 productos para no saturar el chat
+            const topProducts = foundProducts.slice(0, 3);
+            const productList = topProducts.map(p => `• ${p.name}: $${p.price}`).join('\n');
+            const moreText = foundProducts.length > 3 ? `\n...y ${foundProducts.length - 3} más.` : '';
+
+            return {
+                text: `¡Sí! Encontré esto:\n${productList}${moreText}\n\n¿Querés ver más detalles?`,
+                link: "/catalog" // Podríamos llevarlo al catálogo
+            };
+        }
+
+        // --- C. MAYORISTA / DEFAULT ---
+        if (lower.includes('mayor') || lower.includes('reventa'))
+            return { text: "Para ventas mayoristas, por favor escribinos directo al WhatsApp para pasarte el catálogo.", link: "https://wa.me/5492617523156" };
+
+        return {
+            text: "No encontré ese producto específico 🤔. Pero preguntale a Vane por WhatsApp que te consigue todo 👇",
+            link: "https://wa.me/5492617523156"
+        };
     };
 
     // 5. MANEJO DEL ENVÍO
@@ -82,37 +104,15 @@ export default function ChatBot() {
         const textToSend = textOverride || inputText;
         if (!textToSend.trim()) return;
 
-        // Agregar mensaje usuario
         setMessages(prev => [...prev, { id: Date.now(), type: 'user', text: textToSend }]);
         setInputText('');
         setIsLoading(true);
 
-        // A. INTENTO 1: CEREBRO LOCAL (Rápido y Seguro)
-        const localReply = findLocalResponse(textToSend);
-
-        if (localReply) {
-            setTimeout(() => {
-                addBotMessage(localReply);
-                setIsLoading(false);
-            }, 600); // Pequeña demora para que parezca natural
-            return;
-        }
-
-        // B. INTENTO 2: INTELIGENCIA ARTIFICIAL (Con red de seguridad)
-        try {
-            const aiResponse = await askSommelier(textToSend, productsContext);
-            addBotMessage(aiResponse);
-        } catch (error) {
-            // C. FALLBACK (Si falla la IA, no mostramos error feo)
-            console.warn("Mila AI Error:", error);
-            addBotMessage("Mmm, esa info específica te la debo 🤔. Pero preguntale a Vane por WhatsApp que te contesta al toque 👇", "https://wa.me/5492617523156");
-        } finally {
+        setTimeout(() => {
+            const response = getBotResponse(textToSend);
+            setMessages(prev => [...prev, { id: Date.now(), type: 'bot', text: response.text, link: response.link }]);
             setIsLoading(false);
-        }
-    };
-
-    const addBotMessage = (text, link = null) => {
-        setMessages(prev => [...prev, { id: Date.now(), type: 'bot', text, link }]);
+        }, 600);
     };
 
     const QuickOption = ({ icon, label, query }) => (
@@ -125,7 +125,6 @@ export default function ChatBot() {
     );
 
     return (
-        // POSICIÓN AJUSTADA: bottom-24 (aprox 100px arriba) para no tapar WhatsApp
         <div className="fixed bottom-24 right-4 z-[9990] flex flex-col items-end font-sans">
             <AnimatePresence>
                 {isOpen && (
@@ -136,7 +135,7 @@ export default function ChatBot() {
                         transition={{ type: "spring", stiffness: 300, damping: 25 }}
                         className="mb-4 w-[90vw] max-w-[360px] h-[550px] rounded-[30px] shadow-2xl overflow-hidden flex flex-col border border-white/20 relative"
                         style={{
-                            background: 'rgba(255, 255, 255, 0.90)', // Un poco más opaco para lectura
+                            background: 'rgba(255, 255, 255, 0.90)',
                             backdropFilter: 'blur(20px)',
                             WebkitBackdropFilter: 'blur(20px)',
                         }}
@@ -161,26 +160,27 @@ export default function ChatBot() {
                             </div>
                         </div>
 
-                        {/* CHAT */}
+                        {/* CHAT AREA */}
                         <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-4">
                             {messages.map((msg) => (
                                 <div key={msg.id} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                                    <div className={`max-w-[85%] p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.type === 'user'
+                                    <div className={`max-w-[85%] p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-line ${msg.type === 'user'
                                             ? 'bg-black text-white rounded-tr-none'
                                             : 'bg-white/80 backdrop-blur-sm text-gray-800 border border-white/60 rounded-tl-none'
                                         }`}>
                                         {msg.text}
                                     </div>
                                     {msg.link && (
-                                        <a href={msg.link} target="_blank" rel="noopener noreferrer" className="mt-2 bg-green-500 text-white text-xs font-bold py-2 px-4 rounded-xl flex items-center gap-2 hover:bg-green-600 transition-colors shadow-md w-fit">
-                                            <MessageCircle size={14} /> WhatsApp
+                                        <a href={msg.link} className="mt-2 bg-green-500 text-white text-xs font-bold py-2 px-4 rounded-xl flex items-center gap-2 hover:bg-green-600 transition-colors shadow-md w-fit">
+                                            {msg.link.includes('wa.me') ? <MessageCircle size={14} /> : <Sparkles size={14} />}
+                                            {msg.link.includes('wa.me') ? 'WhatsApp' : 'Ver Catálogo'}
                                         </a>
                                     )}
                                 </div>
                             ))}
                             {isLoading && (
                                 <div className="flex items-center gap-2 text-gray-400 text-xs ml-2">
-                                    <Sparkles size={12} className="animate-spin" /> Escribiendo...
+                                    <Sparkles size={12} className="animate-spin" /> Buscando...
                                 </div>
                             )}
                         </div>
@@ -198,7 +198,7 @@ export default function ChatBot() {
                                 type="text"
                                 value={inputText}
                                 onChange={(e) => setInputText(e.target.value)}
-                                placeholder="Preguntale a Mila..."
+                                placeholder="Escribí aquí..."
                                 className="flex-1 bg-white/60 text-gray-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/5 transition-all font-medium border border-transparent focus:border-black/10 shadow-inner"
                             />
                             <button type="submit" disabled={isLoading} className="bg-black text-white w-11 h-11 rounded-xl flex items-center justify-center hover:bg-gray-800 transition-transform active:scale-95 shadow-lg disabled:opacity-50">
