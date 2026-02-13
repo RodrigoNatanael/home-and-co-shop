@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ChatBot() {
     const [isOpen, setIsOpen] = useState(false);
-    const [knowledgeBase, setKnowledgeBase] = useState([]); // Base de conocimiento (Productos + Categorías)
+    const [knowledgeBase, setKnowledgeBase] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
     const avatarUrl = "https://img.freepik.com/premium-psd/3d-render-avatar-character_23-2150611765.jpg?w=740";
@@ -27,15 +27,13 @@ export default function ChatBot() {
     const [inputText, setInputText] = useState('');
     const scrollRef = useRef(null);
 
-    // 2. APRENDIZAJE EN TIEMPO REAL (Lee TODO: Nombre, Descripción, Categoría, Fecha)
+    // 2. APRENDIZAJE
     useEffect(() => {
         const learnStore = async () => {
-            // Traemos descripción y fecha también para ser más inteligentes
             const { data } = await supabase
                 .from('products')
                 .select('name, price, category, description, created_at, stock')
-                .gt('stock', 0); // Solo aprende lo que tiene stock
-
+                .gt('stock', 0);
             if (data) setKnowledgeBase(data);
         };
         learnStore();
@@ -52,45 +50,63 @@ export default function ChatBot() {
     };
 
     const clearHistory = () => {
-        const reset = [{ id: Date.now(), type: 'bot', text: 'Memoria refrescada ✨. Preguntame lo que quieras del sitio.' }];
+        const reset = [{ id: Date.now(), type: 'bot', text: 'Memoria refrescada ✨. Preguntame lo que quieras.' }];
         setMessages(reset);
         localStorage.removeItem('hc_chat_history');
     };
 
+    // --- FUNCIÓN MÁGICA: QUITA ACENTOS Y NORMALIZA ---
+    const cleanString = (str) => {
+        return str
+            .toLowerCase()
+            .normalize("NFD") // Descompone acentos (á -> a + ´)
+            .replace(/[\u0300-\u036f]/g, ""); // Borra los acentos
+    };
+
     // 4. CEREBRO DE BÚSQUEDA PROFUNDA
     const analyzeIntent = (text) => {
-        const lower = text.toLowerCase();
+        // Limpiamos el texto del usuario (Ej: "¿Envíos?" -> "envios")
+        const cleanText = cleanString(text);
 
-        // A. INTENCIONES FIJAS (Políticas)
-        if (lower.match(/\b(hola|buen|buenas|holis|alo)\b/)) return { text: "¡Hola! 👋 Soy experta en nuestro catálogo. Decime qué estilo buscás o preguntame por un producto." };
-        if (lower.includes('envio') || lower.includes('llegan') || lower.includes('soy de')) return { text: "📦 Hacemos envíos a todo el país. En Mendoza entregamos volando, al resto llega en 24/48hs." };
-        if (lower.includes('donde') || lower.includes('ubicacion')) return { text: "📍 Estamos en Mendoza, pero nuestra tienda es 100% online y segura." };
-        if (lower.includes('pago') || lower.includes('tarjeta') || lower.includes('cuota')) return { text: "💳 Aceptamos todas las tarjetas. ¡Tip! Si pagás con transferencia tenés descuento extra." };
-        if (lower.includes('promo') || lower.includes('oferta') || lower.includes('descuento')) return { text: "🔥 ¡El mejor descuento es vía Transferencia! Seleccionalo al final de la compra. También revisá si hay productos con precio rebajado." };
+        // A. INTENCIONES FIJAS (Prioridad Alta)
+        if (cleanText.match(/\b(hola|buen|buenas|holis|alo)\b/)) return { text: "¡Hola! 👋 Soy experta en nuestro catálogo. Decime qué estilo buscás o preguntame por un producto." };
 
-        // B. INTENCIÓN: "NOVEDADES" (Usa la fecha created_at)
-        if (lower.includes('nuevo') || lower.includes('llegaron') || lower.includes('ultimo')) {
-            // Ordenamos por fecha y tomamos los 3 más nuevos
+        // Envíos (Ahora detecta "envios" sin tilde)
+        if (cleanText.includes('envio') || cleanText.includes('llegan') || cleanText.includes('soy de')) return { text: "📦 Hacemos envíos a todo el país. En Mendoza entregamos volando, al resto llega en 24/48hs." };
+
+        // Ubicación
+        if (cleanText.includes('donde') || cleanText.includes('ubicacion') || cleanText.includes('local')) return { text: "📍 Estamos en Mendoza, pero nuestra tienda es 100% online y segura." };
+
+        // Pagos
+        if (cleanText.includes('pago') || cleanText.includes('tarjeta') || cleanText.includes('cuota')) return { text: "💳 Aceptamos todas las tarjetas. ¡Tip! Si pagás con transferencia tenés descuento extra." };
+
+        // Promos
+        if (cleanText.includes('promo') || cleanText.includes('oferta') || cleanText.includes('descuento')) return { text: "🔥 ¡El mejor descuento es vía Transferencia! Seleccionalo al final de la compra. También revisá si hay productos con precio rebajado." };
+
+        // Mayorista (Movido ARRIBA para que no se confunda con productos)
+        if (cleanText.includes('mayor') || cleanText.includes('reventa') || cleanText.includes('negocio')) return { text: "Para catálogo mayorista, hablame al WhatsApp 👇", link: "https://wa.me/5492617523156" };
+
+        // B. INTENCIÓN: "NOVEDADES"
+        if (cleanText.includes('nuevo') || cleanText.includes('llegaron') || cleanText.includes('ultimo')) {
             const news = [...knowledgeBase].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 3);
             const list = news.map(p => `• ${p.name}`).join('\n');
             return { text: `✨ ¡Lo último que entró es bomba!\n${list}\n\n¿Querés ver alguno en especial?` };
         }
 
-        // C. INTENCIÓN: "BUSCADOR SEMÁNTICO" (Busca en descripción y categoría)
-        // Dividimos la búsqueda en palabras clave (ej: "termo rojo" -> "termo", "rojo")
-        const keywords = lower.split(' ').filter(word => word.length > 2); // Ignoramos palabras cortas como "de", "el"
+        // C. BUSCADOR SEMÁNTICO (Normalizado)
+        // Filtramos palabras cortas y limpiamos acentos
+        const keywords = cleanText.split(' ').filter(word => word.length > 3);
 
         const matches = knowledgeBase.filter(p => {
-            const content = `${p.name} ${p.category} ${p.description}`.toLowerCase();
-            // El producto debe coincidir con AL MENOS una palabra clave fuerte
+            // Limpiamos también la data del producto para comparar iguales
+            const content = cleanString(`${p.name} ${p.category} ${p.description}`);
             return keywords.some(key => content.includes(key));
         });
 
         if (matches.length > 0) {
-            // Priorizamos coincidencia exacta en el nombre
             matches.sort((a, b) => {
-                const aName = a.name.toLowerCase().includes(lower) ? 1 : 0;
-                const bName = b.name.toLowerCase().includes(lower) ? 1 : 0;
+                const aName = cleanString(a.name).includes(cleanText) ? 1 : 0;
+                const bName = cleanString(b.name).includes(cleanText) ? 1 : 0;
                 return bName - aName;
             });
 
@@ -102,9 +118,7 @@ export default function ChatBot() {
             };
         }
 
-        // D. MAYORISTA / HUMAN FALLBACK
-        if (lower.includes('mayor') || lower.includes('reventa')) return { text: "Para catálogo mayorista, hablame al WhatsApp 👇", link: "https://wa.me/5492617523156" };
-
+        // D. HUMAN FALLBACK
         return {
             text: "Mmm, no encontré nada con esa descripción exacta 🤔. Probá con otra palabra o preguntale a Vane 👇",
             link: "https://wa.me/5492617523156"
@@ -124,7 +138,7 @@ export default function ChatBot() {
             const response = analyzeIntent(textToSend);
             setMessages(prev => [...prev, { id: Date.now(), type: 'bot', text: response.text, link: response.link }]);
             setIsLoading(false);
-        }, 700); // Un poco más de delay para simular que "piensa"
+        }, 700);
     };
 
     const QuickOption = ({ icon, label, query }) => (
