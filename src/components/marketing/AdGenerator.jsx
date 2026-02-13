@@ -15,7 +15,6 @@ const DESIGN_SYSTEM = {
             { bg: "https://images.unsplash.com/photo-1504280506541-aca1cd12e211?auto=format&fit=crop&q=80&w=1080", overlay: "bg-black/40 mix-blend-multiply", accent: "text-amber-200", badgeBg: "bg-white", badgeText: "text-black" }
         ],
         fontStyle: "font-serif italic",
-        shadow: "drop-shadow-[0_20px_40px_rgba(0,0,0,0.8)]"
     },
     TECH: {
         id: 'tech',
@@ -26,20 +25,18 @@ const DESIGN_SYSTEM = {
             { bg: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=1080", overlay: "bg-slate-900/95", accent: "text-purple-400", badgeBg: "bg-purple-600", badgeText: "text-white" },
             { bg: "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?auto=format&fit=crop&q=80&w=1080", overlay: "bg-black/80", accent: "text-white", badgeBg: "bg-white", badgeText: "text-black" }
         ],
-        fontStyle: "font-mono tracking-tighter",
-        shadow: "drop-shadow-[0_0_25px_rgba(255,255,255,0.15)]" // Glow effect
+        fontStyle: "font-mono tracking-tighter"
     },
     LIFESTYLE: {
         id: 'lifestyle',
         label: 'Urban Home',
         icon: Home,
         palettes: [
-            { bg: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=1080", overlay: "bg-white/10 backdrop-blur-[2px]", accent: "text-rose-500", badgeBg: "bg-rose-500", badgeText: "text-white" }, // Light
+            { bg: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=1080", overlay: "bg-white/10 backdrop-blur-[2px]", accent: "text-rose-500", badgeBg: "bg-rose-500", badgeText: "text-white" },
             { bg: "https://images.unsplash.com/photo-1513161455079-7dc1de15ef3e?auto=format&fit=crop&q=80&w=1080", overlay: "bg-stone-100/20 mix-blend-hard-light", accent: "text-indigo-600", badgeBg: "bg-indigo-600", badgeText: "text-white" },
             { bg: "https://images.unsplash.com/photo-1505691938895-1758d7bab58d?auto=format&fit=crop&q=80&w=1080", overlay: "bg-black/20", accent: "text-white", badgeBg: "bg-black", badgeText: "text-white" }
         ],
-        fontStyle: "font-sans font-black",
-        shadow: "drop-shadow-[0_30px_60px_rgba(0,0,0,0.4)]"
+        fontStyle: "font-sans font-black"
     }
 };
 
@@ -58,7 +55,7 @@ export default function AdGenerator({ product, onClose }) {
         if (name.includes('digital') || name.includes('vaso') || name.includes('térmico') || name.includes('usb')) return DESIGN_SYSTEM.TECH;
         if (name.includes('bento') || name.includes('lunchera') || name.includes('home') || name.includes('hogar')) return DESIGN_SYSTEM.LIFESTYLE;
 
-        return DESIGN_SYSTEM.LIFESTYLE; // Default
+        return DESIGN_SYSTEM.LIFESTYLE;
     }, [product]);
 
     // --- INFINITE BRAIN GENERATOR ---
@@ -229,12 +226,19 @@ export default function AdGenerator({ product, onClose }) {
                                                         </span>
                                                     </div>
 
+                                                    {/* CONTENEDOR PRODUCTO INTEGRADO */}
                                                     <div className="absolute inset-0 z-10 flex items-center justify-center p-6 pb-20">
-                                                        <img
-                                                            src={product.image_url}
-                                                            className={`w-full max-h-[70%] object-contain ${productContext.shadow} transform transition-transform group-hover:scale-105 duration-700`}
-                                                            alt={product.name}
-                                                        />
+                                                        <div className="relative w-full max-h-[70%] flex flex-col items-center justify-end">
+                                                            {/* GROUNDING SHADOW */}
+                                                            <div className="absolute bottom-0 w-[80%] h-12 bg-[radial-gradient(ellipse_at_center,_rgba(0,0,0,0.6)_0%,_transparent_70%)] blur-xl mix-blend-multiply z-0 opacity-80" />
+
+                                                            {/* PRODUCTO CON BYPASS BLANCO */}
+                                                            <img
+                                                                src={product.image_url}
+                                                                className="relative w-full h-full object-contain mix-blend-multiply filter contrast-[1.1] brightness-[1.05] z-10 transform transition-transform group-hover:scale-105 duration-700"
+                                                                alt={product.name}
+                                                            />
+                                                        </div>
                                                     </div>
 
                                                     <div className="absolute bottom-10 left-8 z-30">
@@ -264,13 +268,18 @@ export default function AdGenerator({ product, onClose }) {
                                                     </div>
 
                                                     <div className="absolute inset-0 z-10 flex items-center justify-center p-4">
-                                                        <img
-                                                            src={product.image_url}
-                                                            className={`w-full max-h-[60%] object-contain ${productContext.shadow} z-20 relative`}
-                                                            alt={product.name}
-                                                        />
-                                                        {/* Círculo decorativo detrás */}
-                                                        <div className={`absolute w-64 h-64 rounded-full ${layout.palette.accent} opacity-20 blur-3xl z-10 animate-pulse`} />
+                                                        <div className="relative w-full max-h-[60%] flex flex-col items-center justify-end">
+                                                            {/* GROUNDING SHADOW */}
+                                                            <div className="absolute bottom-2 w-[70%] h-16 bg-[radial-gradient(closest-side,_rgba(0,0,0,0.7)_0%,_transparent_100%)] blur-2xl mix-blend-multiply z-0" />
+
+                                                            <img
+                                                                src={product.image_url}
+                                                                className="relative w-full h-full object-contain mix-blend-multiply filter contrast-[1.1] brightness-[1.05] z-20"
+                                                                alt={product.name}
+                                                            />
+                                                            {/* Círculo decorativo detrás - Mantenido pero sutil */}
+                                                            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full ${layout.palette.accent} opacity-10 blur-3xl z-10 animate-pulse mix-blend-screen`} />
+                                                        </div>
                                                     </div>
 
                                                     <div className="absolute bottom-12 inset-x-0 text-center z-30 flex flex-col items-center">
@@ -299,12 +308,17 @@ export default function AdGenerator({ product, onClose }) {
                                                         </p>
                                                     </div>
 
-                                                    <div className="absolute bottom-0 right-0 w-[85%] h-[60%] z-10">
-                                                        <img
-                                                            src={product.image_url}
-                                                            className={`w-full h-full object-contain object-bottom ${productContext.shadow}`}
-                                                            alt={product.name}
-                                                        />
+                                                    <div className="absolute bottom-0 right-0 w-[85%] h-[60%] z-10 flex items-end justify-center">
+                                                        <div className="relative w-full h-full flex flex-col items-center justify-end">
+                                                            {/* GROUNDING SHADOW */}
+                                                            <div className="absolute bottom-0 w-[90%] h-14 bg-[radial-gradient(ellipse_at_center,_rgba(0,0,0,0.5)_0%,_transparent_70%)] blur-xl mix-blend-multiply z-0" />
+
+                                                            <img
+                                                                src={product.image_url}
+                                                                className="relative w-full h-full object-contain object-bottom mix-blend-multiply filter contrast-[1.15] brightness-[1.05] z-10"
+                                                                alt={product.name}
+                                                            />
+                                                        </div>
                                                     </div>
 
                                                     <div className={`absolute bottom-8 left-8 z-30 w-16 h-16 rounded-full ${layout.palette.badgeBg} flex items-center justify-center shadow-lg`}>
