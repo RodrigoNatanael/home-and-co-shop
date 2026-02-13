@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../supabaseclient';
-import { askSommelier } from '../services/ai'; // Mantenemos la IA, aunque se llame Mila
+import { askSommelier } from '../services/ai';
 import { MessageCircle, X, Send, Trash2, Sparkles, CreditCard, Truck, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -9,37 +9,36 @@ export default function ChatBot() {
     const [productsContext, setProductsContext] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    // URL del Avatar 3D de Mila (puedes cambiarla por una foto real tuya o de Vane si prefieren)
-    // Usamos una imagen 3D de stock de alta calidad para el ejemplo
+    // Avatar 3D de Mila
     const avatarUrl = "https://img.freepik.com/premium-psd/3d-render-avatar-character_23-2150611765.jpg?w=740";
 
-    // 1. MEMORIA
+    // 1. MEMORIA DEL CHAT
     const [messages, setMessages] = useState(() => {
         try {
             const saved = localStorage.getItem('hc_chat_history');
             return saved ? JSON.parse(saved) : [{
                 id: 1,
                 type: 'bot',
-                text: '¡Hola! ✨ Soy Mila, tu asistente personal. ¿Buscás algo para renovar tu hogar o una buena compañía para el mate?'
+                text: '¡Hola! ✨ Soy Mila. ¿Buscás algo para el hogar o para el mate?'
             }];
         } catch (e) {
-            return [{ id: 1, type: 'bot', text: '¡Hola! ✨ Soy Mila. ¿En qué puedo ayudarte hoy?' }];
+            return [{ id: 1, type: 'bot', text: '¡Hola! ✨ Soy Mila. ¿En qué te ayudo?' }];
         }
     });
 
     const [inputText, setInputText] = useState('');
     const scrollRef = useRef(null);
 
-    // 2. CARGAR PRODUCTOS
+    // 2. CARGAR PRODUCTOS (Silenciosamente)
     useEffect(() => {
         const fetchProducts = async () => {
-            const { data } = await supabase.from('products').select('name, price, stock, category, description');
+            const { data } = await supabase.from('products').select('name, price, stock, category');
             if (data) setProductsContext(data);
         };
         fetchProducts();
     }, []);
 
-    // 3. PERSISTENCIA
+    // 3. SCROLL AUTOMÁTICO
     useEffect(() => {
         localStorage.setItem('hc_chat_history', JSON.stringify(messages));
         scrollToBottom();
@@ -50,54 +49,63 @@ export default function ChatBot() {
     };
 
     const clearHistory = () => {
-        const reset = [{ id: Date.now(), type: 'bot', text: '¡Listo! Empecemos de nuevo. ¿Qué necesitás? ✨' }];
-        setMessages(reset);
+        setMessages([{ id: Date.now(), type: 'bot', text: '¡Listo! Empecemos de nuevo. ✨' }]);
         localStorage.removeItem('hc_chat_history');
     };
 
-    // 4. CEREBRO DE MILA
+    // 4. CEREBRO LOCAL (Respuestas infalibles)
+    const findLocalResponse = (text) => {
+        const lower = text.toLowerCase();
+
+        // Saludos
+        if (lower.match(/\b(hola|buen|buenas|holis|alo)\b/)) return "¡Hola! 👋 ¿Cómo estás? ¿Buscás algo en especial o estás mirando?";
+
+        // Envíos / Ubicación
+        if (lower.includes('envio') || lower.includes('llegan') || lower.includes('soy de')) return "📦 Hacemos envíos a todo el país. Si sos de Mendoza, coordinamos entrega rápida.";
+        if (lower.includes('donde') || lower.includes('ubicacion') || lower.includes('local')) return "📍 Estamos en Mendoza. Trabajamos mayormente online con envíos a todo el país.";
+
+        // Pagos / Precios
+        if (lower.includes('pago') || lower.includes('tarjeta') || lower.includes('cuota')) return "💳 Aceptamos todas las tarjetas. También transferencia (con descuento) y efectivo.";
+        if (lower.includes('precio') || lower.includes('sale') || lower.includes('costo')) return "Los precios están actualizados en la tienda. ¡Fijate que hay promos llevando en efectivo!";
+
+        // Promociones
+        if (lower.includes('promo') || lower.includes('oferta') || lower.includes('descuento')) return "🔥 ¡Sí! Pagando con transferencia tenés un descuento especial. También chequeá la sección de 'Combos'.";
+
+        // Mayorista
+        if (lower.includes('mayor') || lower.includes('reventa')) return "Para ventas mayoristas, por favor escribinos directo al WhatsApp para pasarte el catálogo.";
+
+        return null; // Si no sabe, devuelve null y pasamos a la IA
+    };
+
+    // 5. MANEJO DEL ENVÍO
     const handleSend = async (textOverride = null) => {
         const textToSend = textOverride || inputText;
         if (!textToSend.trim()) return;
 
-        const userMsg = { id: Date.now(), type: 'user', text: textToSend };
-        setMessages(prev => [...prev, userMsg]);
+        // Agregar mensaje usuario
+        setMessages(prev => [...prev, { id: Date.now(), type: 'user', text: textToSend }]);
         setInputText('');
         setIsLoading(true);
 
-        const lower = textToSend.toLowerCase();
+        // A. INTENTO 1: CEREBRO LOCAL (Rápido y Seguro)
+        const localReply = findLocalResponse(textToSend);
 
-        // Respuestas Rápidas (Scriptadas para velocidad)
-        if (lower.includes('envio') || lower.includes('llegan')) {
+        if (localReply) {
             setTimeout(() => {
-                addBotMessage("📦 Envíos a todo el país. Si estás en Mendoza te lo llevamos volando, al resto llega en 24/48hs.");
+                addBotMessage(localReply);
                 setIsLoading(false);
-            }, 600);
+            }, 600); // Pequeña demora para que parezca natural
             return;
         }
 
-        if (lower.includes('pago') || lower.includes('tarjeta') || lower.includes('cuotas')) {
-            setTimeout(() => {
-                addBotMessage("💳 Tenés 3 y 6 cuotas. Si pagás con transferencia te hago un mimo en el precio (descuento).");
-                setIsLoading(false);
-            }, 600);
-            return;
-        }
-
-        if (lower.includes('asesor') || lower.includes('humano')) {
-            setTimeout(() => {
-                addBotMessage("¡Dale! Te paso con Vane o Rodri por WhatsApp 👇", "https://wa.me/5492617523156");
-                setIsLoading(false);
-            }, 600);
-            return;
-        }
-
-        // Consulta a la IA (Cerebro real)
+        // B. INTENTO 2: INTELIGENCIA ARTIFICIAL (Con red de seguridad)
         try {
             const aiResponse = await askSommelier(textToSend, productsContext);
             addBotMessage(aiResponse);
         } catch (error) {
-            addBotMessage("Me quedé pensando... 😵 ¿Me repetís la pregunta?");
+            // C. FALLBACK (Si falla la IA, no mostramos error feo)
+            console.warn("Mila AI Error:", error);
+            addBotMessage("Mmm, esa info específica te la debo 🤔. Pero preguntale a Vane por WhatsApp que te contesta al toque 👇", "https://wa.me/5492617523156");
         } finally {
             setIsLoading(false);
         }
@@ -110,14 +118,15 @@ export default function ChatBot() {
     const QuickOption = ({ icon, label, query }) => (
         <button
             onClick={() => handleSend(query)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-white/50 backdrop-blur-sm border border-white/60 rounded-xl text-xs font-bold text-gray-700 hover:bg-black hover:text-white transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 bg-white/50 backdrop-blur-sm border border-white/60 rounded-xl text-xs font-bold text-gray-700 hover:bg-black hover:text-white transition-all shadow-sm whitespace-nowrap"
         >
             {icon} {label}
         </button>
     );
 
     return (
-        <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end font-sans">
+        // POSICIÓN AJUSTADA: bottom-24 (aprox 100px arriba) para no tapar WhatsApp
+        <div className="fixed bottom-24 right-4 z-[9990] flex flex-col items-end font-sans">
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
@@ -127,13 +136,13 @@ export default function ChatBot() {
                         transition={{ type: "spring", stiffness: 300, damping: 25 }}
                         className="mb-4 w-[90vw] max-w-[360px] h-[550px] rounded-[30px] shadow-2xl overflow-hidden flex flex-col border border-white/20 relative"
                         style={{
-                            background: 'rgba(255, 255, 255, 0.85)',
+                            background: 'rgba(255, 255, 255, 0.90)', // Un poco más opaco para lectura
                             backdropFilter: 'blur(20px)',
-                            WebkitBackdropFilter: 'blur(20px)', // Safari
+                            WebkitBackdropFilter: 'blur(20px)',
                         }}
                     >
-                        {/* HEADER GLASS */}
-                        <div className="p-4 flex justify-between items-center border-b border-black/5 bg-white/40 backdrop-blur-md sticky top-0 z-10">
+                        {/* HEADER */}
+                        <div className="p-4 flex justify-between items-center border-b border-black/5 bg-white/50 backdrop-blur-md sticky top-0 z-10">
                             <div className="flex items-center gap-3">
                                 <div className="relative">
                                     <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm">
@@ -147,12 +156,12 @@ export default function ChatBot() {
                                 </div>
                             </div>
                             <div className="flex gap-1">
-                                <button onClick={clearHistory} className="p-2 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-black/5"><Trash2 size={16} /></button>
+                                <button onClick={clearHistory} className="p-2 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-black/5" title="Borrar"><Trash2 size={16} /></button>
                                 <button onClick={() => setIsOpen(false)} className="p-2 text-gray-400 hover:text-black transition-colors rounded-full hover:bg-black/5"><X size={20} /></button>
                             </div>
                         </div>
 
-                        {/* CHAT AREA */}
+                        {/* CHAT */}
                         <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-4">
                             {messages.map((msg) => (
                                 <div key={msg.id} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
@@ -200,10 +209,10 @@ export default function ChatBot() {
                 )}
             </AnimatePresence>
 
-            {/* BOTÓN FLOTANTE "LIQUID GLASS" CON ANIMACIÓN */}
+            {/* BOTÓN FLOTANTE */}
             <motion.button
                 initial={{ y: 0 }}
-                animate={{ y: [0, -6, 0] }} // Animación de flotación suave
+                animate={{ y: [0, -6, 0] }}
                 transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -219,13 +228,8 @@ export default function ChatBot() {
                     <X size={28} className="text-gray-800" />
                 ) : (
                     <>
-                        {/* Avatar en el botón */}
                         <img src={avatarUrl} alt="Mila" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
-
-                        {/* Notificación Roja */}
                         <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
-
-                        {/* Brillo Glass */}
                         <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/40 to-transparent pointer-events-none"></div>
                     </>
                 )}
