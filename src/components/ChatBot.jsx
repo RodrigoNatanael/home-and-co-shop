@@ -39,7 +39,6 @@ export default function ChatBot() {
         learnStore();
     }, []);
 
-    // 3. PERSISTENCIA
     useEffect(() => {
         localStorage.setItem('hc_chat_history', JSON.stringify(messages));
         scrollToBottom();
@@ -55,55 +54,70 @@ export default function ChatBot() {
         localStorage.removeItem('hc_chat_history');
     };
 
-    // --- FUNCIÓN MÁGICA: QUITA ACENTOS Y NORMALIZA ---
+    // --- FUNCIÓN DE LIMPIEZA TOTAL ---
     const cleanString = (str) => {
+        if (!str) return "";
         return str
             .toLowerCase()
-            .normalize("NFD") // Descompone acentos (á -> a + ´)
-            .replace(/[\u0300-\u036f]/g, ""); // Borra los acentos
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // Chau tildes
+            .trim();
     };
 
-    // 4. CEREBRO DE BÚSQUEDA PROFUNDA
+    // --- CEREBRO INTELIGENTE ---
     const analyzeIntent = (text) => {
-        // Limpiamos el texto del usuario (Ej: "¿Envíos?" -> "envios")
         const cleanText = cleanString(text);
 
-        // A. INTENCIONES FIJAS (Prioridad Alta)
-        if (cleanText.match(/\b(hola|buen|buenas|holis|alo)\b/)) return { text: "¡Hola! 👋 Soy experta en nuestro catálogo. Decime qué estilo buscás o preguntame por un producto." };
-
-        // Envíos (Ahora detecta "envios" sin tilde)
-        if (cleanText.includes('envio') || cleanText.includes('llegan') || cleanText.includes('soy de')) return { text: "📦 Hacemos envíos a todo el país. En Mendoza entregamos volando, al resto llega en 24/48hs." };
-
-        // Ubicación
-        if (cleanText.includes('donde') || cleanText.includes('ubicacion') || cleanText.includes('local')) return { text: "📍 Estamos en Mendoza, pero nuestra tienda es 100% online y segura." };
-
-        // Pagos
-        if (cleanText.includes('pago') || cleanText.includes('tarjeta') || cleanText.includes('cuota')) return { text: "💳 Aceptamos todas las tarjetas. ¡Tip! Si pagás con transferencia tenés descuento extra." };
+        // 1. REGLAS DE NEGOCIO (PRIORIDAD MÁXIMA)
+        // Mayorista (Primero que nada, porque es venta grande)
+        if (cleanText.includes('mayor') || cleanText.includes('revender') || cleanText.includes('negocio') || cleanText.includes('reventa')) {
+            return { text: "Para catálogo mayorista, hablame al WhatsApp 👇", link: "https://wa.me/5492617523156" };
+        }
 
         // Promos
-        if (cleanText.includes('promo') || cleanText.includes('oferta') || cleanText.includes('descuento')) return { text: "🔥 ¡El mejor descuento es vía Transferencia! Seleccionalo al final de la compra. También revisá si hay productos con precio rebajado." };
+        if (cleanText.includes('promo') || cleanText.includes('oferta') || cleanText.includes('descuento')) {
+            return { text: "🔥 ¡El mejor descuento es vía Transferencia! Seleccionalo al final de la compra. También revisá si hay productos con precio rebajado." };
+        }
 
-        // Mayorista (Movido ARRIBA para que no se confunda con productos)
-        if (cleanText.includes('mayor') || cleanText.includes('reventa') || cleanText.includes('negocio')) return { text: "Para catálogo mayorista, hablame al WhatsApp 👇", link: "https://wa.me/5492617523156" };
+        // Envíos
+        if (cleanText.includes('envio') || cleanText.includes('llegan') || cleanText.includes('soy de') || cleanText.includes('cordoba') || cleanText.includes('buenos aires')) {
+            return { text: "📦 Hacemos envíos a todo el país. En Mendoza entregamos volando, al resto llega en 24/48hs." };
+        }
 
-        // B. INTENCIÓN: "NOVEDADES"
-        if (cleanText.includes('nuevo') || cleanText.includes('llegaron') || cleanText.includes('ultimo')) {
+        // Ubicación
+        if (cleanText.includes('donde') || cleanText.includes('ubicacion') || cleanText.includes('local')) {
+            return { text: "📍 Estamos en Mendoza, pero nuestra tienda es 100% online y segura." };
+        }
+
+        // Pagos
+        if (cleanText.includes('pago') || cleanText.includes('tarjeta') || cleanText.includes('cuota')) {
+            return { text: "💳 Aceptamos todas las tarjetas. ¡Tip! Si pagás con transferencia tenés descuento extra." };
+        }
+
+        // Novedades
+        if (cleanText.includes('nuevo') || cleanText.includes('llegaron') || cleanText.includes('ultimo') || cleanText.includes('entrando')) {
             const news = [...knowledgeBase].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 3);
             const list = news.map(p => `• ${p.name}`).join('\n');
             return { text: `✨ ¡Lo último que entró es bomba!\n${list}\n\n¿Querés ver alguno en especial?` };
         }
 
-        // C. BUSCADOR SEMÁNTICO (Normalizado)
-        // Filtramos palabras cortas y limpiamos acentos
-        const keywords = cleanText.split(' ').filter(word => word.length > 3);
+        // 2. BUSCADOR INTELIGENTE (Detecta productos)
+        // Diccionario de sinónimos para ayudar a la búsqueda
+        let searchTerms = cleanText;
+        if (searchTerms.includes('termo')) searchTerms += " termico"; // Si busca termo, buscamos termico
+        if (searchTerms.includes('vaso')) searchTerms += " termico";
+        if (searchTerms.includes('camping')) searchTerms += " outdoor";
+
+        const keywords = searchTerms.split(' ').filter(word => word.length > 3);
 
         const matches = knowledgeBase.filter(p => {
-            // Limpiamos también la data del producto para comparar iguales
             const content = cleanString(`${p.name} ${p.category} ${p.description}`);
+            // Debe coincidir con alguna palabra clave
             return keywords.some(key => content.includes(key));
         });
 
         if (matches.length > 0) {
+            // Ordenar por relevancia (si el nombre tiene la palabra es mejor)
             matches.sort((a, b) => {
                 const aName = cleanString(a.name).includes(cleanText) ? 1 : 0;
                 const bName = cleanString(b.name).includes(cleanText) ? 1 : 0;
@@ -118,14 +132,18 @@ export default function ChatBot() {
             };
         }
 
-        // D. HUMAN FALLBACK
+        // 3. SALUDOS (PRIORIDAD BAJA - Solo si no matcheó nada antes)
+        if (cleanText.match(/\b(hola|buen|buenas|holis|alo)\b/) && cleanText.length < 20) {
+            return { text: "¡Hola! 👋 Soy experta en nuestro catálogo. Decime qué estilo buscás o preguntame por un producto." };
+        }
+
+        // 4. FALLBACK (Si no entendió nada)
         return {
             text: "Mmm, no encontré nada con esa descripción exacta 🤔. Probá con otra palabra o preguntale a Vane 👇",
             link: "https://wa.me/5492617523156"
         };
     };
 
-    // 5. MANEJO DEL ENVÍO
     const handleSend = async (textOverride = null) => {
         const textToSend = textOverride || inputText;
         if (!textToSend.trim()) return;
@@ -138,7 +156,7 @@ export default function ChatBot() {
             const response = analyzeIntent(textToSend);
             setMessages(prev => [...prev, { id: Date.now(), type: 'bot', text: response.text, link: response.link }]);
             setIsLoading(false);
-        }, 700);
+        }, 600);
     };
 
     const QuickOption = ({ icon, label, query }) => (
@@ -206,7 +224,7 @@ export default function ChatBot() {
                             ))}
                             {isLoading && (
                                 <div className="flex items-center gap-2 text-gray-400 text-xs ml-2">
-                                    <Sparkles size={12} className="animate-spin" /> Buscando en stock...
+                                    <Sparkles size={12} className="animate-spin" /> Buscando...
                                 </div>
                             )}
                         </div>
