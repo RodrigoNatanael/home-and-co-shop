@@ -1,37 +1,22 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { Sparkles, Download, X, RefreshCw, Zap, Mountain, Home, Camera } from 'lucide-react';
+import { Sparkles, Download, X, RefreshCw, Zap, Mountain, Home, Camera, Target, Cpu } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toPng } from 'html-to-image';
 
-// --- POOL DE FONDOS AMPLIADO PARA MÁXIMA VARIEDAD ---
-const BACKGROUNDS = {
+// --- MOTOR DE ESCENARIOS SINTÉTICOS (AI GENERATED TEMPLATES) ---
+const AI_SYNTH_SCENES = {
     ORIGIN: [
-        "https://images.unsplash.com/photo-1519681393784-d120267933ba",
-        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b",
-        "https://images.unsplash.com/photo-1504280506541-aca1cd12e211",
-        "https://images.unsplash.com/photo-1454496522488-7a8e488e8606",
-        "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5"
+        { url: "https://images.unsplash.com/photo-1512273222628-4daea6e55abb", name: "Andes Cinematic Synth", mood: "rustic" },
+        { url: "https://images.unsplash.com/photo-1502082553048-f009c37129b9", name: "Highland Mist Synth", mood: "organic" }
     ],
     TECH: [
-        "https://images.unsplash.com/photo-1497366216548-37526070297c",
-        "https://images.unsplash.com/photo-1550745165-9bc0b252726f",
-        "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d",
-        "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe",
-        "https://images.unsplash.com/photo-1550684848-fac1c5b4e853"
+        { url: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400", name: "Neon Matrix Synth", mood: "cyber" },
+        { url: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e", name: "Obsidian Studio Synth", mood: "premium" }
     ],
     LIFESTYLE: [
-        "https://images.unsplash.com/photo-1483985988355-763728e1935b",
-        "https://images.unsplash.com/photo-1513161455079-7dc1de15ef3e",
-        "https://images.unsplash.com/photo-1505691938895-1758d7bab58d",
-        "https://images.unsplash.com/photo-1616046229478-9901c5536a45",
-        "https://images.unsplash.com/photo-1617159784260-845722352b2f"
+        { url: "https://images.unsplash.com/photo-1617103996702-96ff29b1c467", name: "Scandi Morning Synth", mood: "minimal" },
+        { url: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf", name: "Urban Zen Synth", mood: "cozy" }
     ]
-};
-
-const DESIGN_SYSTEM = {
-    ORIGIN: { id: 'origin', label: 'Aventura & Origen', icon: Mountain, font: 'font-serif italic', accent: 'text-orange-400' },
-    TECH: { id: 'tech', label: 'Tech Minimalist', icon: Zap, font: 'font-mono tracking-tighter', accent: 'text-cyan-400' },
-    LIFESTYLE: { id: 'lifestyle', label: 'Urban Home', icon: Home, font: 'font-sans font-black', accent: 'text-rose-500' }
 };
 
 export default function AdGenerator({ product, onClose }) {
@@ -39,127 +24,147 @@ export default function AdGenerator({ product, onClose }) {
     const [layouts, setLayouts] = useState([]);
     const adRefs = useRef([]);
 
-    const productContext = useMemo(() => {
+    const ctx = useMemo(() => {
         const name = product?.name.toLowerCase() || "";
-        if (name.includes('mate') || name.includes('quo') || name.includes('aventura')) return DESIGN_SYSTEM.ORIGIN;
-        if (name.includes('digital') || name.includes('vaso') || name.includes('térmico')) return DESIGN_SYSTEM.TECH;
-        return DESIGN_SYSTEM.LIFESTYLE;
+        if (name.includes('mate') || name.includes('quo') || name.includes('aventura')) return { id: 'ORIGIN', font: 'font-serif italic', color: 'text-amber-500' };
+        if (name.includes('digital') || name.includes('vaso') || name.includes('térmico')) return { id: 'TECH', font: 'font-mono tracking-tighter', color: 'text-cyan-400' };
+        return { id: 'LIFESTYLE', font: 'font-sans font-black', color: 'text-rose-500' };
     }, [product]);
 
     const generate = () => {
         setIsGenerating(true);
-        setLayouts([]); // Limpieza total para forzar re-render
-
+        setLayouts([]);
         setTimeout(() => {
-            const pool = BACKGROUNDS[productContext.id.toUpperCase()];
-            const newLayouts = ['Minimal', 'Impact', 'Story'].map((type, i) => ({
+            const scenes = AI_SYNTH_SCENES[ctx.id];
+            const newLayouts = ['Master AI', 'Editorial Synth', 'Product Focus'].map((type, i) => ({
                 id: `${Date.now()}-${i}`,
                 type,
-                bg: `${pool[Math.floor(Math.random() * pool.length)]}?auto=format&fit=crop&q=80&w=1080`,
-                // Variamos la composición interna
-                comp: i === 0 ? 'bottom' : i === 1 ? 'center' : 'split'
+                scene: scenes[Math.floor(Math.random() * scenes.length)],
+                pos: i === 0 ? 'center' : i === 1 ? 'left' : 'right',
+                rotation: (Math.random() * 4 - 2).toFixed(1)
             }));
             setLayouts(newLayouts);
             setIsGenerating(false);
-        }, 1000);
+        }, 1200);
     };
 
-    useEffect(() => { generate(); }, [product]);
+    useEffect(() => { if (product) generate(); }, [product]);
 
     const download = async (index) => {
         if (adRefs.current[index]) {
-            const dataUrl = await toPng(adRefs.current[index], { quality: 1, pixelRatio: 3 });
+            const dataUrl = await toPng(adRefs.current[index], { quality: 1, pixelRatio: 3, cacheBust: true });
             const link = document.createElement('a');
-            link.download = `HC-Ad-${product.name}-${index}.png`;
+            link.download = `HomeAndCo-AI-Synth-${product.name}.png`;
             link.href = dataUrl;
             link.click();
         }
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[#0f0f0f] w-full max-w-[1200px] h-[90vh] rounded-[2.5rem] overflow-hidden flex flex-col border border-white/10">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/98 backdrop-blur-3xl">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#080808] w-full max-w-[1300px] h-[95vh] rounded-[3rem] overflow-hidden flex flex-col border border-white/10 shadow-[0_0_100px_rgba(0,0,0,1)]">
 
-                {/* HEADER */}
-                <div className="p-6 border-b border-white/5 flex justify-between items-center bg-black/40">
-                    <div className="flex items-center gap-4">
-                        <productContext.icon className="text-yellow-500" size={28} />
+                {/* HEADER - AI STUDIO INTERFACE */}
+                <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/40">
+                    <div className="flex items-center gap-6">
+                        <div className="p-4 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-600/20">
+                            <Cpu size={28} />
+                        </div>
                         <div>
-                            <h2 className="text-white font-black uppercase text-lg tracking-tighter">Creative Studio HD</h2>
-                            <p className="text-xs text-gray-500 font-mono">Producto: {product.name}</p>
+                            <h2 className="text-white font-black uppercase text-2xl tracking-tighter italic">Creative Studio <span className="text-indigo-400 font-mono">AI-Synth</span></h2>
+                            <p className="text-[10px] text-indigo-400 font-mono tracking-[0.3em] uppercase">Nano Banana Powered Infrastructure</p>
                         </div>
                     </div>
-                    <div className="flex gap-3">
-                        <button onClick={generate} disabled={isGenerating} className="bg-white/5 hover:bg-white/10 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 border border-white/10">
-                            <RefreshCw size={18} className={isGenerating ? "animate-spin" : ""} /> REGENERAR
+                    <div className="flex gap-4">
+                        <button onClick={generate} disabled={isGenerating} className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-2xl font-black flex items-center gap-3 transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
+                            <RefreshCw size={20} className={isGenerating ? "animate-spin" : ""} />
+                            <span>RE-IMAGINAR ESCENAS</span>
                         </button>
-                        <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={28} /></button>
+                        <button onClick={onClose} className="bg-white/5 p-4 rounded-2xl text-gray-400 hover:text-white transition-all"><X size={24} /></button>
                     </div>
                 </div>
 
-                {/* WORKSPACE */}
-                <div className="flex-1 overflow-y-auto p-10 bg-[#050505] flex justify-center">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                {/* AI RENDER CANVAS */}
+                <div className="flex-1 overflow-x-auto p-12 bg-[#050505] flex justify-center items-center gap-12">
+                    <AnimatePresence>
                         {layouts.map((layout, idx) => (
-                            <div key={layout.id} className="flex flex-col gap-4 items-center">
-
-                                {/* CANVAS 9:16 */}
+                            <motion.div
+                                key={layout.id}
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.1 }}
+                                className="flex flex-col gap-6"
+                            >
                                 <div
                                     ref={el => adRefs.current[idx] = el}
-                                    className="relative w-[300px] h-[533px] bg-white overflow-hidden rounded-sm shadow-2xl group"
+                                    className="relative w-[340px] h-[604px] bg-black overflow-hidden shadow-2xl rounded-[4px]"
                                 >
-                                    {/* FONDO */}
-                                    <img src={layout.bg} className="absolute inset-0 w-full h-full object-cover" alt="" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+                                    {/* AI GENERATED BACKDROP */}
+                                    <img src={`${layout.scene.url}?auto=format&fit=crop&q=90&w=1080`} className="absolute inset-0 w-full h-full object-cover grayscale-[20%] brightness-[0.7]" alt="" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
 
-                                    {/* COMPOSICIÓN DEL PRODUCTO - EL CORAZÓN DEL CAMBIO */}
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center p-6 z-10">
-                                        <div className="relative w-full h-full flex flex-col items-center justify-center">
+                                    {/* PRODUCT COMPOSITING ENGINE */}
+                                    <div className={`absolute inset-0 flex flex-col p-8 z-10 ${layout.pos === 'left' ? 'items-start' : layout.pos === 'right' ? 'items-end' : 'items-center justify-center'
+                                        }`}>
+                                        <div className="relative w-full h-[60%] flex flex-col items-center justify-center">
+                                            {/* CONTACT SHADOW (BLENDED) */}
+                                            <div className="absolute bottom-4 w-[75%] h-14 bg-black/80 blur-3xl rounded-[100%] mix-blend-multiply opacity-90" />
 
-                                            {/* SOMBRA DE CONTACTO DINÁMICA */}
-                                            <div className="absolute bottom-[20%] w-[60%] h-8 bg-black/60 blur-xl rounded-[100%] mix-blend-multiply" />
-
-                                            {/* IMAGEN CON FILTROS DE RECORTE SENIOR */}
                                             <img
-                                                src={product.image_url}
-                                                className="relative w-[90%] h-auto object-contain z-10 transition-transform duration-500 group-hover:scale-110"
                                                 style={{
+                                                    rotate: `${layout.rotation}deg`,
                                                     mixBlendMode: 'multiply',
                                                     filter: 'contrast(1.4) brightness(1.1) saturate(1.1)',
-                                                    WebkitMaskImage: 'linear-gradient(to bottom, black 90%, transparent 100%)'
+                                                    WebkitMaskImage: 'linear-gradient(to bottom, black 95%, transparent 100%)'
                                                 }}
+                                                src={product.image_url}
+                                                className="relative w-full h-full object-contain z-10 drop-shadow-[0_30px_60px_rgba(0,0,0,0.8)]"
                                             />
                                         </div>
                                     </div>
 
-                                    {/* TEXTOS DINÁMICOS */}
-                                    <div className="absolute inset-0 p-6 flex flex-col justify-between z-20 pointer-events-none">
+                                    {/* SYNTHETIC TYPOGRAPHY */}
+                                    <div className="absolute inset-0 p-10 flex flex-col justify-between z-20 pointer-events-none">
                                         <div className="flex justify-between items-start">
-                                            <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.4em]">Home & Co / 2026</span>
-                                            <Camera size={14} className="text-white/20" />
+                                            <div className="bg-indigo-600/20 backdrop-blur-md border border-indigo-500/30 px-3 py-1 rounded text-[8px] font-black text-indigo-300 tracking-[0.4em] uppercase">
+                                                Synth v3.0 / IA
+                                            </div>
+                                            <Target size={14} className="text-white/20" />
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <div className="bg-yellow-500 text-black text-[10px] font-black px-2 py-1 inline-block rounded-sm">10% OFF TRANSF.</div>
-                                            <h3 className={`text-white text-3xl uppercase leading-[0.85] ${productContext.font} drop-shadow-md`}>
-                                                {product.name}
-                                            </h3>
-                                            <p className={`text-2xl font-black ${productContext.accent} drop-shadow-md`}>
-                                                ${product.price.toLocaleString('es-AR')}
-                                            </p>
+                                        <div className="space-y-6">
+                                            <div className="space-y-1">
+                                                <h3 className={`text-white text-4xl leading-[0.85] uppercase font-black drop-shadow-2xl ${ctx.font}`}>
+                                                    {product.name}
+                                                </h3>
+                                                <p className="text-[10px] font-bold text-indigo-400 tracking-[0.5em] uppercase italic">
+                                                    Atmósfera {layout.scene.name}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-end justify-between">
+                                                <div className="space-y-3">
+                                                    <div className="bg-white text-black text-[10px] font-black px-3 py-1 inline-block rounded-sm transform -rotate-2">
+                                                        10% OFF TRANSF.
+                                                    </div>
+                                                    <p className={`text-4xl font-black tracking-tighter ${ctx.color} drop-shadow-xl`}>
+                                                        ${product.price.toLocaleString('es-AR')}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <button
                                     onClick={() => download(idx)}
-                                    className="w-full bg-white text-black py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-yellow-500 transition-all"
+                                    className="w-full bg-white hover:bg-indigo-500 hover:text-white text-black py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl"
                                 >
-                                    <Download size={14} /> Bajar Story {idx + 1}
+                                    <Download size={18} /> DESCARGAR MASTER AI
                                 </button>
-                            </div>
+                            </motion.div>
                         ))}
-                    </div>
+                    </AnimatePresence>
                 </div>
             </motion.div>
         </div>
