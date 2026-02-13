@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../supabaseclient';
-import { MessageCircle, X, Send, Trash2, Sparkles, CreditCard, Truck, MapPin } from 'lucide-react';
+import { MessageCircle, X, Send, Trash2, Sparkles, CreditCard, Truck, MapPin, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ChatBot() {
     const [isOpen, setIsOpen] = useState(false);
-    const [productsContext, setProductsContext] = useState([]);
+    const [knowledgeBase, setKnowledgeBase] = useState([]); // Base de conocimiento (Productos + Categorías)
     const [isLoading, setIsLoading] = useState(false);
 
     const avatarUrl = "https://img.freepik.com/premium-psd/3d-render-avatar-character_23-2150611765.jpg?w=740";
@@ -17,7 +17,7 @@ export default function ChatBot() {
             return saved ? JSON.parse(saved) : [{
                 id: 1,
                 type: 'bot',
-                text: '¡Hola! ✨ Soy Mila. ¿Buscás algo para renovar tu hogar o una buena compañía para el mate?'
+                text: '¡Hola! ✨ Soy Mila. Conozco todo el stock de Home & Co. ¿Qué estás buscando hoy?'
             }];
         } catch (e) {
             return [{ id: 1, type: 'bot', text: '¡Hola! ✨ Soy Mila. ¿En qué te ayudo?' }];
@@ -27,13 +27,18 @@ export default function ChatBot() {
     const [inputText, setInputText] = useState('');
     const scrollRef = useRef(null);
 
-    // 2. CARGAR PRODUCTOS (El conocimiento de Mila)
+    // 2. APRENDIZAJE EN TIEMPO REAL (Lee TODO: Nombre, Descripción, Categoría, Fecha)
     useEffect(() => {
-        const fetchProducts = async () => {
-            const { data } = await supabase.from('products').select('name, price, category');
-            if (data) setProductsContext(data);
+        const learnStore = async () => {
+            // Traemos descripción y fecha también para ser más inteligentes
+            const { data } = await supabase
+                .from('products')
+                .select('name, price, category, description, created_at, stock')
+                .gt('stock', 0); // Solo aprende lo que tiene stock
+
+            if (data) setKnowledgeBase(data);
         };
-        fetchProducts();
+        learnStore();
     }, []);
 
     // 3. PERSISTENCIA
@@ -47,54 +52,61 @@ export default function ChatBot() {
     };
 
     const clearHistory = () => {
-        const reset = [{ id: Date.now(), type: 'bot', text: '¡Listo! Empecemos de nuevo. ✨' }];
+        const reset = [{ id: Date.now(), type: 'bot', text: 'Memoria refrescada ✨. Preguntame lo que quieras del sitio.' }];
         setMessages(reset);
         localStorage.removeItem('hc_chat_history');
     };
 
-    // 4. CEREBRO HÍBRIDO (Fijo + Buscador en DB)
-    const getBotResponse = (text) => {
+    // 4. CEREBRO DE BÚSQUEDA PROFUNDA
+    const analyzeIntent = (text) => {
         const lower = text.toLowerCase();
 
-        // --- A. PREGUNTAS FIJAS ---
-        if (lower.match(/\b(hola|buen|buenas|holis|alo)\b/))
-            return { text: "¡Hola! 👋 ¿Cómo estás? Escribí el nombre de lo que buscás (ej: 'Termo') y te digo qué tenemos." };
+        // A. INTENCIONES FIJAS (Políticas)
+        if (lower.match(/\b(hola|buen|buenas|holis|alo)\b/)) return { text: "¡Hola! 👋 Soy experta en nuestro catálogo. Decime qué estilo buscás o preguntame por un producto." };
+        if (lower.includes('envio') || lower.includes('llegan') || lower.includes('soy de')) return { text: "📦 Hacemos envíos a todo el país. En Mendoza entregamos volando, al resto llega en 24/48hs." };
+        if (lower.includes('donde') || lower.includes('ubicacion')) return { text: "📍 Estamos en Mendoza, pero nuestra tienda es 100% online y segura." };
+        if (lower.includes('pago') || lower.includes('tarjeta') || lower.includes('cuota')) return { text: "💳 Aceptamos todas las tarjetas. ¡Tip! Si pagás con transferencia tenés descuento extra." };
+        if (lower.includes('promo') || lower.includes('oferta') || lower.includes('descuento')) return { text: "🔥 ¡El mejor descuento es vía Transferencia! Seleccionalo al final de la compra. También revisá si hay productos con precio rebajado." };
 
-        if (lower.includes('envio') || lower.includes('llegan') || lower.includes('soy de'))
-            return { text: "📦 Hacemos envíos a todo el país. Si sos de Mendoza, coordinamos entrega rápida." };
+        // B. INTENCIÓN: "NOVEDADES" (Usa la fecha created_at)
+        if (lower.includes('nuevo') || lower.includes('llegaron') || lower.includes('ultimo')) {
+            // Ordenamos por fecha y tomamos los 3 más nuevos
+            const news = [...knowledgeBase].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 3);
+            const list = news.map(p => `• ${p.name}`).join('\n');
+            return { text: `✨ ¡Lo último que entró es bomba!\n${list}\n\n¿Querés ver alguno en especial?` };
+        }
 
-        if (lower.includes('donde') || lower.includes('ubicacion') || lower.includes('local'))
-            return { text: "📍 Estamos en Mendoza. Trabajamos mayormente online con envíos a todo el país." };
+        // C. INTENCIÓN: "BUSCADOR SEMÁNTICO" (Busca en descripción y categoría)
+        // Dividimos la búsqueda en palabras clave (ej: "termo rojo" -> "termo", "rojo")
+        const keywords = lower.split(' ').filter(word => word.length > 2); // Ignoramos palabras cortas como "de", "el"
 
-        if (lower.includes('pago') || lower.includes('tarjeta') || lower.includes('cuota'))
-            return { text: "💳 Aceptamos todas las tarjetas. También transferencia (con descuento) y efectivo." };
+        const matches = knowledgeBase.filter(p => {
+            const content = `${p.name} ${p.category} ${p.description}`.toLowerCase();
+            // El producto debe coincidir con AL MENOS una palabra clave fuerte
+            return keywords.some(key => content.includes(key));
+        });
 
-        // --- B. BUSCADOR INTELIGENTE DE PRODUCTOS ---
-        // Buscamos si alguna palabra del usuario coincide con algún producto
-        const foundProducts = productsContext.filter(p =>
-            lower.includes(p.name.toLowerCase()) ||
-            lower.includes(p.category.toLowerCase()) ||
-            (p.name.toLowerCase().split(' ').some(word => lower.includes(word) && word.length > 3)) // Coincidencia parcial
-        );
+        if (matches.length > 0) {
+            // Priorizamos coincidencia exacta en el nombre
+            matches.sort((a, b) => {
+                const aName = a.name.toLowerCase().includes(lower) ? 1 : 0;
+                const bName = b.name.toLowerCase().includes(lower) ? 1 : 0;
+                return bName - aName;
+            });
 
-        if (foundProducts.length > 0) {
-            // Tomamos hasta 3 productos para no saturar el chat
-            const topProducts = foundProducts.slice(0, 3);
-            const productList = topProducts.map(p => `• ${p.name}: $${p.price}`).join('\n');
-            const moreText = foundProducts.length > 3 ? `\n...y ${foundProducts.length - 3} más.` : '';
-
+            const top = matches.slice(0, 3);
+            const list = top.map(p => `• ${p.name} ($${p.price})`).join('\n');
             return {
-                text: `¡Sí! Encontré esto:\n${productList}${moreText}\n\n¿Querés ver más detalles?`,
-                link: "/catalog" // Podríamos llevarlo al catálogo
+                text: `🔍 Encontré esto que te puede servir:\n${list}\n\n¿Te paso el link de alguno?`,
+                link: "/catalog"
             };
         }
 
-        // --- C. MAYORISTA / DEFAULT ---
-        if (lower.includes('mayor') || lower.includes('reventa'))
-            return { text: "Para ventas mayoristas, por favor escribinos directo al WhatsApp para pasarte el catálogo.", link: "https://wa.me/5492617523156" };
+        // D. MAYORISTA / HUMAN FALLBACK
+        if (lower.includes('mayor') || lower.includes('reventa')) return { text: "Para catálogo mayorista, hablame al WhatsApp 👇", link: "https://wa.me/5492617523156" };
 
         return {
-            text: "No encontré ese producto específico 🤔. Pero preguntale a Vane por WhatsApp que te consigue todo 👇",
+            text: "Mmm, no encontré nada con esa descripción exacta 🤔. Probá con otra palabra o preguntale a Vane 👇",
             link: "https://wa.me/5492617523156"
         };
     };
@@ -109,10 +121,10 @@ export default function ChatBot() {
         setIsLoading(true);
 
         setTimeout(() => {
-            const response = getBotResponse(textToSend);
+            const response = analyzeIntent(textToSend);
             setMessages(prev => [...prev, { id: Date.now(), type: 'bot', text: response.text, link: response.link }]);
             setIsLoading(false);
-        }, 600);
+        }, 700); // Un poco más de delay para simular que "piensa"
     };
 
     const QuickOption = ({ icon, label, query }) => (
@@ -135,7 +147,7 @@ export default function ChatBot() {
                         transition={{ type: "spring", stiffness: 300, damping: 25 }}
                         className="mb-4 w-[90vw] max-w-[360px] h-[550px] rounded-[30px] shadow-2xl overflow-hidden flex flex-col border border-white/20 relative"
                         style={{
-                            background: 'rgba(255, 255, 255, 0.90)',
+                            background: 'rgba(255, 255, 255, 0.92)',
                             backdropFilter: 'blur(20px)',
                             WebkitBackdropFilter: 'blur(20px)',
                         }}
@@ -180,16 +192,16 @@ export default function ChatBot() {
                             ))}
                             {isLoading && (
                                 <div className="flex items-center gap-2 text-gray-400 text-xs ml-2">
-                                    <Sparkles size={12} className="animate-spin" /> Buscando...
+                                    <Sparkles size={12} className="animate-spin" /> Buscando en stock...
                                 </div>
                             )}
                         </div>
 
                         {/* SUGERENCIAS */}
                         <div className="px-4 pb-2 flex gap-2 overflow-x-auto no-scrollbar mask-linear-fade">
+                            <QuickOption icon={<Search size={12} />} label="Lo Nuevo" query="¿Qué hay de nuevo?" />
                             <QuickOption icon={<Truck size={12} />} label="Envíos" query="¿Cómo son los envíos?" />
-                            <QuickOption icon={<CreditCard size={12} />} label="Pagos" query="¿Qué medios de pago aceptan?" />
-                            <QuickOption icon={<MapPin size={12} />} label="Ubicación" query="¿Dónde están ubicados?" />
+                            <QuickOption icon={<CreditCard size={12} />} label="Pagos" query="¿Medios de pago?" />
                         </div>
 
                         {/* INPUT */}
