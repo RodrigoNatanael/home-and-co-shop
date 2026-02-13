@@ -3,9 +3,11 @@ import { supabase } from '../supabaseclient';
 import {
     Trash2, Plus, RefreshCw, ShoppingBag, Video, Image as ImageIcon,
     Package, CheckSquare, FolderPlus, Tag, Settings, Layout, Ticket, Layers, Palette,
-    DollarSign, CheckCircle, AlertCircle, User, UserPlus, ShoppingCart, Minus, Menu
+    DollarSign, CheckCircle, AlertCircle, User, UserPlus, ShoppingCart, Minus, Menu,
+    Sparkles
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import AdGenerator from '../components/marketing/AdGenerator';
 
 export default function AdminPanel() {
     // --- ESTADOS NAVEGACIÓN ---
@@ -43,6 +45,10 @@ export default function AdminPanel() {
     // BANNERS
     const [bannerFormData, setBannerFormData] = useState({ title: '', link: '' });
     const [bannerImageFile, setBannerImageFile] = useState(null);
+
+    // --- ESTADO AD GENERATOR ---
+    const [showAdGen, setShowAdGen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
 
     useEffect(() => {
         refreshAll();
@@ -226,6 +232,11 @@ export default function AdminPanel() {
         await supabase.from('banners').insert([{ ...bannerFormData, image_url: url }]); setBannerFormData({ title: '', link: '' }); setBannerImageFile(null); fetchBanners();
     };
 
+    const handleOpenAdGen = (product) => {
+        setSelectedProduct(product);
+        setShowAdGen(true);
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-900">
             {/* HEADER RESPONSIVE */}
@@ -320,7 +331,16 @@ export default function AdminPanel() {
                                                 <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden">{p.image_url && <img src={p.image_url} className="w-full h-full object-cover" alt="" />}</div>
                                                 <div><p className="font-black text-xs">{p.name}</p><p className="text-[10px] text-gray-500">Stock: {p.stock}</p></div>
                                             </div>
-                                            <button onClick={() => { if (confirm('¿Borrar?')) supabase.from('products').delete().eq('id', p.id).then(fetchProducts) }}><Trash2 size={16} className="text-gray-300" /></button>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleOpenAdGen(p)}
+                                                    className="p-2 rounded-lg bg-yellow-50 text-yellow-600 hover:bg-yellow-100 transition-colors"
+                                                    title="Generar Anuncio"
+                                                >
+                                                    <Sparkles size={16} />
+                                                </button>
+                                                <button onClick={() => { if (confirm('¿Borrar?')) supabase.from('products').delete().eq('id', p.id).then(fetchProducts) }}><Trash2 size={16} className="text-gray-300" /></button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -467,6 +487,14 @@ export default function AdminPanel() {
                     <div className="p-8 text-center text-gray-500 bg-white rounded-xl border">
                         <p>Funcionalidad de escritorio. Usá la PC para editar Banners o Diseño.</p>
                     </div>
+                )}
+
+                {/* AD GENERATOR MODAL */}
+                {showAdGen && selectedProduct && (
+                    <AdGenerator
+                        product={selectedProduct}
+                        onClose={() => { setShowAdGen(false); setSelectedProduct(null); }}
+                    />
                 )}
 
             </div>
